@@ -1,6 +1,6 @@
 // Hello World
 const B: i32 = A;
-const A: i32 = 1;
+const A: i32 = 1 + 2;
 
 //external func printf(format: u8*, ...) -> i32;
 
