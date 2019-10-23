@@ -153,17 +153,22 @@ class Lexer
     {
         if (text[ptr] == '/' && text[ptr + 1] == '/')
         {
-            while (ptr < text.Length && text[ptr] != '\n')
+            while (ptr < text.Length && text[ptr] == '/' && text[ptr + 1] == '/')
             {
+                while (ptr < text.Length && text[ptr] != '\n')
+                {
+                    CurrentTokenSpan.FromColumnNumber++;
+                    ptr++;
+                }
+
                 CurrentTokenSpan.FromColumnNumber++;
                 ptr++;
+
+                CurrentTokenSpan.FromLineNumber++;
+                CurrentTokenSpan.FromColumnNumber = 1;
+
+                RemoveWhitespace();
             }
-
-            CurrentTokenSpan.FromColumnNumber++;
-            ptr++;
-
-            CurrentTokenSpan.FromLineNumber++;
-            CurrentTokenSpan.FromColumnNumber = 1;
         }
     }
 

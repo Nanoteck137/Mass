@@ -4,13 +4,40 @@ using System.Diagnostics;
 
 abstract class Type
 {
-    public static Type IntType { get; } = new IntType();
+    public static Type U8Type { get; } = new IntType(IntKind.U8);
+    public static Type U16Type { get; } = new IntType(IntKind.U16);
+    public static Type U32Type { get; } = new IntType(IntKind.U32);
+    public static Type U64Type { get; } = new IntType(IntKind.U64);
+
+    public static Type S8Type { get; } = new IntType(IntKind.S8);
+    public static Type S16Type { get; } = new IntType(IntKind.S16);
+    public static Type S32Type { get; } = new IntType(IntKind.S32);
+    public static Type S64Type { get; } = new IntType(IntKind.S64);
+
     public static Type VoidType { get; } = new VoidType();
 }
 
+enum IntKind
+{
+    U8,
+    U16,
+    U32,
+    U64,
+
+    S8,
+    S16,
+    S32,
+    S64,
+};
+
 class IntType : Type
 {
-    public IntType() { }
+    public IntKind Kind { get; private set; }
+
+    public IntType(IntKind kind)
+    {
+        this.Kind = kind;
+    }
 }
 
 class PtrType : Type
@@ -166,9 +193,24 @@ class Resolver
         globalSymbols = new Dictionary<string, Symbol>();
         ResolvedSymbols = new List<Symbol>();
 
-        Symbol sym = new Symbol("i32", SymbolKind.TYPE, SymbolState.RESOLVED, null);
-        sym.Type = Type.IntType;
-        globalSymbols.Add("i32", sym);
+        AddGlobalType("u8", Type.U8Type);
+        AddGlobalType("u16", Type.U16Type);
+        AddGlobalType("u32", Type.U32Type);
+        AddGlobalType("u64", Type.U64Type);
+
+        AddGlobalType("s8", Type.U8Type);
+        AddGlobalType("s16", Type.U16Type);
+        AddGlobalType("s32", Type.U32Type);
+        AddGlobalType("s64", Type.U64Type);
+    }
+
+    private void AddGlobalType(string name, Type type)
+    {
+        Symbol sym = new Symbol(name, SymbolKind.TYPE, SymbolState.RESOLVED, null)
+        {
+            Type = type
+        };
+        globalSymbols.Add(name, sym);
     }
 
     //NOTE(patrik): Helper function
@@ -185,7 +227,7 @@ class Resolver
 
     private ResolvedExpr ResolvedConst(ulong val)
     {
-        return new ResolvedExpr(Type.IntType, val, true);
+        return new ResolvedExpr(Type.U32Type, val, true);
     }
 
     public Symbol GetSymbol(string name)
@@ -225,6 +267,10 @@ class Resolver
         {
             kind = SymbolKind.FUNC;
         }
+        else if (decl is ExternalDeclAST)
+        {
+            kind = SymbolKind.FUNC;
+        }
         else
         {
             Debug.Assert(false);
@@ -232,7 +278,7 @@ class Resolver
 
         Symbol sym = new Symbol(decl.Name.Value, kind, SymbolState.UNRESOLVED, decl)
         {
-            Type = Type.IntType
+            Type = Type.U32Type
         };
         globalSymbols.Add(decl.Name.Value, sym);
     }
@@ -326,6 +372,10 @@ class Resolver
         {
             return ResolvedConst(symbol.Val);
         }
+        else if (symbol.Kind == SymbolKind.FUNC)
+        {
+            return ResolvedRValue(symbol.Type);
+        }
         else
         {
             lexer.Fatal(string.Format("{0} must denote a var or const", ident.Value));
@@ -334,13 +384,30 @@ class Resolver
         return null;
     }
 
+    public ResolvedExpr ResolveExprCall(CallExprAST call)
+    {
+        Debug.Assert(call != null);
+
+        //TODO(patrik): Check the parameters
+
+        ResolvedExpr func = ResolveExpr(call.Expr);
+        if (!(func.Type is FunctionType))
+        {
+            lexer.Fatal("Trying to call a non-function value");
+        }
+
+        FunctionType funcType = (FunctionType)func.Type;
+
+        return ResolvedRValue(funcType.ReturnType);
+    }
+
     public ResolvedExpr ResolveExpr(ExprAST expr)
     {
         Debug.Assert(expr != null);
 
         if (expr is NumberAST number)
         {
-            return new ResolvedExpr(Type.IntType, number.Number, true);
+            return new ResolvedExpr(Type.U32Type, number.Number, true);
         }
         else if (expr is BinaryOpExprAST binary)
         {
@@ -349,6 +416,10 @@ class Resolver
         else if (expr is IdentifierAST ident)
         {
             return ResolveExprIdentifer(ident);
+        }
+        else if (expr is CallExprAST call)
+        {
+            return ResolveExprCall(call);
         }
         else
         {
@@ -386,10 +457,8 @@ class Resolver
         return type;
     }
 
-    public Type ResolveFuncDecl(FunctionDeclAST decl)
+    public Type ResolveFuncPrototype(FunctionPrototypeAST prototype)
     {
-        FunctionPrototypeAST prototype = decl.Prototype;
-
         Type returnType = Type.VoidType;
         if (prototype.ReturnType != null)
             returnType = ResolveTypespec(prototype.ReturnType);
@@ -434,6 +503,10 @@ class Resolver
                 lexer.Fatal("Only supports var decls in other decls");
             }
         }
+        else if (stmt is ExprStmtAST exprStmt)
+        {
+            ResolvedExpr result = ResolveExpr(exprStmt.Expr);
+        }
         else
         {
             Debug.Assert(false);
@@ -470,6 +543,7 @@ class Resolver
         LeaveScope(scope);
     }
 
+
     public void ResolveSymbol(Symbol symbol)
     {
         if (symbol.State == SymbolState.RESOLVED)
@@ -491,7 +565,7 @@ class Resolver
         }
         else if (symbol.Decl is FunctionDeclAST funcDecl)
         {
-            symbol.Type = ResolveFuncDecl(funcDecl);
+            symbol.Type = ResolveFuncPrototype(funcDecl.Prototype);
             ResolveFuncBody(symbol);
         }
         else if (symbol.Decl is ConstDeclAST)
@@ -499,6 +573,10 @@ class Resolver
             ulong val = 0;
             symbol.Type = ResolveConstDecl(symbol, ref val);
             symbol.Val = val;
+        }
+        else if (symbol.Decl is ExternalDeclAST externDecl)
+        {
+            symbol.Type = ResolveFuncPrototype(externDecl.Prototype);
         }
         else
         {
@@ -554,15 +632,15 @@ class Resolver
 
         int scope1 = EnterScope();
 
-        PushVar("a", Type.IntType);
-        PushVar("b", Type.IntType);
+        PushVar("a", Type.U32Type);
+        PushVar("b", Type.U32Type);
         Debug.Assert(GetSymbol("a") != null);
         Debug.Assert(GetSymbol("b") != null);
 
         int scope2 = EnterScope();
 
-        PushVar("c", Type.IntType);
-        PushVar("d", Type.IntType);
+        PushVar("c", Type.U32Type);
+        PushVar("d", Type.U32Type);
         Debug.Assert(GetSymbol("a") != null);
         Debug.Assert(GetSymbol("b") != null);
         Debug.Assert(GetSymbol("c") != null);
@@ -582,13 +660,13 @@ class Resolver
             new ConstDeclAST(
                 new IdentifierAST("A"),
                 new IdentifierTypespec(
-                    new IdentifierAST("i32")),
+                    new IdentifierAST("s32")),
                 new NumberAST(123)),
 
             new VarDeclAST(
                 new IdentifierAST("b"),
                 new IdentifierTypespec(
-                    new IdentifierAST("i32")),
+                    new IdentifierAST("s32")),
                 new BinaryOpExprAST(
                     new IdentifierAST("A"),
                     new NumberAST(321),
@@ -600,13 +678,13 @@ class Resolver
                     new List<FunctionParameter>() {
                         new FunctionParameter(
                             new IdentifierAST("a"),
-                            new IdentifierTypespec(new IdentifierAST("i32"))),
+                            new IdentifierTypespec(new IdentifierAST("s32"))),
                         new FunctionParameter(
                             new IdentifierAST("b"),
-                            new IdentifierTypespec(new IdentifierAST("i32")))
+                            new IdentifierTypespec(new IdentifierAST("s32")))
                     },
                     new IdentifierTypespec(
-                        new IdentifierAST("i32")),
+                        new IdentifierAST("s32")),
                     true),
                 new StmtBlock(new List<StmtAST>() {
                     new ReturnStmtAST(

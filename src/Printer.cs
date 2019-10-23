@@ -158,13 +158,41 @@ class Printer
             }
             else
             {
-                Console.Write("nil");
+                Console.Write("void");
             }
 
             indent++;
             PrintNewline();
             PrintStmtBlock(funcDecl.Body);
             indent--;
+
+            Console.Write(")");
+        }
+        else if (decl is ExternalDeclAST externDecl)
+        {
+            Console.Write("(external {0} ", externDecl.Prototype.Name);
+            Console.Write("(");
+            foreach (FunctionParameter param in externDecl.Prototype.Parameters)
+            {
+                Console.Write(" {0} ", param.Name.Value);
+                PrintTypespec(param.Type);
+            }
+
+            if (externDecl.Prototype.VarArgs)
+            {
+                Console.Write(" ...");
+            }
+
+            Console.Write(" ) ");
+
+            if (externDecl.Prototype.ReturnType != null)
+            {
+                PrintTypespec(externDecl.Prototype.ReturnType);
+            }
+            else
+            {
+                Console.Write("void");
+            }
 
             Console.Write(")");
         }
