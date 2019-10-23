@@ -1,26 +1,28 @@
 #include <stdio.h>
 
-const int x = 123;
-const int y = 321;
-int z = x + y;
-// static int y = 321;
+const int A = 123;
+int b = 321 + A;
 
-struct Hello
+int x = 321;
+int y = 123;
+int z = x + y;
+
+typedef int (*TestPtr)(int x, int y);
+
+int add(int x, int y)
 {
-    int x;
-    union {
-        int integer;
-        float floating;
-    };
-};
+    return x + y;
+}
+
+int sub(int x, int y)
+{
+    return x + y;
+}
 
 int main(int argc, char **argv)
 {
-    int local = 123;
-    /*struct Hello hello;
-    hello.x = x;
-    hello.floating = 3.14;
-    printf("Hello: x = %d, int = %d, float = %f", hello.x, hello.integer, hello.floating);*/
-    // printf("Hello World %d %d\n", x, y);
+    TestPtr func = add;
+    func(123, 321);
+
     return 0;
 }

@@ -67,8 +67,6 @@ Hur ska scopes fungera?
 Lista av Symbols?
 
 Hur ska man resolvea stmts?
-Foreach varje stmt? Kanske
-Primärt behöver resolva DeclStmts
 
 * Symbol
     1. Decl

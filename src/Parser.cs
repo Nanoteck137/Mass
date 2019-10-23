@@ -557,10 +557,24 @@ class Parser
             }
             else
             {
-                DeclStmtAST declStmt = ParseDeclStmt();
+                // TODO(patrik): Maybe support decl parsing inside a decl
+                /*DeclStmtAST declStmt = ParseDeclStmt();
                 if (declStmt != null)
                 {
                     stmts.Add(declStmt);
+                }
+                else
+                {
+                    stmts.Add(ParseExprStmt());
+                }*/
+
+                if (lexer.CurrentToken == TokenType.KEYWORD_VAR)
+                {
+                    VarDeclAST decl = ParseVarDecl();
+                    DeclStmtAST stmt = new DeclStmtAST(decl);
+                    stmt.Span = decl.Span.Clone();
+
+                    stmts.Add(stmt);
                 }
                 else
                 {
@@ -591,14 +605,6 @@ class Parser
 
         lexer.ExpectToken(TokenType.COLON);
 
-        /*lexer.ExpectToken(TokenType.IDENTIFIER, false);
-        SourceSpan paramEnd = lexer.CurrentTokenSpan.Clone();
-        IdentifierAST paramType = new IdentifierAST(lexer.CurrentIdentifier)
-        {
-            Span = lexer.CurrentTokenSpan.Clone()
-        };
-        lexer.NextToken();*/
-
         Typespec type = ParseType();
         SourceSpan paramEnd = type.Span.Clone();
 
@@ -608,7 +614,7 @@ class Parser
             if (item.Name.Value == paramName.Value)
             {
                 SourceSpan span = new SourceSpan(paramStart.FromLineNumber, paramStart.FromColumnNumber, paramEnd.ToLineNumber, paramEnd.ToColumnNumber);
-                lexer.Error(string.Format("ERROR: Redefinition of parameter name '{0}'", paramName.Value), span);
+                lexer.Error(string.Format("Redefinition of parameter name '{0}'", paramName.Value), span);
                 redefined = true;
             }
         }

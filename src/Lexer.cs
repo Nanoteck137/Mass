@@ -139,7 +139,7 @@ class Lexer
     {
         if (CurrentToken != type)
         {
-            Error(string.Format("ERROR: Unexpected token '{0}' expected '{1}'", CurrentToken.ToString(), type.ToString()), CurrentTokenSpan);
+            Error(string.Format("Unexpected token '{0}' expected '{1}'", CurrentToken.ToString(), type.ToString()), CurrentTokenSpan);
             Debug.Assert(false);
         }
         else

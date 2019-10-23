@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using LLVMSharp;
 
 namespace Mass
@@ -19,19 +20,32 @@ namespace Mass
 
             List<DeclAST> root = parser.Parse();
 
+            Printer printer = new Printer();
+            //printer.Test();
+            foreach (DeclAST decl in root)
+            {
+                printer.PrintDecl(decl);
+                Console.WriteLine();
+            }
+
             Resolver resolver = new Resolver(lexer);
             //resolver.Test();
-            resolver.AddSymbol(root[0]);
+            /*resolver.AddSymbol(root[0]);
             resolver.AddSymbol(root[1]);
-            //resolver.AddSymbol(root[2]);
+            //resolver.AddSymbol(root[2]);*/
+
+            foreach (DeclAST decl in root)
+            {
+                resolver.AddSymbol(decl);
+            }
 
             resolver.ResolveSymbols();
 
-            CodeGenerator codeGenerator = new CodeGenerator(lexer, lexer.FileName);
+            /*CodeGenerator codeGenerator = new CodeGenerator(lexer, lexer.FileName);
             codeGenerator.Generate(resolver);
             codeGenerator.Test();
 
-            codeGenerator.Dispose();
+            codeGenerator.Dispose(); */
 
             /*
             LLVMTypeRef[] funcParams = new LLVMTypeRef[]
