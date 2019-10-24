@@ -109,6 +109,7 @@ class Lexer
     public string CurrentIdentifier { get; private set; }
     public string CurrentString { get; private set; }
     public ulong CurrentInteger { get; private set; }
+    public double CurrentFloat { get; private set; }
 
     public Lexer(string fileName, string text)
     {
@@ -125,10 +126,18 @@ class Lexer
         this.ptr = 0;
         this.CurrentTokenSpan = new SourceSpan(1, 1, 1, 1);
 
+        ResetToken();
+    }
+
+    private void ResetToken()
+    {
+        CurrentTokenStart = 0;
         CurrentToken = TokenType.UNKNOWN;
+
         CurrentIdentifier = "";
         CurrentString = "";
         CurrentInteger = 0;
+        CurrentFloat = 0.0;
     }
 
     public void Fatal(string message)
@@ -244,19 +253,36 @@ class Lexer
 
     private void ScanFloat()
     {
-        string test = "3.14f";
-        double t = 3.14;
-        double val = double.Parse(test, CultureInfo.InvariantCulture);
+        // Format: 1: 3.14 (double) 2: 3.14f (float)
+        bool alreadySeenDot = false;
 
-        throw new NotImplementedException();
+        while (ptr < text.Length && (char.IsDigit(text[ptr]) || text[ptr] == '.'))
+        {
+            if (text[ptr] == '.')
+            {
+                if (alreadySeenDot)
+                {
+                    Debug.Assert(false);
+                }
+                else
+                {
+                    alreadySeenDot = true;
+                }
+            }
+
+            ptr++;
+        }
+
+        string str = text.Substring(CurrentTokenStart, ptr - CurrentTokenStart);
+        double val = double.Parse(str, CultureInfo.InvariantCulture);
+
+        CurrentToken = TokenType.FLOAT;
+        CurrentFloat = val;
     }
 
     public void NextToken()
     {
-        CurrentToken = TokenType.UNKNOWN;
-        CurrentIdentifier = "";
-        CurrentString = "";
-        CurrentInteger = 0;
+        ResetToken();
 
         CurrentTokenSpan.FromColumnNumber = CurrentTokenSpan.ToColumnNumber;
 
@@ -506,6 +532,6 @@ class Lexer
         lexer.Reset("3.14f");
         lexer.NextToken();
         Debug.Assert(lexer.CurrentToken == TokenType.FLOAT);
-        Debug.Assert(lexer.CurrentInteger == 0b110011);
+        Debug.Assert(lexer.CurrentFloat == 3.14);
     }
 }
