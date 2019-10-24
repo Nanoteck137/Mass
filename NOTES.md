@@ -12,13 +12,16 @@
 
 ### Example
 ```php
-var hello = 123;
-var test = "Wooh";
+var hello: s32 = 123;
+var test: u8* = "Wooh";
 
-func add(a: int32, b: int32) -> int32 {
-    var result = a + b;
+#external
+func printf(format: u8*, ...) -> s32;
+
+func add(a: s32, b: s32) -> s32 {
+    var result: s32 = a + b;
     printf("%d + %d = %d\n", a, b, result);
-    ret a + b;
+    ret result;
 }
 ```
 ### Keywords
@@ -34,7 +37,8 @@ func add(a: int32, b: int32) -> int32 {
 * STR = '"' [^"]* '"'
 
 ### Def
-* type = 
+* base_type = NAME
+* type = base_type ('[' expr? ']' | '*')*
 
 * type_list = type (',' type)*
 
@@ -42,10 +46,28 @@ func add(a: int32, b: int32) -> int32 {
 
 * func_decl = func_prototype stmt_block
 
-* var_decl = NAME ('=' expr)?
+* var_decl = NAME ':' type ('=' expr)?
+
+* const_decl = NAME ':' type '=' expr
+
+* struct_item_list = NAME ':' type ';'
+* struct_decl = NAME '{' struct_item_list* '}'
 
 * decl = 'func' func_decl
        | 'var' var_decl ';'
+	   | 'const' const_decl ';'
+	   | 'struct' struct_decl
+
+### Statements
+
+stmt_block = '{' stmt* '}'
+
+stmt = 'return' expr ';'
+	 | 'break' ';'
+	 | 'continue' ';'
+	 | 'if' '(' expr ')' stmt_block ('else' 'if' '(' expr ')' stmt_block)* ('else' stmt_block)?
+	 | stmt_block
+	 | expr  (INC | DEC | assign_op expr)?
 
 ### Expr
 * operand_expr = INT
@@ -62,11 +84,6 @@ func add(a: int32, b: int32) -> int32 {
 * Symbol Table (name => decl)
 * Resolve Stmts
     * Symbol Scopes
-
-Hur ska scopes fungera?
-Lista av Symbols?
-
-Hur ska man resolvea stmts?
 
 * Symbol
     1. Decl

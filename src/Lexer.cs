@@ -17,9 +17,9 @@ enum TokenType
     KEYWORD_VAR,
     KEYWORD_CONST,
     KEYWORD_FUNC,
+    KEYWORD_STRUCT,
     KEYWORD_EXTERNAL,
     KEYWORD_RET,
-    KEYWORD_STRUCT,
 
     IDENTIFIER,
     STRING,
@@ -54,6 +54,12 @@ enum TokenType
     SEMIDOT,
 
     EOF,
+}
+
+enum TokenMod
+{
+    NONE,
+    FLOAT,
 }
 
 class SourceSpan
@@ -106,6 +112,7 @@ class Lexer
     public TokenType CurrentToken { get; private set; }
     public SourceSpan CurrentTokenSpan { get; private set; }
 
+    public TokenMod TokenMod { get; private set; }
     public string CurrentIdentifier { get; private set; }
     public string CurrentString { get; private set; }
     public ulong CurrentInteger { get; private set; }
@@ -114,7 +121,6 @@ class Lexer
     public Lexer(string fileName, string text)
     {
         this.FileName = fileName;
-
         this.builder = new StringBuilder();
 
         Reset(text);
@@ -134,6 +140,7 @@ class Lexer
         CurrentTokenStart = 0;
         CurrentToken = TokenType.UNKNOWN;
 
+        TokenMod = TokenMod.NONE;
         CurrentIdentifier = "";
         CurrentString = "";
         CurrentInteger = 0;
@@ -262,6 +269,7 @@ class Lexer
             {
                 if (alreadySeenDot)
                 {
+                    // TODO(patrik): Replace with a proper error
                     Debug.Assert(false);
                 }
                 else
@@ -273,11 +281,24 @@ class Lexer
             ptr++;
         }
 
-        string str = text.Substring(CurrentTokenStart, ptr - CurrentTokenStart);
+        bool isFloat = false;
+
+        int end = ptr;
+        if (ptr < text.Length && (text[ptr] == 'f' || text[ptr] == 'F'))
+        {
+            isFloat = true;
+            ptr++;
+        }
+
+        string str = text.Substring(CurrentTokenStart, end - CurrentTokenStart);
         double val = double.Parse(str, CultureInfo.InvariantCulture);
 
         CurrentToken = TokenType.FLOAT;
         CurrentFloat = val;
+        if (isFloat)
+        {
+            TokenMod = TokenMod.FLOAT;
+        }
     }
 
     public void NextToken()
@@ -533,5 +554,16 @@ class Lexer
         lexer.NextToken();
         Debug.Assert(lexer.CurrentToken == TokenType.FLOAT);
         Debug.Assert(lexer.CurrentFloat == 3.14);
+        Debug.Assert(lexer.TokenMod == TokenMod.FLOAT);
+        lexer.NextToken();
+        lexer.ExpectToken(TokenType.EOF);
+
+        lexer.Reset("3.14");
+        lexer.NextToken();
+        Debug.Assert(lexer.CurrentToken == TokenType.FLOAT);
+        Debug.Assert(lexer.CurrentFloat == 3.14);
+        Debug.Assert(lexer.TokenMod != TokenMod.FLOAT);
+        lexer.NextToken();
+        lexer.ExpectToken(TokenType.EOF);
     }
 }
