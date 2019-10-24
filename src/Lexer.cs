@@ -105,7 +105,7 @@ class Lexer
 
     public string CurrentIdentifier { get; private set; }
     public string CurrentString { get; private set; }
-    public ulong CurrentNumber { get; private set; }
+    public ulong CurrentInteger { get; private set; }
 
     public Lexer(string fileName, string text)
     {
@@ -125,7 +125,7 @@ class Lexer
         CurrentToken = TokenType.UNKNOWN;
         CurrentIdentifier = "";
         CurrentString = "";
-        CurrentNumber = 0;
+        CurrentInteger = 0;
     }
 
     public void Fatal(string message)
@@ -212,7 +212,7 @@ class Lexer
         CurrentToken = TokenType.UNKNOWN;
         CurrentIdentifier = "";
         CurrentString = "";
-        CurrentNumber = 0;
+        CurrentInteger = 0;
 
         CurrentTokenSpan.FromColumnNumber = CurrentTokenSpan.ToColumnNumber;
 
@@ -410,12 +410,29 @@ class Lexer
                 }
                 else if (char.IsDigit(current))
                 {
-                    CurrentNumber = (ulong)(current - '0');
+                    // TODO(patrik): Binary Notation needs only to accept 0 and 1
+                    // Format: 1: 123 2: 0x123 3: 0b101
+                    char format = text[ptr];
+                    int numBase = 10;
+                    if (format == 'x' || format == 'X')
+                    {
+                        numBase = 16;
+                        ptr++;
+                    }
+                    else if (format == 'b' || format == 'B')
+                    {
+                        numBase = 2;
+                        ptr++;
+                    }
+                    else
+                    {
+                        CurrentInteger = (ulong)(current - '0');
+                    }
 
                     while (ptr < text.Length && char.IsDigit(text[ptr]))
                     {
-                        CurrentNumber *= 10;
-                        CurrentNumber += (ulong)(text[ptr] - '0');
+                        CurrentInteger *= (ulong)numBase;
+                        CurrentInteger += (ulong)(text[ptr] - '0');
 
                         CurrentTokenSpan.ToColumnNumber++;
                         ptr++;
@@ -433,20 +450,24 @@ class Lexer
         lexer.Reset("struct Hello {}");
         lexer.NextToken();
 
-        void PrintAllTokens()
-        {
-            while (lexer.CurrentToken != TokenType.EOF)
-            {
-                if (lexer.CurrentToken == TokenType.UNKNOWN)
-                    Debug.Assert(false);
-                lexer.Warning(string.Format("{0}", lexer.CurrentToken.ToString()), lexer.CurrentTokenSpan);
+        lexer.ExpectToken(TokenType.KEYWORD_STRUCT);
+        lexer.ExpectToken(TokenType.IDENTIFIER);
+        lexer.ExpectToken(TokenType.OPEN_BRACE);
+        lexer.ExpectToken(TokenType.CLOSE_BRACE);
 
-                lexer.NextToken();
-            }
+        lexer.Reset("123");
+        lexer.NextToken();
+        Debug.Assert(lexer.CurrentToken == TokenType.INTEGER);
+        Debug.Assert(lexer.CurrentInteger == 123);
 
-            Console.WriteLine();
-        }
+        lexer.Reset("0x123");
+        lexer.NextToken();
+        Debug.Assert(lexer.CurrentToken == TokenType.INTEGER);
+        Debug.Assert(lexer.CurrentInteger == 0x123);
 
-        PrintAllTokens();
+        lexer.Reset("0b110011");
+        lexer.NextToken();
+        Debug.Assert(lexer.CurrentToken == TokenType.INTEGER);
+        Debug.Assert(lexer.CurrentInteger == 0b110011);
     }
 }

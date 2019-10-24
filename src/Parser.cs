@@ -241,7 +241,7 @@ class Parser
         {
             case TokenType.INTEGER:
             {
-                NumberAST result = new NumberAST(lexer.CurrentNumber)
+                NumberAST result = new NumberAST(lexer.CurrentInteger)
                 {
                     Span = lexer.CurrentTokenSpan.Clone()
                 };
