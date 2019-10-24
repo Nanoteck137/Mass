@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -100,6 +100,7 @@ class Lexer
 
     private StringBuilder builder;
 
+    public int CurrentTokenStart { get; private set; }
     public TokenType CurrentToken { get; private set; }
     public SourceSpan CurrentTokenSpan { get; private set; }
 
@@ -331,36 +332,36 @@ class Lexer
                 break;
 
             case '"':
-            {
-                while (text[ptr] != '"')
                 {
-                    builder.Append(text[ptr]);
+                    while (text[ptr] != '"')
+                    {
+                        builder.Append(text[ptr]);
+
+                        CurrentTokenSpan.ToColumnNumber++;
+                        ptr++;
+
+                        if (ptr >= text.Length)
+                        {
+                            Error("String never ends", new SourceSpan(CurrentTokenSpan.FromLineNumber,
+                                                                      CurrentTokenSpan.FromLineNumber,
+                                                                      CurrentTokenSpan.FromLineNumber,
+                                                                      CurrentTokenSpan.FromLineNumber + 1));
+                            //TODO: Add a fatal method to terminate the lexer
+                            Debug.Assert(false);
+                        }
+                    }
 
                     CurrentTokenSpan.ToColumnNumber++;
                     ptr++;
 
-                    if (ptr >= text.Length)
-                    {
-                        Error("String never ends", new SourceSpan(CurrentTokenSpan.FromLineNumber,
-                                                                  CurrentTokenSpan.FromLineNumber,
-                                                                  CurrentTokenSpan.FromLineNumber,
-                                                                  CurrentTokenSpan.FromLineNumber + 1));
-                        //TODO: Add a fatal method to terminate the lexer
-                        Debug.Assert(false);
-                    }
+                    CurrentString = builder.ToString();
+                    CurrentString = Regex.Unescape(CurrentString);
+                    CurrentToken = TokenType.STRING;
+
+                    builder.Clear();
+
+                    break;
                 }
-
-                CurrentTokenSpan.ToColumnNumber++;
-                ptr++;
-
-                CurrentString = builder.ToString();
-                CurrentString = Regex.Unescape(CurrentString);
-                CurrentToken = TokenType.STRING;
-
-                builder.Clear();
-
-                break;
-            }
 
             default:
                 if (char.IsLetter(current) || current == '_')
