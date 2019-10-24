@@ -532,8 +532,10 @@ class Parser
         DeclAST decl = ParseDecl();
         if (decl != null)
         {
-            DeclStmtAST result = new DeclStmtAST(decl);
-            result.Span = decl.Span.Clone();
+            DeclStmtAST result = new DeclStmtAST(decl)
+            {
+                Span = decl.Span.Clone()
+            };
 
             return result;
         }

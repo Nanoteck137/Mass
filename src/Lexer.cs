@@ -18,6 +18,7 @@ enum TokenType
     KEYWORD_FUNC,
     KEYWORD_EXTERNAL,
     KEYWORD_RET,
+    KEYWORD_STRUCT,
 
     IDENTIFIER,
     STRING,
@@ -110,11 +111,21 @@ class Lexer
     {
         this.FileName = fileName;
 
-        this.text = text.Replace("\r\n", "\n").Replace("\r", "");
-        this.ptr = 0;
         this.builder = new StringBuilder();
 
+        Reset(text);
+    }
+
+    public void Reset(string text)
+    {
+        this.text = text.Replace("\r\n", "\n").Replace("\r", "");
+        this.ptr = 0;
         this.CurrentTokenSpan = new SourceSpan(1, 1, 1, 1);
+
+        CurrentToken = TokenType.UNKNOWN;
+        CurrentIdentifier = "";
+        CurrentString = "";
+        CurrentNumber = 0;
     }
 
     public void Fatal(string message)
@@ -365,6 +376,7 @@ class Lexer
                     }
 
                     CurrentIdentifier = builder.ToString();
+
                     if (CurrentIdentifier.Equals("var", StringComparison.Ordinal))
                     {
                         CurrentToken = TokenType.KEYWORD_VAR;
@@ -384,6 +396,10 @@ class Lexer
                     else if (CurrentIdentifier.Equals("ret", StringComparison.Ordinal))
                     {
                         CurrentToken = TokenType.KEYWORD_RET;
+                    }
+                    else if (CurrentIdentifier.Equals("struct", StringComparison.Ordinal))
+                    {
+                        CurrentToken = TokenType.KEYWORD_STRUCT;
                     }
                     else
                     {
@@ -409,5 +425,28 @@ class Lexer
                 }
                 break;
         }
+    }
+
+    public static void Test()
+    {
+        Lexer lexer = new Lexer("test", "");
+        lexer.Reset("struct Hello {}");
+        lexer.NextToken();
+
+        void PrintAllTokens()
+        {
+            while (lexer.CurrentToken != TokenType.EOF)
+            {
+                if (lexer.CurrentToken == TokenType.UNKNOWN)
+                    Debug.Assert(false);
+                lexer.Warning(string.Format("{0}", lexer.CurrentToken.ToString()), lexer.CurrentTokenSpan);
+
+                lexer.NextToken();
+            }
+
+            Console.WriteLine();
+        }
+
+        PrintAllTokens();
     }
 }
