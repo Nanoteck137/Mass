@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -23,6 +24,7 @@ enum TokenType
     IDENTIFIER,
     STRING,
     INTEGER,
+    FLOAT,
 
     PLUS,
     MINUS,
@@ -208,6 +210,47 @@ class Lexer
         }
     }
 
+    private void ScanInt()
+    {
+        // TODO(patrik): Binary Notation needs only to accept 0 and 1
+        // Format: 1: 123 2: 0x123 3: 0b101
+        int numBase = 10;
+
+        char format = text[ptr + 1];
+
+
+        if (format == 'x' || format == 'X')
+        {
+            numBase = 16;
+            ptr += 2;
+        }
+        else if (format == 'b' || format == 'B')
+        {
+            numBase = 2;
+            ptr += 2;
+        }
+
+        while (ptr < text.Length && char.IsDigit(text[ptr]))
+        {
+            CurrentInteger *= (ulong)numBase;
+            CurrentInteger += (ulong)(text[ptr] - '0');
+
+            CurrentTokenSpan.ToColumnNumber++;
+            ptr++;
+        }
+
+        CurrentToken = TokenType.INTEGER;
+    }
+
+    private void ScanFloat()
+    {
+        string test = "3.14f";
+        double t = 3.14;
+        double val = double.Parse(test, CultureInfo.InvariantCulture);
+
+        throw new NotImplementedException();
+    }
+
     public void NextToken()
     {
         CurrentToken = TokenType.UNKNOWN;
@@ -236,6 +279,7 @@ class Lexer
         CurrentTokenSpan.ToColumnNumber = CurrentTokenSpan.FromColumnNumber + 1;
         CurrentTokenSpan.ToLineNumber = CurrentTokenSpan.FromLineNumber;
 
+        CurrentTokenStart = ptr;
         char current = text[ptr++];
 
         switch (current)
@@ -332,36 +376,36 @@ class Lexer
                 break;
 
             case '"':
+            {
+                while (text[ptr] != '"')
                 {
-                    while (text[ptr] != '"')
-                    {
-                        builder.Append(text[ptr]);
-
-                        CurrentTokenSpan.ToColumnNumber++;
-                        ptr++;
-
-                        if (ptr >= text.Length)
-                        {
-                            Error("String never ends", new SourceSpan(CurrentTokenSpan.FromLineNumber,
-                                                                      CurrentTokenSpan.FromLineNumber,
-                                                                      CurrentTokenSpan.FromLineNumber,
-                                                                      CurrentTokenSpan.FromLineNumber + 1));
-                            //TODO: Add a fatal method to terminate the lexer
-                            Debug.Assert(false);
-                        }
-                    }
+                    builder.Append(text[ptr]);
 
                     CurrentTokenSpan.ToColumnNumber++;
                     ptr++;
 
-                    CurrentString = builder.ToString();
-                    CurrentString = Regex.Unescape(CurrentString);
-                    CurrentToken = TokenType.STRING;
-
-                    builder.Clear();
-
-                    break;
+                    if (ptr >= text.Length)
+                    {
+                        Error("String never ends", new SourceSpan(CurrentTokenSpan.FromLineNumber,
+                                                                  CurrentTokenSpan.FromLineNumber,
+                                                                  CurrentTokenSpan.FromLineNumber,
+                                                                  CurrentTokenSpan.FromLineNumber + 1));
+                        //TODO: Add a fatal method to terminate the lexer
+                        Debug.Assert(false);
+                    }
                 }
+
+                CurrentTokenSpan.ToColumnNumber++;
+                ptr++;
+
+                CurrentString = builder.ToString();
+                CurrentString = Regex.Unescape(CurrentString);
+                CurrentToken = TokenType.STRING;
+
+                builder.Clear();
+
+                break;
+            }
 
             default:
                 if (char.IsLetter(current) || current == '_')
@@ -411,35 +455,23 @@ class Lexer
                 }
                 else if (char.IsDigit(current))
                 {
-                    // TODO(patrik): Binary Notation needs only to accept 0 and 1
-                    // Format: 1: 123 2: 0x123 3: 0b101
-                    char format = text[ptr];
-                    int numBase = 10;
-                    if (format == 'x' || format == 'X')
+                    while (ptr < text.Length && char.IsDigit(text[ptr]))
                     {
-                        numBase = 16;
                         ptr++;
                     }
-                    else if (format == 'b' || format == 'B')
+
+                    char c = ptr < text.Length ? text[ptr] : '0';
+                    CurrentTokenSpan.ToColumnNumber--;
+                    ptr = CurrentTokenStart;
+
+                    if (c == '.')
                     {
-                        numBase = 2;
-                        ptr++;
+                        ScanFloat();
                     }
                     else
                     {
-                        CurrentInteger = (ulong)(current - '0');
+                        ScanInt();
                     }
-
-                    while (ptr < text.Length && char.IsDigit(text[ptr]))
-                    {
-                        CurrentInteger *= (ulong)numBase;
-                        CurrentInteger += (ulong)(text[ptr] - '0');
-
-                        CurrentTokenSpan.ToColumnNumber++;
-                        ptr++;
-                    }
-
-                    CurrentToken = TokenType.INTEGER;
                 }
                 break;
         }
@@ -469,6 +501,11 @@ class Lexer
         lexer.Reset("0b110011");
         lexer.NextToken();
         Debug.Assert(lexer.CurrentToken == TokenType.INTEGER);
+        Debug.Assert(lexer.CurrentInteger == 0b110011);
+
+        lexer.Reset("3.14f");
+        lexer.NextToken();
+        Debug.Assert(lexer.CurrentToken == TokenType.FLOAT);
         Debug.Assert(lexer.CurrentInteger == 0b110011);
     }
 }
