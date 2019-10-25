@@ -358,7 +358,7 @@ class Resolver
         return new ResolvedExpr(type, val, isConst);
     }
 
-    public ResolvedExpr ResolveExprIdentifer(IdentifierAST ident)
+    public ResolvedExpr ResolveExprIdentifer(IdentifierExprAST ident)
     {
         Debug.Assert(ident != null);
 
@@ -405,15 +405,15 @@ class Resolver
     {
         Debug.Assert(expr != null);
 
-        if (expr is NumberAST number)
+        if (expr is IntegerExprAST number)
         {
-            return new ResolvedExpr(Type.U32Type, number.Number, true);
+            return new ResolvedExpr(Type.U32Type, number.Integer, true);
         }
         else if (expr is BinaryOpExprAST binary)
         {
             return ResolveExprBinary(binary);
         }
-        else if (expr is IdentifierAST ident)
+        else if (expr is IdentifierExprAST ident)
         {
             return ResolveExprIdentifer(ident);
         }
@@ -658,39 +658,39 @@ class Resolver
         DeclAST[] decls = new DeclAST[]
         {
             new ConstDeclAST(
-                new IdentifierAST("A"),
+                new IdentifierExprAST("A"),
                 new IdentifierTypespec(
-                    new IdentifierAST("s32")),
-                new NumberAST(123)),
+                    new IdentifierExprAST("s32")),
+                new IntegerExprAST(123)),
 
             new VarDeclAST(
-                new IdentifierAST("b"),
+                new IdentifierExprAST("b"),
                 new IdentifierTypespec(
-                    new IdentifierAST("s32")),
+                    new IdentifierExprAST("s32")),
                 new BinaryOpExprAST(
-                    new IdentifierAST("A"),
-                    new NumberAST(321),
+                    new IdentifierExprAST("A"),
+                    new IntegerExprAST(321),
                     Operation.ADD)),
 
             new FunctionDeclAST(
                 new FunctionPrototypeAST(
-                    new IdentifierAST("add"),
+                    new IdentifierExprAST("add"),
                     new List<FunctionParameter>() {
                         new FunctionParameter(
-                            new IdentifierAST("a"),
-                            new IdentifierTypespec(new IdentifierAST("s32"))),
+                            new IdentifierExprAST("a"),
+                            new IdentifierTypespec(new IdentifierExprAST("s32"))),
                         new FunctionParameter(
-                            new IdentifierAST("b"),
-                            new IdentifierTypespec(new IdentifierAST("s32")))
+                            new IdentifierExprAST("b"),
+                            new IdentifierTypespec(new IdentifierExprAST("s32")))
                     },
                     new IdentifierTypespec(
-                        new IdentifierAST("s32")),
+                        new IdentifierExprAST("s32")),
                     true),
                 new StmtBlock(new List<StmtAST>() {
                     new ReturnStmtAST(
                         new BinaryOpExprAST(
-                            new IdentifierAST("a"),
-                            new IdentifierAST("b"),
+                            new IdentifierExprAST("a"),
+                            new IdentifierExprAST("b"),
                             Operation.ADD))
             }))
         };

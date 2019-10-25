@@ -298,7 +298,9 @@ class Lexer
     {
         // TODO(patrik): Binary Notation needs only to accept 0 and 1 and hex needs to have ABCDEF as "numbers"
         // Format: 1: 123 2: 0x123 3: 0b101
-        char format = text[ptr + 1];
+        char format = ' ';
+        if (ptr + 1 < text.Length)
+            format = text[ptr + 1];
 
         if (format == 'x' || format == 'X')
         {

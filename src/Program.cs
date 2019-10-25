@@ -13,11 +13,13 @@ namespace Mass
         {
             string fileContent = File.ReadAllText("test.ma");
 
-            Lexer lexer = new Lexer("test.ma", fileContent);
-            lexer.NextToken();
+            //Lexer lexer = new Lexer("test.ma", fileContent);
+            //lexer.NextToken();
+
+            Parser.Test();
 
             return;
-            Parser parser = new Parser(lexer);
+            /*Parser parser = new Parser(lexer);
 
             List<DeclAST> root = parser.Parse();
 
@@ -31,9 +33,6 @@ namespace Mass
 
             Resolver resolver = new Resolver(lexer);
             //resolver.Test();
-            /*resolver.AddSymbol(root[0]);
-            resolver.AddSymbol(root[1]);
-            //resolver.AddSymbol(root[2]);*/
 
             foreach (DeclAST decl in root)
             {
@@ -44,7 +43,7 @@ namespace Mass
 
             CodeGenerator codeGenerator = new CodeGenerator(lexer, resolver, lexer.FileName);
             codeGenerator.Generate();
-            codeGenerator.Test();
+            codeGenerator.Test();*/
 
 
             /*
@@ -72,7 +71,7 @@ namespace Mass
             Console.WriteLine("Old Module");
             Console.WriteLine(str);*/
 
-            LLVMModuleRef module = codeGenerator.Module;
+            /*LLVMModuleRef module = codeGenerator.Module;
 
             LLVMValueRef func = codeGenerator.GetValueFromName("main");
             //LLVMValueRef sumFunc = module.GetNamedFunction("add");
@@ -82,7 +81,7 @@ namespace Mass
             passManager.AddReassociatePass();
             passManager.AddGVNPass();
             passManager.AddCFGSimplificationPass();
-            passManager.InitializeFunctionPassManager();
+            passManager.InitializeFunctionPassManager();*/
 
             //passManager.RunFunctionPassManager(sumFunc);
 
@@ -90,7 +89,7 @@ namespace Mass
             Console.WriteLine("New Module");
             Console.WriteLine(str);*/
 
-            codeGenerator.Test();
+            /*codeGenerator.Test();
 
             LLVM.LinkInMCJIT();
             LLVM.InitializeX86TargetMC();
@@ -108,14 +107,14 @@ namespace Mass
             LLVMValueRef t = engine.FindFunction("test");
             LLVMGenericValueRef val = new LLVMGenericValueRef();
             LLVMGenericValueRef one = val.CreateInt(LLVMTypeRef.Int32, 123, false);
-            LLVMGenericValueRef two = val.CreateInt(LLVMTypeRef.Int32, 321, false);
+            LLVMGenericValueRef two = val.CreateInt(LLVMTypeRef.Int32, 321, false);*/
 
             /*LLVMGenericValueRef[] funcArgs = new LLVMGenericValueRef[]
             {
                 one, two
             };*/
 
-            int res = engine.RunFunctionAsMain(func, 0, null, null);
+            //int res = engine.RunFunctionAsMain(func, 0, null, null);
 
             /*unsafe
             {
@@ -123,7 +122,7 @@ namespace Mass
                 Console.WriteLine("Result: {0}", wooh);
             }*/
 
-            codeGenerator.Dispose();
+            //codeGenerator.Dispose();
         }
     }
 }

@@ -20,15 +20,15 @@ class Printer
 
     public void PrintExpr(ExprAST expr)
     {
-        if (expr is IdentifierAST ident)
+        if (expr is IdentifierExprAST ident)
         {
             Console.Write("{0}", ident.Value);
         }
-        else if (expr is NumberAST number)
+        else if (expr is IntegerExprAST number)
         {
-            Console.Write("{0}", number.Number);
+            Console.Write("{0}", number.Integer);
         }
-        else if (expr is StringAST str)
+        else if (expr is StringExprAST str)
         {
             Console.Write("\"{0}\"", str.Value);
         }
@@ -206,8 +206,8 @@ class Printer
     {
         ExprAST[] exprs = new ExprAST[]
         {
-            new BinaryOpExprAST(new NumberAST(123), new NumberAST(321), Operation.ADD),
-            new CallExprAST(new IdentifierAST("fact"), new List<ExprAST>() { new NumberAST(42) }),
+            new BinaryOpExprAST(new IntegerExprAST(123), new IntegerExprAST(321), Operation.ADD),
+            new CallExprAST(new IdentifierExprAST("fact"), new List<ExprAST>() { new IntegerExprAST(42) }),
         };
 
         foreach (ExprAST expr in exprs)
@@ -220,8 +220,8 @@ class Printer
 
         StmtAST[] stmts = new StmtAST[]
         {
-            new ReturnStmtAST(new NumberAST(32)),
-            new ExprStmtAST(new CallExprAST(new IdentifierAST("printf"), new List<ExprAST>() { new NumberAST(123), new NumberAST(321) }))
+            new ReturnStmtAST(new IntegerExprAST(32)),
+            new ExprStmtAST(new CallExprAST(new IdentifierExprAST("printf"), new List<ExprAST>() { new IntegerExprAST(123), new IntegerExprAST(321) }))
         };
 
         Console.WriteLine();
@@ -235,26 +235,26 @@ class Printer
         Console.WriteLine();
 
         DeclAST[] decls = new DeclAST[] {
-            new ConstDeclAST(new IdentifierAST("A"), new IdentifierTypespec(new IdentifierAST("i32")), new NumberAST(123)),
-            new VarDeclAST(new IdentifierAST("test"), new IdentifierTypespec(new IdentifierAST("i32")), new NumberAST(4)),
+            new ConstDeclAST(new IdentifierExprAST("A"), new IdentifierTypespec(new IdentifierExprAST("i32")), new IntegerExprAST(123)),
+            new VarDeclAST(new IdentifierExprAST("test"), new IdentifierTypespec(new IdentifierExprAST("i32")), new IntegerExprAST(4)),
         new FunctionDeclAST(
             new FunctionPrototypeAST(
-                new IdentifierAST("add"),
+                new IdentifierExprAST("add"),
                 new List<FunctionParameter>() {
                         new FunctionParameter(
-                            new IdentifierAST("a"),
-                            new IdentifierTypespec(new IdentifierAST("i32"))),
+                            new IdentifierExprAST("a"),
+                            new IdentifierTypespec(new IdentifierExprAST("i32"))),
                         new FunctionParameter(
-                            new IdentifierAST("b"),
-                            new IdentifierTypespec(new IdentifierAST("i32")))
+                            new IdentifierExprAST("b"),
+                            new IdentifierTypespec(new IdentifierExprAST("i32")))
                 },
-                new IdentifierTypespec(new IdentifierAST("i32")),
+                new IdentifierTypespec(new IdentifierExprAST("i32")),
                 true),
             new StmtBlock(new List<StmtAST>() {
                     new ReturnStmtAST(
                         new BinaryOpExprAST(
-                            new IdentifierAST("a"),
-                            new IdentifierAST("b"),
+                            new IdentifierExprAST("a"),
+                            new IdentifierExprAST("b"),
                             Operation.ADD))
             }))
         };

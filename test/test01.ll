@@ -18,10 +18,17 @@ define i32 @main(i32, i8**) #0 {
   %3 = alloca i32, align 4
   %4 = alloca i32, align 4
   %5 = alloca i8**, align 8
+  %6 = alloca i32, align 4
+  %7 = alloca i32, align 4
   store i32 0, i32* %3, align 4
   store i32 %0, i32* %4, align 4
   store i8** %1, i8*** %5, align 8
-  call void @Test()
+  store i32 16, i32* %6, align 4
+  %8 = load i32, i32* %6, align 4
+  %9 = urem i32 %8, 3
+  %10 = mul i32 %9, 2
+  %11 = add i32 %10, 1
+  store i32 %11, i32* %7, align 4
   ret i32 0
 }
 

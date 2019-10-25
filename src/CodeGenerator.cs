@@ -148,9 +148,9 @@ class CodeGenerator : IDisposable
 
     private LLVMValueRef CreateConstantExprFold(ExprAST expr)
     {
-        if (expr is NumberAST numberExpr)
+        if (expr is IntegerExprAST numberExpr)
         {
-            return LLVMValueRef.CreateConstInt(LLVMTypeRef.Int32, numberExpr.Number);
+            return LLVMValueRef.CreateConstInt(LLVMTypeRef.Int32, numberExpr.Integer);
         }
         else if (expr is BinaryOpExprAST binaryExpr)
         {
@@ -191,11 +191,11 @@ class CodeGenerator : IDisposable
 
     private LLVMValueRef GenerateExpr(LLVMBuilderRef builder, ExprAST expr)
     {
-        if (expr is NumberAST numberExpr)
+        if (expr is IntegerExprAST numberExpr)
         {
-            return LLVMValueRef.CreateConstInt(LLVMTypeRef.Int32, numberExpr.Number);
+            return LLVMValueRef.CreateConstInt(LLVMTypeRef.Int32, numberExpr.Integer);
         }
-        else if (expr is IdentifierAST identExpr)
+        else if (expr is IdentifierExprAST identExpr)
         {
             //if (identExpr.)
             //ResolvedExpr result = resolver.ResolveExpr(expr);
@@ -231,7 +231,7 @@ class CodeGenerator : IDisposable
             }
             return builder.BuildCall(function, arguments);
         }
-        else if (expr is StringAST str)
+        else if (expr is StringExprAST str)
         {
             return GetStringValue(builder, str.Value);
         }

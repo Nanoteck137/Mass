@@ -3,229 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-abstract class NodeAST
-{
-    public SourceSpan Span { get; set; }
-}
-abstract class ExprAST : NodeAST
-{
-}
-
-class NumberAST : ExprAST
-{
-    public ulong Number { get; private set; }
-
-    public NumberAST(ulong number)
-    {
-        this.Number = number;
-    }
-}
-
-class IdentifierAST : ExprAST
-{
-    public string Value { get; private set; }
-
-    public IdentifierAST(string value)
-    {
-        this.Value = value;
-    }
-}
-
-class StringAST : ExprAST
-{
-    public string Value { get; private set; }
-
-    public StringAST(string value)
-    {
-        this.Value = value;
-    }
-}
-
-enum Operation
-{
-    ADD,
-    SUB,
-    MUL,
-    DIV
-}
-
-class BinaryOpExprAST : ExprAST
-{
-    public ExprAST Left { get; private set; }
-    public ExprAST Right { get; private set; }
-    public Operation Op { get; private set; }
-
-    public BinaryOpExprAST(ExprAST left, ExprAST right, Operation op)
-    {
-        this.Left = left;
-        this.Right = right;
-        this.Op = op;
-    }
-}
-
-class CallExprAST : ExprAST
-{
-    public ExprAST Expr { get; private set; }
-    public List<ExprAST> Arguments { get; private set; }
-
-    public CallExprAST(ExprAST expr, List<ExprAST> arguments)
-    {
-        this.Expr = expr;
-        this.Arguments = arguments;
-    }
-}
-
-abstract class DeclAST : NodeAST
-{
-    public IdentifierAST Name { get; protected set; }
-}
-
-abstract class Typespec : NodeAST
-{
-}
-
-class PtrTypespec : Typespec
-{
-    public Typespec Type { get; private set; }
-
-    public PtrTypespec(Typespec type)
-    {
-        this.Type = type;
-    }
-}
-
-class IdentifierTypespec : Typespec
-{
-    public IdentifierAST Value { get; private set; }
-
-    public IdentifierTypespec(IdentifierAST value)
-    {
-        this.Value = value;
-    }
-}
-
-class VarDeclAST : DeclAST
-{
-    public Typespec Type { get; private set; }
-    public ExprAST Value { get; private set; }
-
-    public VarDeclAST(IdentifierAST name, Typespec type, ExprAST value)
-    {
-        this.Name = name;
-        this.Type = type;
-        this.Value = value;
-    }
-}
-
-class FunctionParameter
-{
-    public IdentifierAST Name { get; private set; }
-    public Typespec Type { get; private set; }
-
-    public FunctionParameter(IdentifierAST name, Typespec type)
-    {
-        this.Name = name;
-        this.Type = type;
-    }
-}
-
-class FunctionPrototypeAST : NodeAST
-{
-    public IdentifierAST Name { get; private set; }
-    public List<FunctionParameter> Parameters { get; private set; }
-    public Typespec ReturnType { get; private set; }
-    public bool VarArgs { get; private set; }
-
-    public FunctionPrototypeAST(IdentifierAST name, List<FunctionParameter> parameters, Typespec returnType, bool varArgs)
-    {
-        this.Name = name;
-        this.Parameters = parameters;
-        this.ReturnType = returnType;
-        this.VarArgs = varArgs;
-    }
-}
-
-class FunctionDeclAST : DeclAST
-{
-    public FunctionPrototypeAST Prototype { get; private set; }
-    public StmtBlock Body { get; private set; }
-
-    public FunctionDeclAST(FunctionPrototypeAST prototype, StmtBlock body)
-    {
-        this.Prototype = prototype;
-        this.Name = prototype.Name;
-        this.Body = body;
-    }
-}
-
-class ExternalDeclAST : DeclAST
-{
-    public FunctionPrototypeAST Prototype { get; private set; }
-
-    public ExternalDeclAST(FunctionPrototypeAST prototype)
-    {
-        this.Prototype = prototype;
-        this.Name = prototype.Name;
-    }
-}
-
-class ConstDeclAST : DeclAST
-{
-    public Typespec Type { get; private set; }
-    public ExprAST Value { get; private set; }
-
-    public ConstDeclAST(IdentifierAST name, Typespec type, ExprAST value)
-    {
-        this.Name = name;
-        this.Type = type;
-        this.Value = value;
-    }
-}
-
-abstract class StmtAST : NodeAST
-{
-}
-
-class StmtBlock : StmtAST
-{
-    public List<StmtAST> Stmts { get; private set; }
-
-    public StmtBlock(List<StmtAST> stmts)
-    {
-        this.Stmts = stmts;
-    }
-}
-
-class ReturnStmtAST : StmtAST
-{
-    public ExprAST Value { get; private set; }
-
-    public ReturnStmtAST(ExprAST value)
-    {
-        this.Value = value;
-    }
-}
-
-class ExprStmtAST : StmtAST
-{
-    public ExprAST Expr { get; private set; }
-
-    public ExprStmtAST(ExprAST expr)
-    {
-        this.Expr = expr;
-    }
-}
-
-class DeclStmtAST : StmtAST
-{
-    public DeclAST Decl { get; private set; }
-
-    public DeclStmtAST(DeclAST decl)
-    {
-        this.Decl = decl;
-    }
-}
-
 class Parser
 {
     private Lexer lexer;
@@ -235,16 +12,16 @@ class Parser
         this.lexer = lexer;
     }
 
-    private ExprAST ParseOperand()
+    private Expr ParseOperand()
     {
         switch (lexer.CurrentToken)
         {
             case TokenType.INTEGER:
             {
-                NumberAST result = new NumberAST(lexer.CurrentInteger)
-                {
+                IntegerExpr result = new IntegerExpr(lexer.CurrentInteger);
+                /*{
                     Span = lexer.CurrentTokenSpan.Clone()
-                };
+                };*/
                 lexer.NextToken();
 
                 return result;
@@ -252,10 +29,10 @@ class Parser
 
             case TokenType.IDENTIFIER:
             {
-                IdentifierAST result = new IdentifierAST(lexer.CurrentIdentifier)
-                {
+                IdentifierExpr result = new IdentifierExpr(lexer.CurrentIdentifier);
+                /*{
                     Span = lexer.CurrentTokenSpan.Clone()
-                };
+                };*/
                 lexer.NextToken();
 
                 return result;
@@ -263,10 +40,10 @@ class Parser
 
             case TokenType.STRING:
             {
-                StringAST result = new StringAST(lexer.CurrentString)
-                {
+                StringExpr result = new StringExpr(lexer.CurrentString);
+                /*{
                     Span = lexer.CurrentTokenSpan.Clone()
-                };
+                };*/
                 lexer.NextToken();
 
                 return result;
@@ -277,12 +54,12 @@ class Parser
                 SourceSpan firstSpan = lexer.CurrentTokenSpan.Clone();
                 lexer.NextToken();
 
-                ExprAST result = ParseExpr();
+                Expr result = ParseExpr();
 
                 SourceSpan lastSpan = lexer.CurrentTokenSpan.Clone();
                 lexer.ExpectToken(TokenType.CLOSE_PAREN);
 
-                result.Span = FirstLastSpan(firstSpan, lastSpan);
+                //result.Span = FirstLastSpan(firstSpan, lastSpan);
 
                 return result;
             }
@@ -293,19 +70,19 @@ class Parser
         }
     }
 
-    private ExprAST ParseBase()
+    private Expr ParseBase()
     {
-        ExprAST expr = ParseOperand();
+        Expr expr = ParseOperand();
 
         if (lexer.CurrentToken == TokenType.OPEN_PAREN)
         {
             lexer.NextToken();
 
-            List<ExprAST> arguments = new List<ExprAST>();
+            List<Expr> arguments = new List<Expr>();
 
             if (lexer.CurrentToken != TokenType.CLOSE_PAREN)
             {
-                ExprAST arg = ParseExpr();
+                Expr arg = ParseExpr();
                 arguments.Add(arg);
 
                 while (lexer.CurrentToken != TokenType.CLOSE_PAREN)
@@ -321,19 +98,19 @@ class Parser
             SourceSpan lastSpan = lexer.CurrentTokenSpan.Clone();
             lexer.ExpectToken(TokenType.CLOSE_PAREN);
 
-            SourceSpan firstSpan = expr.Span;
-            expr = new CallExprAST(expr, arguments)
-            {
+            //SourceSpan firstSpan = expr.Span;
+            expr = new CallExpr(expr, arguments);
+            /*{
                 Span = FirstLastSpan(firstSpan, lastSpan)
-            };
+            };*/
         }
 
         return expr;
     }
 
-    private ExprAST ParseMul()
+    private Expr ParseMul()
     {
-        ExprAST left = ParseBase();
+        Expr left = ParseBase();
 
         while (lexer.CurrentToken == TokenType.ASTERISK ||
                 lexer.CurrentToken == TokenType.FORWORD_SLASH)
@@ -351,21 +128,21 @@ class Parser
 
             lexer.NextToken();
 
-            ExprAST right = ParseBase();
+            Expr right = ParseBase();
 
-            SourceSpan leftSpan = left.Span;
-            left = new BinaryOpExprAST(left, right, op)
-            {
+            //SourceSpan leftSpan = left.Span;
+            left = new BinaryOpExpr(left, right, op);
+            /*{
                 Span = FirstLastSpan(leftSpan, right.Span)
-            };
+            };*/
         }
 
         return left;
     }
 
-    private ExprAST ParseAdd()
+    private Expr ParseAdd()
     {
-        ExprAST left = ParseMul();
+        Expr left = ParseMul();
 
         while (lexer.CurrentToken == TokenType.PLUS ||
                 lexer.CurrentToken == TokenType.MINUS)
@@ -383,19 +160,19 @@ class Parser
 
             lexer.NextToken();
 
-            ExprAST right = ParseMul();
+            Expr right = ParseMul();
 
-            SourceSpan leftSpan = left.Span;
-            left = new BinaryOpExprAST(left, right, op)
-            {
+            //SourceSpan leftSpan = left.Span;
+            left = new BinaryOpExpr(left, right, op);
+            /*{
                 Span = FirstLastSpan(leftSpan, right.Span)
-            };
+            };*/
         }
 
         return left;
     }
 
-    private ExprAST ParseExpr()
+    private Expr ParseExpr()
     {
         return ParseAdd();
     }
@@ -408,21 +185,25 @@ class Parser
     private Typespec ParseType()
     {
         lexer.ExpectToken(TokenType.IDENTIFIER, false);
-        IdentifierAST identifier = new IdentifierAST(lexer.CurrentIdentifier);
-        identifier.Span = lexer.CurrentTokenSpan.Clone();
+        IdentifierExpr identifier = new IdentifierExpr(lexer.CurrentIdentifier);
+        /*{
+            Span = lexer.CurrentTokenSpan.Clone()
+        };*/
         lexer.NextToken();
 
         Typespec result = new IdentifierTypespec(identifier);
-        result.Span = identifier.Span.Clone();
+        /*{
+            Span = identifier.Span.Clone()
+        };*/
 
         if (lexer.CurrentToken == TokenType.ASTERISK)
         {
             while (lexer.CurrentToken == TokenType.ASTERISK)
             {
-                result = new PtrTypespec(result)
-                {
+                result = new PtrTypespec(result);
+                /*{
                     Span = lexer.CurrentTokenSpan.Clone()
-                };
+                };*/
                 lexer.NextToken();
             }
         }
@@ -430,14 +211,14 @@ class Parser
         return result;
     }
 
-    private VarDeclAST ParseVarDecl()
+    /*private VarDeclAST ParseVarDecl()
     {
         SourceSpan firstSpan = lexer.CurrentTokenSpan.Clone();
 
         lexer.ExpectToken(TokenType.KEYWORD_VAR);
         lexer.ExpectToken(TokenType.IDENTIFIER, false);
 
-        IdentifierAST name = new IdentifierAST(lexer.CurrentIdentifier)
+        IdentifierExpr name = new IdentifierExpr(lexer.CurrentIdentifier)
         {
             Span = lexer.CurrentTokenSpan.Clone()
         };
@@ -449,7 +230,7 @@ class Parser
 
         lexer.ExpectToken(TokenType.EQUAL);
 
-        ExprAST value = ParseExpr();
+        Expr value = ParseExpr();
 
         SourceSpan lastSpan = lexer.CurrentTokenSpan.Clone();
         lexer.ExpectToken(TokenType.SEMICOLON);
@@ -469,7 +250,7 @@ class Parser
         lexer.ExpectToken(TokenType.KEYWORD_CONST);
         lexer.ExpectToken(TokenType.IDENTIFIER, false);
 
-        IdentifierAST name = new IdentifierAST(lexer.CurrentIdentifier)
+        IdentifierExpr name = new IdentifierExpr(lexer.CurrentIdentifier)
         {
             Span = lexer.CurrentTokenSpan.Clone()
         };
@@ -481,7 +262,7 @@ class Parser
 
         lexer.ExpectToken(TokenType.EQUAL);
 
-        ExprAST value = ParseExpr();
+        Expr value = ParseExpr();
 
         SourceSpan lastSpan = lexer.CurrentTokenSpan.Clone();
         lexer.ExpectToken(TokenType.SEMICOLON);
@@ -499,7 +280,7 @@ class Parser
         SourceSpan firstSpan = lexer.CurrentTokenSpan.Clone();
         lexer.ExpectToken(TokenType.KEYWORD_RET);
 
-        ExprAST expr = ParseExpr();
+        Expr expr = ParseExpr();
 
         SourceSpan lastSpan = lexer.CurrentTokenSpan.Clone();
         lexer.ExpectToken(TokenType.SEMICOLON);
@@ -514,7 +295,7 @@ class Parser
 
     private ExprStmtAST ParseExprStmt()
     {
-        ExprAST expr = ParseExpr();
+        Expr expr = ParseExpr();
 
         SourceSpan lastSpan = lexer.CurrentTokenSpan.Clone();
         lexer.ExpectToken(TokenType.SEMICOLON);
@@ -560,16 +341,6 @@ class Parser
             else
             {
                 // TODO(patrik): Maybe support decl parsing inside a decl
-                /*DeclStmtAST declStmt = ParseDeclStmt();
-                if (declStmt != null)
-                {
-                    stmts.Add(declStmt);
-                }
-                else
-                {
-                    stmts.Add(ParseExprStmt());
-                }*/
-
                 if (lexer.CurrentToken == TokenType.KEYWORD_VAR)
                 {
                     VarDeclAST decl = ParseVarDecl();
@@ -599,7 +370,7 @@ class Parser
     private void ParseFunctionParameter(List<FunctionParameter> parameters)
     {
         SourceSpan paramStart = lexer.CurrentTokenSpan.Clone();
-        IdentifierAST paramName = new IdentifierAST(lexer.CurrentIdentifier)
+        IdentifierExpr paramName = new IdentifierExpr(lexer.CurrentIdentifier)
         {
             Span = lexer.CurrentTokenSpan.Clone()
         };
@@ -633,7 +404,7 @@ class Parser
         lexer.ExpectToken(TokenType.KEYWORD_FUNC);
 
         lexer.ExpectToken(TokenType.IDENTIFIER, false);
-        IdentifierAST name = new IdentifierAST(lexer.CurrentIdentifier)
+        IdentifierExpr name = new IdentifierExpr(lexer.CurrentIdentifier)
         {
             Span = lexer.CurrentTokenSpan.Clone()
         };
@@ -742,10 +513,6 @@ class Parser
         {
             return ParseFunctionDecl();
         }
-        /*else if (lexer.CurrentToken == TokenType.KEYWORD_EXTERNAL)
-        {
-            return ParseExternalDecl();
-        }*/
         else
         {
             return null;
@@ -766,5 +533,17 @@ class Parser
         }
 
         return result;
+    }*/
+
+    public static void Test()
+    {
+        Lexer lexer = new Lexer("Parser Test", "");
+        Parser parser = new Parser(lexer);
+
+        lexer.Reset("4 + 2 * 8");
+        lexer.NextToken();
+
+        Expr expr = parser.ParseExpr();
+        Debug.Assert(expr is BinaryOpExpr);
     }
 }
