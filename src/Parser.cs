@@ -710,7 +710,8 @@ class Parser
     private ExternalDeclAST ParseExternalDecl()
     {
         SourceSpan firstSpan = lexer.CurrentTokenSpan.Clone();
-        lexer.ExpectToken(TokenType.KEYWORD_EXTERNAL);
+        //lexer.ExpectToken(TokenType.KEYWORD_EXTERNAL);
+        Debug.Assert(false);
 
         FunctionPrototypeAST prototype = ParseFunctionPrototype();
 
@@ -727,6 +728,8 @@ class Parser
 
     private DeclAST ParseDecl()
     {
+        Debug.Assert(false);
+
         if (lexer.CurrentToken == TokenType.KEYWORD_VAR)
         {
             return ParseVarDecl();
@@ -739,10 +742,10 @@ class Parser
         {
             return ParseFunctionDecl();
         }
-        else if (lexer.CurrentToken == TokenType.KEYWORD_EXTERNAL)
+        /*else if (lexer.CurrentToken == TokenType.KEYWORD_EXTERNAL)
         {
             return ParseExternalDecl();
-        }
+        }*/
         else
         {
             return null;

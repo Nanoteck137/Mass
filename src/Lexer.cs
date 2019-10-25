@@ -18,9 +18,12 @@ enum TokenType
     KEYWORD_CONST,
     KEYWORD_FUNC,
     KEYWORD_STRUCT,
-    KEYWORD_EXTERNAL,
-    KEYWORD_RET,
+
     KEYWORD_IF,
+    KEYWORD_FOR,
+    KEYWORD_WHILE,
+    KEYWORD_DO,
+    KEYWORD_RET,
     KEYWORD_CONTINUE,
     KEYWORD_BREAK,
 
@@ -32,18 +35,16 @@ enum TokenType
     HASHTAG,
 
     PLUS,
+    PLUS_EQUAL,
+
     MINUS,
+    MINUS_EQUAL,
+
     ASTERISK,
+    MUL_EQUAL,
+
     FORWORD_SLASH,
-
-    OPEN_PAREN,
-    CLOSE_PAREN,
-
-    OPEN_BRACKET,
-    CLOSE_BRACKET,
-
-    OPEN_BRACE,
-    CLOSE_BRACE,
+    DIV_EQUAL,
 
     COLON,
     SEMICOLON,
@@ -57,6 +58,15 @@ enum TokenType
     DOT2,
     DOT3,
     SEMIDOT,
+
+    OPEN_PAREN,
+    CLOSE_PAREN,
+
+    OPEN_BRACKET,
+    CLOSE_BRACKET,
+
+    OPEN_BRACE,
+    CLOSE_BRACE,
 
     EOF,
 }
@@ -111,7 +121,9 @@ class Lexer
     private string text;
     private int ptr;
 
-    private StringBuilder builder;
+    private readonly StringBuilder builder;
+    private readonly Dictionary<string, TokenType> keywords;
+    private readonly Dictionary<char, int> hexCharMap;
 
     public int CurrentTokenStart { get; private set; }
     public TokenType CurrentToken { get; private set; }
@@ -127,6 +139,37 @@ class Lexer
     {
         this.FileName = fileName;
         this.builder = new StringBuilder();
+
+        keywords = new Dictionary<string, TokenType>
+        {
+            { "var", TokenType.KEYWORD_VAR },
+            { "const", TokenType.KEYWORD_CONST },
+            { "func", TokenType.KEYWORD_FUNC },
+            { "struct", TokenType.KEYWORD_STRUCT },
+
+            { "if", TokenType.KEYWORD_IF },
+            { "for", TokenType.KEYWORD_FOR },
+            { "while", TokenType.KEYWORD_WHILE },
+            { "do", TokenType.KEYWORD_DO },
+            { "ret", TokenType.KEYWORD_RET },
+            { "continue", TokenType.KEYWORD_CONTINUE },
+            { "break", TokenType.KEYWORD_BREAK }
+        };
+
+        hexCharMap = new Dictionary<char, int>()
+        {
+            { '0', 0 }, { '1', 1 }, { '2', 2 }, { '3', 3 },
+            { '4', 4 }, { '5', 5 }, { '6', 6 }, { '7', 7 },
+            { '8', 8 }, { '9', 9 },
+
+            { 'a', 10 }, { 'b', 11 },
+            { 'c', 12 }, { 'd', 13 },
+            { 'e', 14 }, { 'f', 15 },
+
+            { 'A', 10 }, { 'B', 11 },
+            { 'C', 12 }, { 'D', 13 },
+            { 'E', 14 }, { 'F', 15 },
+        };
 
         Reset(text);
     }
@@ -192,12 +235,10 @@ class Lexer
             {
                 while (ptr < text.Length && text[ptr] != '\n')
                 {
-                    CurrentTokenSpan.FromColumnNumber++;
-                    ptr++;
+                    Inc();
                 }
 
-                CurrentTokenSpan.FromColumnNumber++;
-                ptr++;
+                Inc();
 
                 CurrentTokenSpan.FromLineNumber++;
                 CurrentTokenSpan.FromColumnNumber = 1;
@@ -231,33 +272,57 @@ class Lexer
         }
     }
 
+    private void ScanHexInt()
+    {
+        while (ptr < text.Length && hexCharMap.ContainsKey(text[ptr]))
+        {
+            CurrentInteger *= 16;
+            CurrentInteger += (ulong)(hexCharMap[text[ptr]]);
+
+            Inc();
+        }
+    }
+
+    private void ScanBinaryInt()
+    {
+        while (ptr < text.Length && (text[ptr] == '0' || text[ptr] == '1'))
+        {
+            CurrentInteger *= 2;
+            CurrentInteger += (ulong)(text[ptr] - '0');
+
+            Inc();
+        }
+    }
+
     private void ScanInt()
     {
-        // TODO(patrik): Binary Notation needs only to accept 0 and 1
+        // TODO(patrik): Binary Notation needs only to accept 0 and 1 and hex needs to have ABCDEF as "numbers"
         // Format: 1: 123 2: 0x123 3: 0b101
-        int numBase = 10;
-
         char format = text[ptr + 1];
-
 
         if (format == 'x' || format == 'X')
         {
-            numBase = 16;
-            ptr += 2;
+            Inc();
+            Inc();
+
+            ScanHexInt();
         }
         else if (format == 'b' || format == 'B')
         {
-            numBase = 2;
-            ptr += 2;
+            Inc();
+            Inc();
+
+            ScanBinaryInt();
         }
-
-        while (ptr < text.Length && char.IsDigit(text[ptr]))
+        else
         {
-            CurrentInteger *= (ulong)numBase;
-            CurrentInteger += (ulong)(text[ptr] - '0');
+            while (ptr < text.Length && char.IsDigit(text[ptr]))
+            {
+                CurrentInteger *= 10;
+                CurrentInteger += (ulong)(text[ptr] - '0');
 
-            CurrentTokenSpan.ToColumnNumber++;
-            ptr++;
+                Inc();
+            }
         }
 
         CurrentToken = TokenType.INTEGER;
@@ -283,7 +348,7 @@ class Lexer
                 }
             }
 
-            ptr++;
+            Inc();
         }
 
         bool isFloat = false;
@@ -292,7 +357,7 @@ class Lexer
         if (ptr < text.Length && (text[ptr] == 'f' || text[ptr] == 'F'))
         {
             isFloat = true;
-            ptr++;
+            Inc();
         }
 
         string str = text.Substring(CurrentTokenStart, end - CurrentTokenStart);
@@ -303,6 +368,56 @@ class Lexer
         if (isFloat)
         {
             TokenMod = TokenMod.FLOAT;
+        }
+    }
+
+    private bool MatchChar(char c)
+    {
+        return ptr < text.Length && text[ptr] == c;
+    }
+
+    private void Inc()
+    {
+        ptr++;
+        CurrentTokenSpan.ToColumnNumber++;
+    }
+
+    private bool Case2(char next, TokenType nextToken, TokenType otherToken)
+    {
+        if (MatchChar(next))
+        {
+            CurrentToken = nextToken;
+            Inc();
+
+            return true;
+        }
+        else
+        {
+            CurrentToken = otherToken;
+
+            return false;
+        }
+    }
+
+    private void Case3(char case2, char case3, TokenType case2Token, TokenType case3Token, TokenType otherToken)
+    {
+        if (MatchChar(case2))
+        {
+            Inc();
+
+            if (MatchChar(case3))
+            {
+                CurrentToken = case3Token;
+                Inc();
+            }
+            else
+            {
+                CurrentToken = case2Token;
+            }
+        }
+        else
+        {
+            CurrentToken = otherToken;
         }
     }
 
@@ -336,27 +451,42 @@ class Lexer
 
         switch (current)
         {
+            case '#':
+                CurrentToken = TokenType.HASHTAG;
+                break;
+
             case '+':
-                CurrentToken = TokenType.PLUS;
+                Case2('=', TokenType.PLUS_EQUAL, TokenType.PLUS);
                 break;
             case '-':
-                if (text[ptr] == '>')
+                if (!Case2('=', TokenType.MINUS_EQUAL, TokenType.MINUS))
                 {
-                    CurrentToken = TokenType.ARROW;
-
-                    CurrentTokenSpan.ToColumnNumber++;
-                    ptr++;
-                }
-                else
-                {
-                    CurrentToken = TokenType.MINUS;
+                    Case2('>', TokenType.ARROW, TokenType.MINUS);
                 }
                 break;
             case '*':
-                CurrentToken = TokenType.ASTERISK;
+                Case2('=', TokenType.MUL_EQUAL, TokenType.ASTERISK);
                 break;
             case '/':
-                CurrentToken = TokenType.FORWORD_SLASH;
+                Case2('=', TokenType.DIV_EQUAL, TokenType.FORWORD_SLASH);
+                break;
+
+            case ':':
+                CurrentToken = TokenType.COLON;
+                break;
+            case ';':
+                CurrentToken = TokenType.SEMICOLON;
+                break;
+
+            case '=':
+                Case2('>', TokenType.EQUAL2, TokenType.EQUAL);
+                break;
+
+            case '.':
+                Case3('.', '.', TokenType.DOT2, TokenType.DOT3, TokenType.DOT);
+                break;
+            case ',':
+                CurrentToken = TokenType.SEMIDOT;
                 break;
 
             case '(':
@@ -380,84 +510,35 @@ class Lexer
                 CurrentToken = TokenType.CLOSE_BRACE;
                 break;
 
-            case ':':
-                CurrentToken = TokenType.COLON;
-                break;
-            case ';':
-                CurrentToken = TokenType.SEMICOLON;
-                break;
-
-            case '=':
-                if (text[ptr] == '=')
-                {
-                    CurrentToken = TokenType.EQUAL2;
-
-                    CurrentTokenSpan.ToColumnNumber++;
-                    ptr++;
-                }
-                else
-                {
-                    CurrentToken = TokenType.EQUAL;
-                }
-                break;
-            case '.':
-                if (text[ptr] == '.')
-                {
-                    CurrentTokenSpan.ToColumnNumber++;
-                    ptr++;
-
-                    if (text[ptr] == '.')
-                    {
-                        CurrentToken = TokenType.DOT3;
-
-                        CurrentTokenSpan.ToColumnNumber++;
-                        ptr++;
-                    }
-                    else
-                    {
-                        CurrentToken = TokenType.DOT2;
-                    }
-                }
-                else
-                {
-                    CurrentToken = TokenType.DOT;
-                }
-                break;
-            case ',':
-                CurrentToken = TokenType.SEMIDOT;
-                break;
-
             case '"':
+            {
+                while (text[ptr] != '"')
                 {
-                    while (text[ptr] != '"')
+                    builder.Append(text[ptr]);
+
+                    Inc();
+
+                    if (ptr >= text.Length)
                     {
-                        builder.Append(text[ptr]);
-
-                        CurrentTokenSpan.ToColumnNumber++;
-                        ptr++;
-
-                        if (ptr >= text.Length)
-                        {
-                            Error("String never ends", new SourceSpan(CurrentTokenSpan.FromLineNumber,
-                                                                      CurrentTokenSpan.FromLineNumber,
-                                                                      CurrentTokenSpan.FromLineNumber,
-                                                                      CurrentTokenSpan.FromLineNumber + 1));
-                            //TODO: Add a fatal method to terminate the lexer
-                            Debug.Assert(false);
-                        }
+                        Error("String never ends", new SourceSpan(CurrentTokenSpan.FromLineNumber,
+                                                                  CurrentTokenSpan.FromLineNumber,
+                                                                  CurrentTokenSpan.FromLineNumber,
+                                                                  CurrentTokenSpan.FromLineNumber + 1));
+                        //TODO: Add a fatal method to terminate the lexer
+                        Debug.Assert(false);
                     }
-
-                    CurrentTokenSpan.ToColumnNumber++;
-                    ptr++;
-
-                    CurrentString = builder.ToString();
-                    CurrentString = Regex.Unescape(CurrentString);
-                    CurrentToken = TokenType.STRING;
-
-                    builder.Clear();
-
-                    break;
                 }
+
+                Inc();
+
+                CurrentString = builder.ToString();
+                CurrentString = Regex.Unescape(CurrentString);
+                CurrentToken = TokenType.STRING;
+
+                builder.Clear();
+
+                break;
+            }
 
             default:
                 if (char.IsLetter(current) || current == '_')
@@ -468,35 +549,14 @@ class Lexer
                     {
                         builder.Append(text[ptr]);
 
-                        CurrentTokenSpan.ToColumnNumber++;
-                        ptr++;
+                        Inc();
                     }
 
                     CurrentIdentifier = builder.ToString();
 
-                    if (CurrentIdentifier.Equals("var", StringComparison.Ordinal))
+                    if (keywords.ContainsKey(CurrentIdentifier))
                     {
-                        CurrentToken = TokenType.KEYWORD_VAR;
-                    }
-                    else if (CurrentIdentifier.Equals("const", StringComparison.Ordinal))
-                    {
-                        CurrentToken = TokenType.KEYWORD_CONST;
-                    }
-                    else if (CurrentIdentifier.Equals("func", StringComparison.Ordinal))
-                    {
-                        CurrentToken = TokenType.KEYWORD_FUNC;
-                    }
-                    else if (CurrentIdentifier.Equals("external", StringComparison.Ordinal))
-                    {
-                        CurrentToken = TokenType.KEYWORD_EXTERNAL;
-                    }
-                    else if (CurrentIdentifier.Equals("ret", StringComparison.Ordinal))
-                    {
-                        CurrentToken = TokenType.KEYWORD_RET;
-                    }
-                    else if (CurrentIdentifier.Equals("struct", StringComparison.Ordinal))
-                    {
-                        CurrentToken = TokenType.KEYWORD_STRUCT;
+                        CurrentToken = keywords[CurrentIdentifier];
                     }
                     else
                     {
@@ -545,12 +605,12 @@ class Lexer
         Debug.Assert(lexer.CurrentToken == TokenType.INTEGER);
         Debug.Assert(lexer.CurrentInteger == 123);
 
-        lexer.Reset("0x123");
+        lexer.Reset("0x123af");
         lexer.NextToken();
         Debug.Assert(lexer.CurrentToken == TokenType.INTEGER);
-        Debug.Assert(lexer.CurrentInteger == 0x123);
+        Debug.Assert(lexer.CurrentInteger == 0x123af);
 
-        lexer.Reset("0b110011");
+        lexer.Reset("0b1100112");
         lexer.NextToken();
         Debug.Assert(lexer.CurrentToken == TokenType.INTEGER);
         Debug.Assert(lexer.CurrentInteger == 0b110011);
@@ -570,5 +630,30 @@ class Lexer
         Debug.Assert(lexer.TokenMod != TokenMod.FLOAT);
         lexer.NextToken();
         lexer.ExpectToken(TokenType.EOF);
+
+        lexer.Reset(". .. ... + += - -> -= * *= / /=");
+        lexer.NextToken();
+
+        lexer.ExpectToken(TokenType.DOT);
+        lexer.ExpectToken(TokenType.DOT2);
+        lexer.ExpectToken(TokenType.DOT3);
+        lexer.ExpectToken(TokenType.PLUS);
+        lexer.ExpectToken(TokenType.PLUS_EQUAL);
+        lexer.ExpectToken(TokenType.MINUS);
+        lexer.ExpectToken(TokenType.ARROW);
+        lexer.ExpectToken(TokenType.MINUS_EQUAL);
+        lexer.ExpectToken(TokenType.ASTERISK);
+        lexer.ExpectToken(TokenType.MUL_EQUAL);
+        lexer.ExpectToken(TokenType.FORWORD_SLASH);
+        lexer.ExpectToken(TokenType.DIV_EQUAL);
+
+        lexer.Reset("hello \"hellostr\" 123 0xff00cd 0b11001111 # + += - -= * *= / /= :; = == -> . .. ... , ()[]{}");
+
+        while (lexer.CurrentToken != TokenType.EOF)
+        {
+            lexer.NextToken();
+
+            Console.WriteLine("{0} {1}", lexer.CurrentToken.ToString(), lexer.CurrentTokenSpan.ToString());
+        }
     }
 }

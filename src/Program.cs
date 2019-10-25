@@ -13,15 +13,11 @@ namespace Mass
         {
             string fileContent = File.ReadAllText("test.ma");
 
-            Lexer.Test();
-
-            return;
-
             Lexer lexer = new Lexer("test.ma", fileContent);
             lexer.NextToken();
 
+            return;
             Parser parser = new Parser(lexer);
-
 
             List<DeclAST> root = parser.Parse();
 
