@@ -20,11 +20,16 @@ enum TokenType
     KEYWORD_STRUCT,
     KEYWORD_EXTERNAL,
     KEYWORD_RET,
+    KEYWORD_IF,
+    KEYWORD_CONTINUE,
+    KEYWORD_BREAK,
 
     IDENTIFIER,
     STRING,
     INTEGER,
     FLOAT,
+
+    HASHTAG,
 
     PLUS,
     MINUS,
@@ -423,36 +428,36 @@ class Lexer
                 break;
 
             case '"':
-            {
-                while (text[ptr] != '"')
                 {
-                    builder.Append(text[ptr]);
+                    while (text[ptr] != '"')
+                    {
+                        builder.Append(text[ptr]);
+
+                        CurrentTokenSpan.ToColumnNumber++;
+                        ptr++;
+
+                        if (ptr >= text.Length)
+                        {
+                            Error("String never ends", new SourceSpan(CurrentTokenSpan.FromLineNumber,
+                                                                      CurrentTokenSpan.FromLineNumber,
+                                                                      CurrentTokenSpan.FromLineNumber,
+                                                                      CurrentTokenSpan.FromLineNumber + 1));
+                            //TODO: Add a fatal method to terminate the lexer
+                            Debug.Assert(false);
+                        }
+                    }
 
                     CurrentTokenSpan.ToColumnNumber++;
                     ptr++;
 
-                    if (ptr >= text.Length)
-                    {
-                        Error("String never ends", new SourceSpan(CurrentTokenSpan.FromLineNumber,
-                                                                  CurrentTokenSpan.FromLineNumber,
-                                                                  CurrentTokenSpan.FromLineNumber,
-                                                                  CurrentTokenSpan.FromLineNumber + 1));
-                        //TODO: Add a fatal method to terminate the lexer
-                        Debug.Assert(false);
-                    }
+                    CurrentString = builder.ToString();
+                    CurrentString = Regex.Unescape(CurrentString);
+                    CurrentToken = TokenType.STRING;
+
+                    builder.Clear();
+
+                    break;
                 }
-
-                CurrentTokenSpan.ToColumnNumber++;
-                ptr++;
-
-                CurrentString = builder.ToString();
-                CurrentString = Regex.Unescape(CurrentString);
-                CurrentToken = TokenType.STRING;
-
-                builder.Clear();
-
-                break;
-            }
 
             default:
                 if (char.IsLetter(current) || current == '_')
