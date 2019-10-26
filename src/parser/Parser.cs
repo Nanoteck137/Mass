@@ -243,16 +243,6 @@ class Parser
 
     private Stmt ParseIfStmt()
     {
-        /*
-        if(x <= 5) {
-
-        } else if(x > 10) {
-
-        } else {
-
-        }
-        */
-
         SourceSpan firstSpan = lexer.CurrentTokenSpan;
         lexer.ExpectToken(TokenType.KEYWORD_IF);
 
@@ -266,16 +256,18 @@ class Parser
         SourceSpan lastSpan = thenBlock.Span;
 
         List<ElseIf> elseIfs = new List<ElseIf>();
+        SourceSpan elseStart = null;
         StmtBlock elseBlock = null;
 
         while (lexer.MatchToken(TokenType.KEYWORD_ELSE))
         {
+            SourceSpan span = lexer.CurrentTokenSpan;
             lexer.NextToken();
 
             if (lexer.MatchToken(TokenType.KEYWORD_IF))
             {
                 if (elseBlock != null)
-                    lexer.Error("Else block needs to be at the bottom of the if stmt", new SourceSpan(0, 0));
+                    lexer.Error("Else block needs to be at the bottom of the if stmt", SourceSpan.FromTo(elseStart, elseBlock.Span));
                 lexer.NextToken();
 
                 lexer.ExpectToken(TokenType.OPEN_PAREN);
@@ -287,10 +279,16 @@ class Parser
             }
             else
             {
+                StmtBlock block = ParseStmtBlock();
+                lastSpan = block.Span;
+
                 if (elseBlock != null)
-                    lexer.Error("Multiple elses", new SourceSpan(0, 0));
-                elseBlock = ParseStmtBlock();
-                lastSpan = elseBlock.Span;
+                    lexer.Error("Multiple elses", SourceSpan.FromTo(span, lastSpan));
+                else
+                {
+                    elseBlock = block;
+                    elseStart = span;
+                }
             }
         }
 
@@ -748,6 +746,11 @@ class Parser
         Typespec typespec = parser.ParseTypespec();
         Debug.Assert(typespec is PtrTypespec);
 
+        lexer.Reset("s32[4]");
+        lexer.NextToken();
+        Typespec typespec2 = parser.ParseTypespec();
+        Debug.Assert(typespec2 is PtrTypespec);
+
         lexer.Reset("test(123, 321, 3.14f, \"Wooh\") + 123");
         lexer.NextToken();
         Expr expr2 = parser.ParseExpr();
@@ -772,7 +775,7 @@ class Parser
         Stmt stmt3 = parser.ParseStmt();
         Debug.Assert(stmt3 is IfStmt);
 
-        lexer.Reset("if(1) { continue; } else if(2) { ret 123; } else { break; } else {}");
+        lexer.Reset("if(1) { continue; } else if(2) { ret 123; } else if(1) { continue; } else { break; }");
         lexer.NextToken();
         Stmt stmt4 = parser.ParseStmt();
         Debug.Assert(stmt4 is IfStmt);
