@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.Text;
 
-abstract class Stmt { }
+abstract class Stmt
+{
+    public SourceSpan Span { get; set; }
+}
 
 class StmtBlock : Stmt
 {
@@ -18,6 +21,12 @@ class ElseIf
 {
     public Expr Cond { get; private set; }
     public StmtBlock Block { get; private set; }
+
+    public ElseIf(Expr cond, StmtBlock block)
+    {
+        this.Cond = cond;
+        this.Block = block;
+    }
 }
 
 class IfStmt : Stmt
@@ -86,7 +95,7 @@ class ReturnStmt : Stmt
     }
 }
 
-class ConinueStmt : Stmt { }
+class ContinueStmt : Stmt { }
 
 class BreakStmt : Stmt { }
 

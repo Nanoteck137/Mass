@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.Text;
 
-abstract class Expr { }
+abstract class Expr
+{
+    public SourceSpan Span { get; set; }
+}
 
 class IntegerExpr : Expr
 {
@@ -17,10 +20,12 @@ class IntegerExpr : Expr
 class FloatExpr : Expr
 {
     public double Value { get; private set; }
+    public bool IsFloat { get; private set; }
 
-    public FloatExpr(double value)
+    public FloatExpr(double value, bool isFloat)
     {
         this.Value = value;
+        this.IsFloat = isFloat;
     }
 }
 

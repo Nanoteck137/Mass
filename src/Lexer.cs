@@ -27,6 +27,8 @@ enum TokenType
     KEYWORD_CONTINUE,
     KEYWORD_BREAK,
 
+    KEYWORD_ELSE,
+
     IDENTIFIER,
     STRING,
     INTEGER,
@@ -112,6 +114,11 @@ class SourceSpan
     {
         return string.Format("({0}:{1}, {2}:{3})", this.FromLineNumber, this.FromColumnNumber, this.ToLineNumber, this.ToColumnNumber);
     }
+
+    public static SourceSpan FromTo(SourceSpan from, SourceSpan to)
+    {
+        return new SourceSpan(from.FromLineNumber, from.FromColumnNumber, to.ToLineNumber, to.ToColumnNumber);
+    }
 }
 
 class Lexer
@@ -127,7 +134,14 @@ class Lexer
 
     public int CurrentTokenStart { get; private set; }
     public TokenType CurrentToken { get; private set; }
-    public SourceSpan CurrentTokenSpan { get; private set; }
+    private SourceSpan currentTokenSpan;
+    public SourceSpan CurrentTokenSpan
+    {
+        get
+        {
+            return currentTokenSpan.Clone();
+        }
+    }
 
     public TokenMod TokenMod { get; private set; }
     public string CurrentIdentifier { get; private set; }
@@ -153,7 +167,9 @@ class Lexer
             { "do", TokenType.KEYWORD_DO },
             { "ret", TokenType.KEYWORD_RET },
             { "continue", TokenType.KEYWORD_CONTINUE },
-            { "break", TokenType.KEYWORD_BREAK }
+            { "break", TokenType.KEYWORD_BREAK },
+
+            { "else", TokenType.KEYWORD_ELSE },
         };
 
         hexCharMap = new Dictionary<char, int>()
@@ -178,7 +194,7 @@ class Lexer
     {
         this.text = text.Replace("\r\n", "\n").Replace("\r", "");
         this.ptr = 0;
-        this.CurrentTokenSpan = new SourceSpan(1, 1, 1, 1);
+        this.currentTokenSpan = new SourceSpan(1, 1, 1, 1);
 
         ResetToken();
     }
@@ -217,7 +233,7 @@ class Lexer
     {
         if (CurrentToken != type)
         {
-            Error(string.Format("Unexpected token '{0}' expected '{1}'", CurrentToken.ToString(), type.ToString()), CurrentTokenSpan);
+            Error(string.Format("Unexpected token '{0}' expected '{1}'", CurrentToken.ToString(), type.ToString()), currentTokenSpan);
             Debug.Assert(false);
         }
         else
@@ -225,6 +241,11 @@ class Lexer
             if (skip)
                 NextToken();
         }
+    }
+
+    public bool MatchToken(TokenType type)
+    {
+        return CurrentToken == type;
     }
 
     private void RemoveComments()
@@ -240,8 +261,8 @@ class Lexer
 
                 Inc();
 
-                CurrentTokenSpan.FromLineNumber++;
-                CurrentTokenSpan.FromColumnNumber = 1;
+                currentTokenSpan.FromLineNumber++;
+                currentTokenSpan.FromColumnNumber = 1;
 
                 RemoveWhitespace();
             }
@@ -254,12 +275,12 @@ class Lexer
         {
             if (text[ptr] == '\n')
             {
-                CurrentTokenSpan.FromLineNumber++;
-                CurrentTokenSpan.FromColumnNumber = 1;
+                currentTokenSpan.FromLineNumber++;
+                currentTokenSpan.FromColumnNumber = 1;
             }
             else
             {
-                CurrentTokenSpan.FromColumnNumber++;
+                currentTokenSpan.FromColumnNumber++;
             }
 
             ptr++;
@@ -381,7 +402,7 @@ class Lexer
     private void Inc()
     {
         ptr++;
-        CurrentTokenSpan.ToColumnNumber++;
+        currentTokenSpan.ToColumnNumber++;
     }
 
     private bool Case2(char next, TokenType nextToken, TokenType otherToken)
@@ -427,7 +448,7 @@ class Lexer
     {
         ResetToken();
 
-        CurrentTokenSpan.FromColumnNumber = CurrentTokenSpan.ToColumnNumber;
+        currentTokenSpan.FromColumnNumber = currentTokenSpan.ToColumnNumber;
 
         if (ptr >= text.Length)
         {
@@ -445,8 +466,8 @@ class Lexer
             return;
         }
 
-        CurrentTokenSpan.ToColumnNumber = CurrentTokenSpan.FromColumnNumber + 1;
-        CurrentTokenSpan.ToLineNumber = CurrentTokenSpan.FromLineNumber;
+        currentTokenSpan.ToColumnNumber = currentTokenSpan.FromColumnNumber + 1;
+        currentTokenSpan.ToLineNumber = currentTokenSpan.FromLineNumber;
 
         CurrentTokenStart = ptr;
         char current = text[ptr++];
@@ -522,10 +543,10 @@ class Lexer
 
                     if (ptr >= text.Length)
                     {
-                        Error("String never ends", new SourceSpan(CurrentTokenSpan.FromLineNumber,
-                                                                  CurrentTokenSpan.FromLineNumber,
-                                                                  CurrentTokenSpan.FromLineNumber,
-                                                                  CurrentTokenSpan.FromLineNumber + 1));
+                        Error("String never ends", new SourceSpan(currentTokenSpan.FromLineNumber,
+                                                                  currentTokenSpan.FromLineNumber,
+                                                                  currentTokenSpan.FromLineNumber,
+                                                                  currentTokenSpan.FromLineNumber + 1));
                         //TODO: Add a fatal method to terminate the lexer
                         Debug.Assert(false);
                     }
@@ -575,7 +596,7 @@ class Lexer
                     }
 
                     char c = ptr < text.Length ? text[ptr] : '0';
-                    CurrentTokenSpan.ToColumnNumber--;
+                    currentTokenSpan.ToColumnNumber--;
                     ptr = CurrentTokenStart;
 
                     if (c == '.')
@@ -655,7 +676,7 @@ class Lexer
         {
             lexer.NextToken();
 
-            Console.WriteLine("{0} {1}", lexer.CurrentToken.ToString(), lexer.CurrentTokenSpan.ToString());
+            Console.WriteLine("{0} {1}", lexer.CurrentToken.ToString(), lexer.currentTokenSpan.ToString());
         }
     }
 }

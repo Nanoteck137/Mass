@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.Text;
 
-abstract class Typespec { }
+abstract class Typespec
+{
+    public SourceSpan Span { get; set; }
+}
 
 class PtrTypespec : Typespec
 {
