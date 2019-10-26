@@ -188,33 +188,73 @@ class Parser
         return ParseAdd();
     }
 
+    private Typespec ParseTypespecBase()
+    {
+        if (lexer.MatchToken(TokenType.IDENTIFIER))
+        {
+            IdentifierExpr identifier = new IdentifierExpr(lexer.CurrentIdentifier)
+            {
+                Span = lexer.CurrentTokenSpan
+            };
+
+            lexer.ExpectToken(TokenType.IDENTIFIER);
+
+            Typespec result = new IdentifierTypespec(identifier)
+            {
+                Span = identifier.Span.Clone()
+            };
+
+            return result;
+        }
+        else
+        {
+            Debug.Assert(false);
+        }
+
+        return null;
+    }
+
     private Typespec ParseTypespec()
     {
-        IdentifierExpr identifier = new IdentifierExpr(lexer.CurrentIdentifier)
-        {
-            Span = lexer.CurrentTokenSpan
-        };
+        Typespec type = ParseTypespecBase();
 
-        lexer.ExpectToken(TokenType.IDENTIFIER);
-
-        Typespec result = new IdentifierTypespec(identifier)
+        while (lexer.MatchToken(TokenType.ASTERISK) ||
+            lexer.MatchToken(TokenType.OPEN_BRACKET))
         {
-            Span = identifier.Span.Clone()
-        };
-
-        if (lexer.MatchToken(TokenType.ASTERISK))
-        {
-            while (lexer.MatchToken(TokenType.ASTERISK))
+            if (lexer.MatchToken(TokenType.ASTERISK))
             {
-                result = new PtrTypespec(result)
+                type = new PtrTypespec(type)
                 {
                     Span = lexer.CurrentTokenSpan
                 };
                 lexer.NextToken();
             }
+            else if (lexer.MatchToken(TokenType.OPEN_BRACKET))
+            {
+                SourceSpan firstSpan = lexer.CurrentTokenSpan;
+                lexer.NextToken();
+
+                Expr size = null;
+                if (!lexer.MatchToken(TokenType.CLOSE_BRACKET))
+                {
+                    size = ParseExpr();
+                }
+
+                SourceSpan lastSpan = lexer.CurrentTokenSpan;
+                lexer.ExpectToken(TokenType.CLOSE_BRACKET);
+
+                type = new ArrayTypespec(type, size)
+                {
+                    Span = SourceSpan.FromTo(firstSpan, lastSpan)
+                };
+            }
+            else
+            {
+                Debug.Assert(false);
+            }
         }
 
-        return result;
+        return type;
     }
 
     private StmtBlock ParseStmtBlock()
@@ -746,10 +786,10 @@ class Parser
         Typespec typespec = parser.ParseTypespec();
         Debug.Assert(typespec is PtrTypespec);
 
-        lexer.Reset("s32[4]");
+        lexer.Reset("s32*[4]*");
         lexer.NextToken();
         Typespec typespec2 = parser.ParseTypespec();
-        Debug.Assert(typespec2 is PtrTypespec);
+        Debug.Assert(typespec2 is ArrayTypespec);
 
         lexer.Reset("test(123, 321, 3.14f, \"Wooh\") + 123");
         lexer.NextToken();

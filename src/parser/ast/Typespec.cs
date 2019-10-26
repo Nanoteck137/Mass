@@ -17,6 +17,18 @@ class PtrTypespec : Typespec
     }
 }
 
+class ArrayTypespec : Typespec
+{
+    public Typespec Type { get; private set; }
+    public Expr Size { get; private set; }
+
+    public ArrayTypespec(Typespec type, Expr size)
+    {
+        this.Type = type;
+        this.Size = size;
+    }
+}
+
 class IdentifierTypespec : Typespec
 {
     public IdentifierExpr Value { get; private set; }
