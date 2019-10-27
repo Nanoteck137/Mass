@@ -4,7 +4,8 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-linux-gnu"
 
 @.str = private unnamed_addr constant [13 x i8] c"Hello World\0A\00", align 1
-@.str.1 = private unnamed_addr constant [6 x i8] c"Test\0A\00", align 1
+@.str.1 = private unnamed_addr constant [5 x i8] c"Wooh\00", align 1
+@.str.2 = private unnamed_addr constant [5 x i8] c"Test\00", align 1
 
 ; Function Attrs: noinline nounwind optnone uwtable
 define void @Test() #0 {
@@ -24,21 +25,19 @@ define i32 @main(i32, i8**) #0 {
   store i32 %0, i32* %4, align 4
   store i8** %1, i8*** %5, align 8
   store i32 0, i32* %6, align 4
-  br label %7
+  %7 = load i32, i32* %6, align 4
+  %8 = icmp uge i32 %7, 4
+  br i1 %8, label %9, label %11
 
-; <label>:7:                                      ; preds = %10, %2
-  %8 = load i32, i32* %6, align 4
-  %9 = icmp slt i32 %8, 4
-  br i1 %9, label %10, label %14
+; <label>:9:                                      ; preds = %2
+  %10 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.1, i32 0, i32 0))
+  br label %13
 
-; <label>:10:                                     ; preds = %7
-  %11 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str.1, i32 0, i32 0))
-  %12 = load i32, i32* %6, align 4
-  %13 = add nsw i32 %12, 1
-  store i32 %13, i32* %6, align 4
-  br label %7
+; <label>:11:                                     ; preds = %2
+  %12 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.2, i32 0, i32 0))
+  br label %13
 
-; <label>:14:                                     ; preds = %7
+; <label>:13:                                     ; preds = %11, %9
   ret i32 0
 }
 

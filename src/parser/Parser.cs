@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
+/* TODO(patrik):
+ *  Fix SourceSpan for binary operator parsing
+ */
+
 class Parser
 {
     private Lexer lexer;
@@ -85,35 +89,56 @@ class Parser
     {
         Expr expr = ParseOperand();
 
-        if (lexer.MatchToken(TokenType.OPEN_PAREN))
+        while (lexer.MatchToken(TokenType.OPEN_PAREN) ||
+                lexer.MatchToken(TokenType.OPEN_BRACKET))
         {
-            lexer.NextToken();
-
-            List<Expr> arguments = new List<Expr>();
-
-            if (!lexer.MatchToken(TokenType.CLOSE_PAREN))
+            if (lexer.MatchToken(TokenType.OPEN_PAREN))
             {
-                Expr arg = ParseExpr();
-                arguments.Add(arg);
+                SourceSpan firstSpan = lexer.CurrentTokenSpan;
 
-                while (!lexer.MatchToken(TokenType.CLOSE_PAREN))
+                lexer.NextToken();
+
+                List<Expr> arguments = new List<Expr>();
+
+                if (!lexer.MatchToken(TokenType.CLOSE_PAREN))
                 {
-                    lexer.ExpectToken(TokenType.SEMIDOT);
-
-                    arg = ParseExpr();
-
+                    Expr arg = ParseExpr();
                     arguments.Add(arg);
+
+                    while (!lexer.MatchToken(TokenType.CLOSE_PAREN))
+                    {
+                        lexer.ExpectToken(TokenType.SEMIDOT);
+
+                        arg = ParseExpr();
+
+                        arguments.Add(arg);
+                    }
                 }
+
+                SourceSpan lastSpan = lexer.CurrentTokenSpan;
+                lexer.ExpectToken(TokenType.CLOSE_PAREN);
+
+                expr = new CallExpr(expr, arguments)
+                {
+                    Span = SourceSpan.FromTo(firstSpan, lastSpan)
+                };
             }
-
-            SourceSpan lastSpan = lexer.CurrentTokenSpan;
-            lexer.ExpectToken(TokenType.CLOSE_PAREN);
-
-            SourceSpan firstSpan = expr.Span;
-            expr = new CallExpr(expr, arguments)
+            else if (lexer.MatchToken(TokenType.OPEN_BRACKET))
             {
-                Span = SourceSpan.FromTo(firstSpan, lastSpan)
-            };
+                SourceSpan firstSpan = lexer.CurrentTokenSpan;
+
+                lexer.NextToken();
+
+                Expr index = ParseExpr();
+
+                SourceSpan lastSpan = lexer.CurrentTokenSpan;
+                lexer.ExpectToken(TokenType.CLOSE_BRACKET);
+
+                expr = new IndexExpr(expr, index)
+                {
+                    Span = SourceSpan.FromTo(firstSpan, lastSpan)
+                };
+            }
         }
 
         return expr;
@@ -123,8 +148,9 @@ class Parser
     {
         Expr left = ParseBase();
 
-        while (lexer.CurrentToken == TokenType.ASTERISK ||
-                lexer.CurrentToken == TokenType.FORWORD_SLASH)
+        while (lexer.MatchToken(TokenType.MULTIPLY) ||
+                lexer.MatchToken(TokenType.DIVIDE) ||
+                lexer.MatchToken(TokenType.MODULO))
         {
             TokenType op = lexer.CurrentToken;
 
@@ -200,10 +226,10 @@ class Parser
     {
         Typespec type = ParseTypespecBase();
 
-        while (lexer.MatchToken(TokenType.ASTERISK) ||
+        while (lexer.MatchToken(TokenType.MULTIPLY) ||
             lexer.MatchToken(TokenType.OPEN_BRACKET))
         {
-            if (lexer.MatchToken(TokenType.ASTERISK))
+            if (lexer.MatchToken(TokenType.MULTIPLY))
             {
                 type = new PtrTypespec(type)
                 {
@@ -434,7 +460,7 @@ class Parser
         }
         else if (lexer.MatchToken(TokenType.KEYWORD_FOR))
         {
-            return ParseForStmt();
+            return ParseForStmt(); // TODO
         }
         else if (lexer.MatchToken(TokenType.KEYWORD_WHILE))
         {
@@ -779,26 +805,29 @@ class Parser
         Lexer lexer = new Lexer("Parser Test", "");
         Parser parser = new Parser(lexer);
 
+        #region Exprs Testing
         lexer.Reset("4 + 2 * 8 + 3.14f");
         lexer.NextToken();
         Expr expr = parser.ParseExpr();
         Debug.Assert(expr is BinaryOpExpr);
-
-        lexer.Reset("s32**");
-        lexer.NextToken();
-        Typespec typespec = parser.ParseTypespec();
-        Debug.Assert(typespec is PtrTypespec);
-
-        lexer.Reset("s32*[4]*");
-        lexer.NextToken();
-        Typespec typespec2 = parser.ParseTypespec();
-        Debug.Assert(typespec2 is PtrTypespec);
 
         lexer.Reset("test(123, 321, 3.14f, \"Wooh\") + 123");
         lexer.NextToken();
         Expr expr2 = parser.ParseExpr();
         Debug.Assert(expr2 is BinaryOpExpr);
 
+        lexer.Reset("test[0]");
+        lexer.NextToken();
+        Expr expr3 = parser.ParseExpr();
+        Debug.Assert(expr3 is IndexExpr);
+
+        lexer.Reset("test(321)[0][1]");
+        lexer.NextToken();
+        Expr expr4 = parser.ParseExpr();
+        Debug.Assert(expr4 is IndexExpr);
+        #endregion
+
+        #region Stmts Testing
         lexer.Reset("ret 123;");
         lexer.NextToken();
         Stmt stmt = parser.ParseStmt();
@@ -827,5 +856,18 @@ class Parser
         lexer.NextToken();
         Stmt stmt5 = parser.ParseStmt();
         Debug.Assert(stmt5 is DoWhileStmt);
+        #endregion
+
+        #region Typespec Testing
+        lexer.Reset("s32**");
+        lexer.NextToken();
+        Typespec typespec = parser.ParseTypespec();
+        Debug.Assert(typespec is PtrTypespec);
+
+        lexer.Reset("s32*[4]*");
+        lexer.NextToken();
+        Typespec typespec2 = parser.ParseTypespec();
+        Debug.Assert(typespec2 is PtrTypespec);
+        #endregion
     }
 }

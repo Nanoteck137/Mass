@@ -2,17 +2,19 @@
 
 void Test()
 {
-    printf("Hello World\n");
+	printf("Hello World\n");
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-    int x = 0;
-    while (x < 4)
-    {
-        printf("Test\n");
-        x++;
-    }
+	unsigned int x = 0;
+	if (x >= 4)
+	{
+		printf("Wooh");
+	}
+	else {
+		printf("Test");
+	}
 
-    return 0;
+	return 0;
 }

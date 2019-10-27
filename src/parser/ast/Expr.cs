@@ -74,3 +74,15 @@ class CallExpr : Expr
         this.Arguments = arguments;
     }
 }
+
+class IndexExpr : Expr
+{
+    public Expr Expr { get; private set; }
+    public Expr Index { get; private set; }
+
+    public IndexExpr(Expr expr, Expr index)
+    {
+        this.Expr = expr;
+        this.Index = index;
+    }
+}

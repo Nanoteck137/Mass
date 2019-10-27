@@ -42,11 +42,14 @@ enum TokenType
     MINUS,
     MINUS_EQUAL,
 
-    ASTERISK,
-    MUL_EQUAL,
+    MULTIPLY,
+    MULTIPLY_EQUALS,
 
-    FORWORD_SLASH,
-    DIV_EQUAL,
+    DIVIDE,
+    DIVIDE_EQUALS,
+
+    MODULO,
+    MODULO_EQUALS,
 
     COLON,
     SEMICOLON,
@@ -488,10 +491,14 @@ class Lexer
                 }
                 break;
             case '*':
-                Case2('=', TokenType.MUL_EQUAL, TokenType.ASTERISK);
+                Case2('=', TokenType.MULTIPLY_EQUALS, TokenType.MULTIPLY);
                 break;
             case '/':
-                Case2('=', TokenType.DIV_EQUAL, TokenType.FORWORD_SLASH);
+                Case2('=', TokenType.DIVIDE_EQUALS, TokenType.DIVIDE);
+                break;
+
+            case '%':
+                Case2('=', TokenType.MODULO_EQUALS, TokenType.MODULO);
                 break;
 
             case ':':
@@ -654,7 +661,7 @@ class Lexer
         lexer.NextToken();
         lexer.ExpectToken(TokenType.EOF);
 
-        lexer.Reset(". .. ... + += - -> -= * *= / /=");
+        lexer.Reset(". .. ... + += - -> -= * *= / /= % %=");
         lexer.NextToken();
 
         lexer.ExpectToken(TokenType.DOT);
@@ -665,10 +672,12 @@ class Lexer
         lexer.ExpectToken(TokenType.MINUS);
         lexer.ExpectToken(TokenType.ARROW);
         lexer.ExpectToken(TokenType.MINUS_EQUAL);
-        lexer.ExpectToken(TokenType.ASTERISK);
-        lexer.ExpectToken(TokenType.MUL_EQUAL);
-        lexer.ExpectToken(TokenType.FORWORD_SLASH);
-        lexer.ExpectToken(TokenType.DIV_EQUAL);
+        lexer.ExpectToken(TokenType.MULTIPLY);
+        lexer.ExpectToken(TokenType.MULTIPLY_EQUALS);
+        lexer.ExpectToken(TokenType.DIVIDE);
+        lexer.ExpectToken(TokenType.DIVIDE_EQUALS);
+        lexer.ExpectToken(TokenType.MODULO);
+        lexer.ExpectToken(TokenType.MODULO_EQUALS);
 
         lexer.Reset("hello \"hellostr\" 123 0xff00cd 0b11001111 # + += - -= * *= / /= :; = == -> . .. ... , ()[]{}");
 

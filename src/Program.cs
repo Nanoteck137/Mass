@@ -16,6 +16,7 @@ namespace Mass
             //Lexer lexer = new Lexer("test.ma", fileContent);
             //lexer.NextToken();
 
+            Lexer.Test();
             Parser.Test();
 
             return;
