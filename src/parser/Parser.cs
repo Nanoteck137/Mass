@@ -126,16 +126,7 @@ class Parser
         while (lexer.CurrentToken == TokenType.ASTERISK ||
                 lexer.CurrentToken == TokenType.FORWORD_SLASH)
         {
-            Operation op = Operation.MUL;
-
-            if (lexer.MatchToken(TokenType.ASTERISK))
-            {
-                op = Operation.MUL;
-            }
-            else if (lexer.MatchToken(TokenType.FORWORD_SLASH))
-            {
-                op = Operation.DIV;
-            }
+            TokenType op = lexer.CurrentToken;
 
             lexer.NextToken();
 
@@ -158,16 +149,7 @@ class Parser
         while (lexer.CurrentToken == TokenType.PLUS ||
                 lexer.CurrentToken == TokenType.MINUS)
         {
-            Operation op = Operation.ADD;
-
-            if (lexer.MatchToken(TokenType.PLUS))
-            {
-                op = Operation.ADD;
-            }
-            else if (lexer.MatchToken(TokenType.MINUS))
-            {
-                op = Operation.SUB;
-            }
+            TokenType op = lexer.CurrentToken;
 
             lexer.NextToken();
 
@@ -370,7 +352,28 @@ class Parser
 
     private Stmt ParseDoWhileStmt()
     {
-        return null;
+        SourceSpan firstSpan = lexer.CurrentTokenSpan;
+        lexer.ExpectToken(TokenType.KEYWORD_DO);
+
+        StmtBlock block = ParseStmtBlock();
+
+        lexer.ExpectToken(TokenType.KEYWORD_WHILE);
+        lexer.ExpectToken(TokenType.OPEN_PAREN);
+
+        Expr cond = ParseExpr();
+
+        lexer.ExpectToken(TokenType.CLOSE_PAREN);
+
+        SourceSpan lastSpan = lexer.CurrentTokenSpan;
+        lexer.ExpectToken(TokenType.SEMICOLON);
+
+
+        DoWhileStmt result = new DoWhileStmt(cond, block)
+        {
+            Span = SourceSpan.FromTo(firstSpan, lastSpan)
+        };
+
+        return result;
     }
 
     private Stmt ParseReturnStmt()
@@ -789,7 +792,7 @@ class Parser
         lexer.Reset("s32*[4]*");
         lexer.NextToken();
         Typespec typespec2 = parser.ParseTypespec();
-        Debug.Assert(typespec2 is ArrayTypespec);
+        Debug.Assert(typespec2 is PtrTypespec);
 
         lexer.Reset("test(123, 321, 3.14f, \"Wooh\") + 123");
         lexer.NextToken();
@@ -819,5 +822,10 @@ class Parser
         lexer.NextToken();
         Stmt stmt4 = parser.ParseStmt();
         Debug.Assert(stmt4 is IfStmt);
+
+        lexer.Reset("do { continue; } while(1);");
+        lexer.NextToken();
+        Stmt stmt5 = parser.ParseStmt();
+        Debug.Assert(stmt5 is DoWhileStmt);
     }
 }

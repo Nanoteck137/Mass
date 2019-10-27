@@ -49,21 +49,13 @@ class StringExpr : Expr
     }
 }
 
-enum Operation
-{
-    ADD,
-    SUB,
-    MUL,
-    DIV
-}
-
 class BinaryOpExpr : Expr
 {
     public Expr Left { get; private set; }
     public Expr Right { get; private set; }
-    public Operation Op { get; private set; }
+    public TokenType Op { get; private set; }
 
-    public BinaryOpExpr(Expr left, Expr right, Operation op)
+    public BinaryOpExpr(Expr left, Expr right, TokenType op)
     {
         this.Left = left;
         this.Right = right;
