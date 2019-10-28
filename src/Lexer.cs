@@ -62,7 +62,7 @@ enum TokenType
     DOT,
     DOT2,
     DOT3,
-    SEMIDOT,
+    COMMA,
 
     OPEN_PAREN,
     CLOSE_PAREN,
@@ -516,7 +516,7 @@ class Lexer
                 Case3('.', '.', TokenType.DOT2, TokenType.DOT3, TokenType.DOT);
                 break;
             case ',':
-                CurrentToken = TokenType.SEMIDOT;
+                CurrentToken = TokenType.COMMA;
                 break;
 
             case '(':

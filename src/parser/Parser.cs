@@ -16,6 +16,7 @@ class Parser
         this.lexer = lexer;
     }
 
+    #region Expr Parsing
     private Expr ParseOperand()
     {
         switch (lexer.CurrentToken)
@@ -107,7 +108,7 @@ class Parser
 
                     while (!lexer.MatchToken(TokenType.CLOSE_PAREN))
                     {
-                        lexer.ExpectToken(TokenType.SEMIDOT);
+                        lexer.ExpectToken(TokenType.COMMA);
 
                         arg = ParseExpr();
 
@@ -195,76 +196,9 @@ class Parser
     {
         return ParseAdd();
     }
+    #endregion
 
-    private Typespec ParseTypespecBase()
-    {
-        if (lexer.MatchToken(TokenType.IDENTIFIER))
-        {
-            IdentifierExpr identifier = new IdentifierExpr(lexer.CurrentIdentifier)
-            {
-                Span = lexer.CurrentTokenSpan
-            };
-
-            lexer.ExpectToken(TokenType.IDENTIFIER);
-
-            Typespec result = new IdentifierTypespec(identifier)
-            {
-                Span = identifier.Span.Clone()
-            };
-
-            return result;
-        }
-        else
-        {
-            Debug.Assert(false);
-        }
-
-        return null;
-    }
-
-    private Typespec ParseTypespec()
-    {
-        Typespec type = ParseTypespecBase();
-
-        while (lexer.MatchToken(TokenType.MULTIPLY) ||
-            lexer.MatchToken(TokenType.OPEN_BRACKET))
-        {
-            if (lexer.MatchToken(TokenType.MULTIPLY))
-            {
-                type = new PtrTypespec(type)
-                {
-                    Span = lexer.CurrentTokenSpan
-                };
-                lexer.NextToken();
-            }
-            else if (lexer.MatchToken(TokenType.OPEN_BRACKET))
-            {
-                SourceSpan firstSpan = lexer.CurrentTokenSpan;
-                lexer.NextToken();
-
-                Expr size = null;
-                if (!lexer.MatchToken(TokenType.CLOSE_BRACKET))
-                {
-                    size = ParseExpr();
-                }
-
-                SourceSpan lastSpan = lexer.CurrentTokenSpan;
-                lexer.ExpectToken(TokenType.CLOSE_BRACKET);
-
-                type = new ArrayTypespec(type, size)
-                {
-                    Span = SourceSpan.FromTo(firstSpan, lastSpan)
-                };
-            }
-            else
-            {
-                Debug.Assert(false);
-            }
-        }
-
-        return type;
-    }
-
+    #region Stmt Parsing
     private StmtBlock ParseStmtBlock()
     {
         // Fromat: { stmts* }
@@ -488,6 +422,267 @@ class Parser
             return null;
         }
     }
+    #endregion
+
+    #region Typespec Parsing
+    private Typespec ParseTypespecBase()
+    {
+        if (lexer.MatchToken(TokenType.IDENTIFIER))
+        {
+            IdentifierExpr identifier = new IdentifierExpr(lexer.CurrentIdentifier)
+            {
+                Span = lexer.CurrentTokenSpan
+            };
+
+            lexer.ExpectToken(TokenType.IDENTIFIER);
+
+            Typespec result = new IdentifierTypespec(identifier)
+            {
+                Span = identifier.Span.Clone()
+            };
+
+            return result;
+        }
+        else
+        {
+            Debug.Assert(false);
+        }
+
+        return null;
+    }
+
+    private Typespec ParseTypespec()
+    {
+        Typespec type = ParseTypespecBase();
+
+        while (lexer.MatchToken(TokenType.MULTIPLY) ||
+            lexer.MatchToken(TokenType.OPEN_BRACKET))
+        {
+            if (lexer.MatchToken(TokenType.MULTIPLY))
+            {
+                type = new PtrTypespec(type)
+                {
+                    Span = lexer.CurrentTokenSpan
+                };
+                lexer.NextToken();
+            }
+            else if (lexer.MatchToken(TokenType.OPEN_BRACKET))
+            {
+                SourceSpan firstSpan = lexer.CurrentTokenSpan;
+                lexer.NextToken();
+
+                Expr size = null;
+                if (!lexer.MatchToken(TokenType.CLOSE_BRACKET))
+                {
+                    size = ParseExpr();
+                }
+
+                SourceSpan lastSpan = lexer.CurrentTokenSpan;
+                lexer.ExpectToken(TokenType.CLOSE_BRACKET);
+
+                type = new ArrayTypespec(type, size)
+                {
+                    Span = SourceSpan.FromTo(firstSpan, lastSpan)
+                };
+            }
+            else
+            {
+                Debug.Assert(false);
+            }
+        }
+
+        return type;
+    }
+    #endregion
+
+    #region Decl Parsing
+
+    private Decl ParseVarDecl()
+    {
+        // Format: var test: s32 = 123;
+        lexer.ExpectToken(TokenType.KEYWORD_VAR);
+
+        string name = lexer.CurrentIdentifier;
+        lexer.ExpectToken(TokenType.IDENTIFIER);
+
+        lexer.ExpectToken(TokenType.COLON);
+
+        Typespec type = ParseTypespec();
+        Expr expr = null;
+
+        if (lexer.MatchToken(TokenType.EQUAL))
+        {
+            lexer.NextToken();
+
+            expr = ParseExpr();
+        }
+
+        lexer.ExpectToken(TokenType.SEMICOLON);
+
+        VarDecl result = new VarDecl(name, type, expr);
+
+        return result;
+    }
+
+    private Decl ParseConstDecl()
+    {
+        // const test: s32 = 123;
+        lexer.ExpectToken(TokenType.KEYWORD_CONST);
+
+        string name = lexer.CurrentIdentifier;
+        lexer.ExpectToken(TokenType.IDENTIFIER);
+        lexer.ExpectToken(TokenType.COLON);
+
+        Typespec type = ParseTypespec();
+
+        lexer.ExpectToken(TokenType.EQUAL);
+
+        Expr expr = ParseExpr();
+
+        lexer.ExpectToken(TokenType.SEMICOLON);
+
+        ConstDecl result = new ConstDecl(name, type, expr);
+        return result;
+    }
+
+    private FunctionParameter ParseFuncParam()
+    {
+        string paramName = lexer.CurrentIdentifier;
+        lexer.ExpectToken(TokenType.IDENTIFIER);
+        lexer.ExpectToken(TokenType.COLON);
+
+        Typespec paramType = ParseTypespec();
+
+        return new FunctionParameter(paramName, paramType);
+    }
+
+    private Decl ParseFuncDecl()
+    {
+        // Format: func test(x: s32, y: s32, ...) { stmt* }
+        //         func test(x: s32, y: s32, ...) -> s32 { stmt* }
+        //         func test(x: s32, y: s32, ...);
+        //         func test(x: s32, y: s32, ...) -> s32;
+        lexer.ExpectToken(TokenType.KEYWORD_FUNC);
+
+        string name = lexer.CurrentIdentifier;
+        lexer.ExpectToken(TokenType.IDENTIFIER);
+
+        List<FunctionParameter> parameters = new List<FunctionParameter>();
+        bool varArgs = false;
+        SourceSpan varArgsSpan = null;
+
+        lexer.ExpectToken(TokenType.OPEN_PAREN);
+
+        if (!lexer.MatchToken(TokenType.CLOSE_PAREN))
+        {
+            parameters.Add(ParseFuncParam());
+
+            while (lexer.MatchToken(TokenType.COMMA))
+            {
+                lexer.NextToken();
+                if (lexer.MatchToken(TokenType.DOT3))
+                {
+                    if (varArgs)
+                    {
+                        lexer.Error("Multiple ellipsis in function decl", lexer.CurrentTokenSpan);
+                    }
+
+                    varArgsSpan = lexer.CurrentTokenSpan;
+                    varArgs = true;
+
+                    lexer.NextToken();
+                }
+                else
+                {
+                    if (varArgs)
+                    {
+                        lexer.Error("Ellipsis must be last parameter in function decl", varArgsSpan);
+                    }
+                    parameters.Add(ParseFuncParam());
+                }
+            }
+        }
+
+        lexer.ExpectToken(TokenType.CLOSE_PAREN);
+
+        Typespec returnType = null;
+        if (lexer.MatchToken(TokenType.ARROW))
+        {
+            lexer.NextToken();
+
+            returnType = ParseTypespec();
+        }
+
+        StmtBlock block = null;
+        if (lexer.MatchToken(TokenType.OPEN_BRACE))
+        {
+            block = ParseStmtBlock();
+        }
+        else
+        {
+            lexer.ExpectToken(TokenType.SEMICOLON);
+        }
+
+        FunctionDecl result = new FunctionDecl(name, parameters, returnType, varArgs, block);
+        return result;
+    }
+
+    private Decl ParseStructDecl()
+    {
+        // Format: struct Test { x: s32; y: s32; }
+
+        lexer.ExpectToken(TokenType.KEYWORD_STRUCT);
+
+        string name = lexer.CurrentIdentifier;
+        lexer.ExpectToken(TokenType.IDENTIFIER);
+
+        lexer.ExpectToken(TokenType.OPEN_BRACE);
+
+        List<StructItem> items = new List<StructItem>();
+        while (!lexer.MatchToken(TokenType.CLOSE_BRACE))
+        {
+            string itemName = lexer.CurrentIdentifier;
+            lexer.ExpectToken(TokenType.IDENTIFIER);
+            lexer.ExpectToken(TokenType.COLON);
+            Typespec itemType = ParseTypespec();
+            lexer.ExpectToken(TokenType.SEMICOLON);
+
+            items.Add(new StructItem(itemName, itemType));
+        }
+
+        lexer.ExpectToken(TokenType.CLOSE_BRACE);
+
+        StructDecl result = new StructDecl(name, items);
+        return result;
+    }
+
+    private Decl ParseDecl()
+    {
+        if (lexer.MatchToken(TokenType.KEYWORD_VAR))
+        {
+            return ParseVarDecl();
+        }
+        else if (lexer.MatchToken(TokenType.KEYWORD_CONST))
+        {
+            return ParseConstDecl();
+        }
+        else if (lexer.MatchToken(TokenType.KEYWORD_FUNC))
+        {
+            return ParseFuncDecl();
+        }
+        else if (lexer.MatchToken(TokenType.KEYWORD_STRUCT))
+        {
+            return ParseStructDecl();
+        }
+        else
+        {
+            Debug.Assert(false);
+        }
+
+        return null;
+    }
+
+    #endregion
 
     /*private VarDeclAST ParseVarDecl()
     {
@@ -868,6 +1063,63 @@ class Parser
         lexer.NextToken();
         Typespec typespec2 = parser.ParseTypespec();
         Debug.Assert(typespec2 is PtrTypespec);
+        #endregion
+
+        #region Decl Testing
+        lexer.Reset("var test: s32 = 123;");
+        lexer.NextToken();
+        Decl decl = parser.ParseDecl();
+        Debug.Assert(decl is VarDecl);
+        Debug.Assert(lexer.MatchToken(TokenType.EOF));
+
+        lexer.Reset("var test: s32;");
+        lexer.NextToken();
+        Decl decl2 = parser.ParseDecl();
+        Debug.Assert(decl2 is VarDecl);
+        Debug.Assert(lexer.MatchToken(TokenType.EOF));
+
+        lexer.Reset("struct Test { x: s32; y: s32; }");
+        lexer.NextToken();
+        Decl decl3 = parser.ParseDecl();
+        Debug.Assert(decl3 is StructDecl);
+        Debug.Assert(lexer.MatchToken(TokenType.EOF));
+
+        lexer.Reset("const test: s32 = 123;");
+        lexer.NextToken();
+        Decl decl4 = parser.ParseDecl();
+        Debug.Assert(decl4 is ConstDecl);
+        Debug.Assert(lexer.MatchToken(TokenType.EOF));
+
+        lexer.Reset("func test() { ret 123; }");
+        lexer.NextToken();
+        Decl decl5 = parser.ParseDecl();
+        Debug.Assert(decl5 is FunctionDecl);
+        Debug.Assert(lexer.MatchToken(TokenType.EOF));
+
+        lexer.Reset("func test();");
+        lexer.NextToken();
+        Decl decl6 = parser.ParseDecl();
+        Debug.Assert(decl6 is FunctionDecl);
+        Debug.Assert(lexer.MatchToken(TokenType.EOF));
+
+        lexer.Reset("func test() -> s32 { ret 123; }");
+        lexer.NextToken();
+        Decl decl7 = parser.ParseDecl();
+        Debug.Assert(decl7 is FunctionDecl);
+        Debug.Assert(lexer.MatchToken(TokenType.EOF));
+
+        lexer.Reset("func test() -> s32;");
+        lexer.NextToken();
+        Decl decl8 = parser.ParseDecl();
+        Debug.Assert(decl8 is FunctionDecl);
+        Debug.Assert(lexer.MatchToken(TokenType.EOF));
+
+        lexer.Reset("func test(x: s32, y: s32, ...) { ret 123; }");
+        lexer.NextToken();
+        Decl decl9 = parser.ParseDecl();
+        Debug.Assert(decl9 is FunctionDecl);
+        Debug.Assert(lexer.MatchToken(TokenType.EOF));
+
         #endregion
     }
 }

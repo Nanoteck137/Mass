@@ -62,5 +62,35 @@ class FunctionDecl : Decl
     }
 }
 
+/*
+
+    struct Hello {
+        x: int;
+        y: int;
+    }
+
+ */
+
+class StructItem
+{
+    public string Name { get; private set; }
+    public Typespec Type { get; private set; }
+
+    public StructItem(string name, Typespec type)
+    {
+        this.Name = name;
+        this.Type = type;
+    }
+}
+
 // TODO(patrik): Fill out
-class StructDecl : Decl { }
+class StructDecl : Decl
+{
+    public List<StructItem> Items { get; private set; }
+
+    public StructDecl(string name, List<StructItem> items)
+    {
+        this.Name = name;
+        this.Items = items;
+    }
+}
