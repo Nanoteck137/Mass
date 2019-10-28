@@ -18,6 +18,7 @@ namespace Mass
 
             Lexer.Test();
             Parser.Test();
+            Printer.Test();
 
             return;
             /*Parser parser = new Parser(lexer);

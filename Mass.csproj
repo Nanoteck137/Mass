@@ -17,13 +17,11 @@
 
   <ItemGroup>
     <Compile Remove="src\CodeGenerator.cs" />
-    <Compile Remove="src\Printer.cs" />
     <Compile Remove="src\Resolver.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="src\CodeGenerator.cs" />
-    <None Include="src\Printer.cs" />
     <None Include="src\Resolver.cs" />
   </ItemGroup>
 

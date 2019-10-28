@@ -1,38 +1,84 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 
 class Printer
 {
-    private int indent;
+    private static int indent = 0;
 
-    public Printer()
-    {
-        this.indent = 0;
-    }
-
-    public void PrintNewline()
+    public static void PrintNewline()
     {
         string identStr = "                                  ";
         Console.Write("\n{0}", identStr.Substring(0, indent * 2));
     }
 
-    public void PrintExpr(ExprAST expr)
+    public static void PrintExpr(Expr expr)
     {
-        if (expr is IdentifierExprAST ident)
+        if (expr is IntegerExpr integerExpr)
+        {
+            Console.Write("{0}", integerExpr.Value);
+        }
+        else if (expr is FloatExpr floatExpr)
+        {
+            Console.Write("{0}", floatExpr.Value.ToString(CultureInfo.InvariantCulture));
+            if (floatExpr.IsFloat)
+                Console.Write("f");
+        }
+        else if (expr is IdentifierExpr identExpr)
+        {
+            Console.Write("{0}", identExpr.Value);
+        }
+        else if (expr is StringExpr strExpr)
+        {
+            Console.Write("\"{0}\"", strExpr.Value);
+        }
+        else if (expr is BinaryOpExpr binaryOpExpr)
+        {
+            Console.Write("({0} ", binaryOpExpr.Op.ToString());
+            PrintExpr(binaryOpExpr.Left);
+            Console.Write(" ");
+            PrintExpr(binaryOpExpr.Right);
+            Console.Write(")");
+        }
+        else if (expr is CallExpr callExpr)
+        {
+            Console.Write("(");
+            PrintExpr(callExpr.Expr);
+            foreach (Expr arg in callExpr.Arguments)
+            {
+                Console.Write(" ");
+                PrintExpr(arg);
+            }
+            Console.Write(")");
+        }
+        else if (expr is IndexExpr indexExpr)
+        {
+            Console.Write("(index ");
+            PrintExpr(indexExpr.Expr);
+            Console.Write(" ");
+            PrintExpr(indexExpr.Index);
+            Console.Write(")");
+        }
+        else
+        {
+            Debug.Assert(false);
+        }
+
+        /*if (expr is IdentifierExpr ident)
         {
             Console.Write("{0}", ident.Value);
         }
-        else if (expr is IntegerExprAST number)
+        else if (expr is IntegerExpr number)
         {
-            Console.Write("{0}", number.Integer);
+            Console.Write("{0}", number.Value);
         }
-        else if (expr is StringExprAST str)
+        else if (expr is StringExpr str)
         {
             Console.Write("\"{0}\"", str.Value);
         }
-        else if (expr is BinaryOpExprAST binary)
+        else if (expr is BinaryOpExpr binary)
         {
             Console.Write("({0} ", binary.Op.ToString());
             PrintExpr(binary.Left);
@@ -40,11 +86,11 @@ class Printer
             PrintExpr(binary.Right);
             Console.Write(")");
         }
-        else if (expr is CallExprAST call)
+        else if (expr is CallExpr call)
         {
             Console.Write("(");
             PrintExpr(call.Expr);
-            foreach (ExprAST arg in call.Arguments)
+            foreach (Expr arg in call.Arguments)
             {
                 Console.Write(" ");
                 PrintExpr(arg);
@@ -54,24 +100,24 @@ class Printer
         else
         {
             Debug.Assert(false);
-        }
+        }*/
     }
 
-    public void PrintStmt(StmtAST stmt)
+    /*public void PrintStmt(Stmt stmt)
     {
         Debug.Assert(stmt != null);
 
-        if (stmt is ReturnStmtAST returnStmt)
+        if (stmt is ReturnStmt returnStmt)
         {
             Console.Write("(return ");
             PrintExpr(returnStmt.Value);
             Console.Write(")");
         }
-        else if (stmt is ExprStmtAST exprStmt)
+        else if (stmt is ExprStmt exprStmt)
         {
             PrintExpr(exprStmt.Expr);
         }
-        else if (stmt is DeclStmtAST declStmt)
+        else if (stmt is DeclStmt declStmt)
         {
             PrintDecl(declStmt.Decl);
         }
@@ -104,7 +150,7 @@ class Printer
         Console.Write("(block");
         indent++;
 
-        foreach (StmtAST stmt in block.Stmts)
+        foreach (Stmt stmt in block.Stmts)
         {
             PrintNewline();
             PrintStmt(stmt);
@@ -114,11 +160,11 @@ class Printer
         Console.Write(")");
     }
 
-    public void PrintDecl(DeclAST decl)
+    public void PrintDecl(Decl decl)
     {
         Debug.Assert(decl != null);
 
-        if (decl is ConstDeclAST constDecl)
+        if (decl is ConstDecl constDecl)
         {
             Console.Write("(const {0} ", constDecl.Name.Value);
             PrintTypespec(constDecl.Type);
@@ -126,7 +172,7 @@ class Printer
             PrintExpr(constDecl.Value);
             Console.Write(")");
         }
-        else if (decl is VarDeclAST varDecl)
+        else if (decl is VarDecl varDecl)
         {
             Console.Write("(var {0} ", varDecl.Name.Value);
             PrintTypespec(varDecl.Type);
@@ -134,7 +180,7 @@ class Printer
             PrintExpr(varDecl.Value);
             Console.Write(")");
         }
-        else if (decl is FunctionDeclAST funcDecl)
+        else if (decl is FunctionDecl funcDecl)
         {
             Console.Write("(func {0} ", funcDecl.Prototype.Name.Value);
             Console.Write("(");
@@ -168,7 +214,7 @@ class Printer
 
             Console.Write(")");
         }
-        else if (decl is ExternalDeclAST externDecl)
+        else if (decl is ExternalDecl externDecl)
         {
             Console.Write("(external {0} ", externDecl.Prototype.Name);
             Console.Write("(");
@@ -200,69 +246,18 @@ class Printer
         {
             Debug.Assert(false);
         }
-    }
+    }*/
 
-    public void Test()
+    public static void Test()
     {
-        ExprAST[] exprs = new ExprAST[]
-        {
-            new BinaryOpExprAST(new IntegerExprAST(123), new IntegerExprAST(321), Operation.ADD),
-            new CallExprAST(new IdentifierExprAST("fact"), new List<ExprAST>() { new IntegerExprAST(42) }),
-        };
-
-        foreach (ExprAST expr in exprs)
-        {
-            PrintExpr(expr);
-            Console.WriteLine();
-        }
-
-        Console.WriteLine();
-
-        StmtAST[] stmts = new StmtAST[]
-        {
-            new ReturnStmtAST(new IntegerExprAST(32)),
-            new ExprStmtAST(new CallExprAST(new IdentifierExprAST("printf"), new List<ExprAST>() { new IntegerExprAST(123), new IntegerExprAST(321) }))
-        };
-
-        Console.WriteLine();
-
-        foreach (StmtAST stmt in stmts)
-        {
-            PrintStmt(stmt);
-            Console.WriteLine();
-        }
-
-        Console.WriteLine();
-
-        DeclAST[] decls = new DeclAST[] {
-            new ConstDeclAST(new IdentifierExprAST("A"), new IdentifierTypespec(new IdentifierExprAST("i32")), new IntegerExprAST(123)),
-            new VarDeclAST(new IdentifierExprAST("test"), new IdentifierTypespec(new IdentifierExprAST("i32")), new IntegerExprAST(4)),
-        new FunctionDeclAST(
-            new FunctionPrototypeAST(
-                new IdentifierExprAST("add"),
-                new List<FunctionParameter>() {
-                        new FunctionParameter(
-                            new IdentifierExprAST("a"),
-                            new IdentifierTypespec(new IdentifierExprAST("i32"))),
-                        new FunctionParameter(
-                            new IdentifierExprAST("b"),
-                            new IdentifierTypespec(new IdentifierExprAST("i32")))
-                },
-                new IdentifierTypespec(new IdentifierExprAST("i32")),
-                true),
-            new StmtBlock(new List<StmtAST>() {
-                    new ReturnStmtAST(
-                        new BinaryOpExprAST(
-                            new IdentifierExprAST("a"),
-                            new IdentifierExprAST("b"),
-                            Operation.ADD))
-            }))
-        };
-
-        foreach (DeclAST decl in decls)
-        {
-            PrintDecl(decl);
-            Console.WriteLine();
-        }
+        // Integer x
+        // Float x
+        // Identifier
+        // String
+        // BinaryOp x
+        // Call
+        // Index
+        Expr expr = new BinaryOpExpr(new IntegerExpr(123), new FloatExpr(3.14, true), TokenType.PLUS);
+        PrintExpr(expr);
     }
 }
