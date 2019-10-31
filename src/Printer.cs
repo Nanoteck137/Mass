@@ -87,7 +87,6 @@ class Printer
     {
         /*
         ForStmt
-        DeclStmt
         */
 
         if (stmt is StmtBlock stmtBlock)
@@ -179,30 +178,6 @@ class Printer
         }
         else if (stmt is DeclStmt declStmt)
         {
-            Debug.Assert(false);
-        }
-        else
-        {
-            Debug.Assert(false);
-        }
-    }
-
-    /*public void PrintStmt(Stmt stmt)
-    {
-        Debug.Assert(stmt != null);
-
-        if (stmt is ReturnStmt returnStmt)
-        {
-            Console.Write("(return ");
-            PrintExpr(returnStmt.Value);
-            Console.Write(")");
-        }
-        else if (stmt is ExprStmt exprStmt)
-        {
-            PrintExpr(exprStmt.Expr);
-        }
-        else if (stmt is DeclStmt declStmt)
-        {
             PrintDecl(declStmt.Decl);
         }
         else
@@ -211,17 +186,25 @@ class Printer
         }
     }
 
-    public void PrintTypespec(Typespec spec)
+    public static void PrintTypespec(Typespec spec)
     {
-        if (spec is IdentifierTypespec ident)
-        {
-            Console.Write("{0}", ident.Value.Value);
-        }
-        else if (spec is PtrTypespec ptr)
+        if (spec is PtrTypespec ptr)
         {
             Console.Write("(ptr ");
             PrintTypespec(ptr.Type);
             Console.Write(")");
+        }
+        else if (spec is ArrayTypespec array)
+        {
+            Console.Write("(array ");
+            PrintTypespec(array.Type);
+            Console.Write(" ");
+            PrintExpr(array.Size);
+            Console.Write(")");
+        }
+        else if (spec is IdentifierTypespec ident)
+        {
+            Console.Write("{0}", ident.Value.Value);
         }
         else
         {
@@ -229,52 +212,49 @@ class Printer
         }
     }
 
-    public void PrintStmtBlock(StmtBlock block)
+    public static void PrintDecl(Decl decl)
     {
-
-    }
-
-    public void PrintDecl(Decl decl)
-    {
-        Debug.Assert(decl != null);
-
-        if (decl is ConstDecl constDecl)
+        if (decl is VarDecl varDecl)
         {
-            Console.Write("(const {0} ", constDecl.Name.Value);
-            PrintTypespec(constDecl.Type);
+            Console.Write("(var ");
+            Console.Write(varDecl.Name);
             Console.Write(" ");
-            PrintExpr(constDecl.Value);
-            Console.Write(")");
-        }
-        else if (decl is VarDecl varDecl)
-        {
-            Console.Write("(var {0} ", varDecl.Name.Value);
             PrintTypespec(varDecl.Type);
             Console.Write(" ");
             PrintExpr(varDecl.Value);
             Console.Write(")");
         }
+        else if (decl is ConstDecl constDecl)
+        {
+            Console.Write("(const ");
+            Console.Write(constDecl.Name);
+            Console.Write(" ");
+            PrintTypespec(constDecl.Type);
+            Console.Write(" ");
+            PrintExpr(constDecl.Value);
+            Console.Write(")");
+        }
         else if (decl is FunctionDecl funcDecl)
         {
-            Console.Write("(func {0} ", funcDecl.Prototype.Name.Value);
+            Console.Write("(func {0} ", funcDecl.Name);
             Console.Write("(");
 
-            foreach (FunctionParameter param in funcDecl.Prototype.Parameters)
+            foreach (FunctionParameter param in funcDecl.Parameters)
             {
-                Console.Write(" {0} ", param.Name.Value);
+                Console.Write(" {0} ", param.Name);
                 PrintTypespec(param.Type);
             }
 
-            if (funcDecl.Prototype.VarArgs)
+            if (funcDecl.VarArgs)
             {
                 Console.Write(" ...");
             }
 
             Console.Write(" ) ");
 
-            if (funcDecl.Prototype.ReturnType != null)
+            if (funcDecl.ReturnType != null)
             {
-                PrintTypespec(funcDecl.Prototype.ReturnType);
+                PrintTypespec(funcDecl.ReturnType);
             }
             else
             {
@@ -288,39 +268,27 @@ class Printer
 
             Console.Write(")");
         }
-        else if (decl is ExternalDecl externDecl)
+        else if (decl is StructDecl structDecl)
         {
-            Console.Write("(external {0} ", externDecl.Prototype.Name);
-            Console.Write("(");
-            foreach (FunctionParameter param in externDecl.Prototype.Parameters)
+            Console.Write("(struct {0} ", structDecl.Name);
+            indent++;
+
+            foreach (StructItem item in structDecl.Items)
             {
-                Console.Write(" {0} ", param.Name.Value);
-                PrintTypespec(param.Type);
+                PrintNewline();
+                Console.Write("(item {0} ", item.Name);
+                PrintTypespec(item.Type);
+                Console.Write(")");
             }
 
-            if (externDecl.Prototype.VarArgs)
-            {
-                Console.Write(" ...");
-            }
-
-            Console.Write(" ) ");
-
-            if (externDecl.Prototype.ReturnType != null)
-            {
-                PrintTypespec(externDecl.Prototype.ReturnType);
-            }
-            else
-            {
-                Console.Write("void");
-            }
-
+            indent--;
             Console.Write(")");
         }
         else
         {
             Debug.Assert(false);
         }
-    }*/
+    }
 
     public static void Test()
     {
@@ -346,16 +314,7 @@ class Printer
         }
 
         /*
-        StmtBlock x
-        IfStmt x
         ForStmt
-        WhileStmt x
-        DoWhileStmt x
-        ReturnStmt x
-        ContinueStmt x
-        BreakStmt x
-        ExprStmt
-        DeclStmt
         */
 
         Stmt[] stmts = new Stmt[]
@@ -410,11 +369,57 @@ class Printer
                 new StmtBlock(new List<Stmt>() {
                     new ContinueStmt()
                 }))*/
+
+            new DeclStmt(new VarDecl("a", new IdentifierTypespec(new IdentifierExpr("s32")), new IntegerExpr(321)))
         };
 
         foreach (Stmt stmt in stmts)
         {
             PrintStmt(stmt);
+            Console.WriteLine();
+        }
+
+        Typespec[] types = new Typespec[]
+        {
+            new IdentifierTypespec(new IdentifierExpr("s32")),
+            new PtrTypespec(new IdentifierTypespec(new IdentifierExpr("s32"))),
+            new ArrayTypespec(new PtrTypespec(new IdentifierTypespec(new IdentifierExpr("s32"))), new IntegerExpr(4)),
+        };
+
+        foreach (Typespec typespec in types)
+        {
+            PrintTypespec(typespec);
+            Console.WriteLine();
+        }
+
+        Typespec type = new IdentifierTypespec(new IdentifierExpr("s32"));
+        Decl[] decls = new Decl[]
+        {
+            new VarDecl("a", new IdentifierTypespec(new IdentifierExpr("s32")), new IntegerExpr(123)),
+            new ConstDecl("a", new IdentifierTypespec(new IdentifierExpr("s32")), new IntegerExpr(123)),
+            new FunctionDecl(
+                "add",
+                new List<FunctionParameter>()
+                {
+                    new FunctionParameter("a", type),
+                    new FunctionParameter("b", type)
+                },
+                type,
+                false,
+                new StmtBlock(new List<Stmt>() {
+                    new DeclStmt(new VarDecl("a", new IdentifierTypespec(new IdentifierExpr("s32")), new IntegerExpr(321)))
+                })),
+
+            new StructDecl("vec2", new List<StructItem>()
+            {
+                new StructItem("x", new IdentifierTypespec(new IdentifierExpr("f32"))),
+                new StructItem("y", new IdentifierTypespec(new IdentifierExpr("f32"))),
+            }),
+        };
+
+        foreach (Decl decl in decls)
+        {
+            PrintDecl(decl);
             Console.WriteLine();
         }
     }
