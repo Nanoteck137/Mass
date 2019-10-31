@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 
 class Printer
 {
@@ -32,7 +33,7 @@ class Printer
         }
         else if (expr is StringExpr strExpr)
         {
-            Console.Write("\"{0}\"", strExpr.Value);
+            Console.Write("\"{0}\"", Regex.Escape(strExpr.Value));
         }
         else if (expr is BinaryOpExpr binaryOpExpr)
         {
@@ -65,42 +66,125 @@ class Printer
         {
             Debug.Assert(false);
         }
+    }
 
-        /*if (expr is IdentifierExpr ident)
+    public static void PrintStmtBlock(StmtBlock block)
+    {
+        Console.Write("(block");
+        indent++;
+
+        foreach (Stmt stmt in block.Stmts)
         {
-            Console.Write("{0}", ident.Value);
+            PrintNewline();
+            PrintStmt(stmt);
         }
-        else if (expr is IntegerExpr number)
+
+        indent--;
+        Console.Write(")");
+    }
+
+    public static void PrintStmt(Stmt stmt)
+    {
+        /*
+        ForStmt
+        DeclStmt
+        */
+
+        if (stmt is StmtBlock stmtBlock)
         {
-            Console.Write("{0}", number.Value);
+            PrintStmtBlock(stmtBlock);
         }
-        else if (expr is StringExpr str)
+        else if (stmt is IfStmt ifStmt)
         {
-            Console.Write("\"{0}\"", str.Value);
-        }
-        else if (expr is BinaryOpExpr binary)
-        {
-            Console.Write("({0} ", binary.Op.ToString());
-            PrintExpr(binary.Left);
-            Console.Write(" ");
-            PrintExpr(binary.Right);
-            Console.Write(")");
-        }
-        else if (expr is CallExpr call)
-        {
-            Console.Write("(");
-            PrintExpr(call.Expr);
-            foreach (Expr arg in call.Arguments)
+            Console.Write("(if ");
+            PrintExpr(ifStmt.Cond);
+
+            indent++;
+            PrintNewline();
+
+            PrintStmtBlock(ifStmt.ThenBlock);
+
+            foreach (ElseIf elseIf in ifStmt.ElseIfs)
             {
-                Console.Write(" ");
-                PrintExpr(arg);
+                PrintNewline();
+                Console.Write("elseif ");
+                indent++;
+                PrintExpr(elseIf.Cond);
+                PrintNewline();
+                PrintStmtBlock(elseIf.Block);
+                indent--;
             }
+
+            if (ifStmt.ElseBlock != null)
+            {
+                PrintNewline();
+                Console.Write("else ");
+                indent++;
+                PrintNewline();
+                PrintStmtBlock(ifStmt.ElseBlock);
+                indent--;
+            }
+
+            indent--;
+
             Console.Write(")");
+        }
+        else if (stmt is ForStmt forStmt)
+        {
+            Console.Write("(for ");
+
+            PrintStmtBlock(forStmt.Block);
+
+            Console.Write(")");
+        }
+        else if (stmt is WhileStmt whileStmt)
+        {
+            Console.Write("(while ");
+            PrintExpr(whileStmt.Cond);
+
+            indent++;
+            PrintNewline();
+            PrintStmtBlock(whileStmt.Block);
+            indent--;
+
+            Console.Write(")");
+        }
+        else if (stmt is DoWhileStmt doWhileStmt)
+        {
+            Console.Write("(do while ");
+            PrintExpr(doWhileStmt.Cond);
+
+            indent++;
+            PrintNewline();
+            PrintStmtBlock(doWhileStmt.Block);
+            indent--;
+        }
+        else if (stmt is ReturnStmt returnStmt)
+        {
+            Console.Write("(return ");
+            PrintExpr(returnStmt.Value);
+            Console.Write(")");
+        }
+        else if (stmt is ContinueStmt)
+        {
+            Console.Write("(continue)");
+        }
+        else if (stmt is BreakStmt)
+        {
+            Console.Write("(break)");
+        }
+        else if (stmt is ExprStmt exprStmt)
+        {
+            PrintExpr(exprStmt.Expr);
+        }
+        else if (stmt is DeclStmt declStmt)
+        {
+            Debug.Assert(false);
         }
         else
         {
             Debug.Assert(false);
-        }*/
+        }
     }
 
     /*public void PrintStmt(Stmt stmt)
@@ -147,17 +231,7 @@ class Printer
 
     public void PrintStmtBlock(StmtBlock block)
     {
-        Console.Write("(block");
-        indent++;
 
-        foreach (Stmt stmt in block.Stmts)
-        {
-            PrintNewline();
-            PrintStmt(stmt);
-        }
-
-        indent--;
-        Console.Write(")");
     }
 
     public void PrintDecl(Decl decl)
@@ -250,14 +324,98 @@ class Printer
 
     public static void Test()
     {
-        // Integer x
-        // Float x
-        // Identifier
-        // String
-        // BinaryOp x
-        // Call
-        // Index
-        Expr expr = new BinaryOpExpr(new IntegerExpr(123), new FloatExpr(3.14, true), TokenType.PLUS);
-        PrintExpr(expr);
+        Expr[] exprs = new Expr[]
+        {
+            new BinaryOpExpr(new IntegerExpr(123), new FloatExpr(3.14, true), TokenType.PLUS),
+            new CallExpr(
+                new IdentifierExpr("printf"),
+                new List<Expr>()
+                {
+                    new StringExpr("Hello %s\n"),
+                    new IndexExpr(
+                        new IdentifierExpr("arr"),
+                        new IntegerExpr(2)),
+                }
+            ),
+        };
+
+        foreach (Expr expr in exprs)
+        {
+            PrintExpr(expr);
+            Console.WriteLine();
+        }
+
+        /*
+        StmtBlock x
+        IfStmt x
+        ForStmt
+        WhileStmt x
+        DoWhileStmt x
+        ReturnStmt x
+        ContinueStmt x
+        BreakStmt x
+        ExprStmt
+        DeclStmt
+        */
+
+        Stmt[] stmts = new Stmt[]
+        {
+            new IfStmt(
+                new IntegerExpr(1),
+                new StmtBlock(
+                    new List<Stmt>() {
+                        new ReturnStmt(
+                            new IntegerExpr(123)),
+                        new ContinueStmt(),
+                        new BreakStmt()
+                    }),
+                new List<ElseIf>() {
+                    new ElseIf(
+                        new IntegerExpr(1),
+                        new StmtBlock(
+                            new List<Stmt>() {
+                                new BreakStmt()
+                            }))
+                },
+                new StmtBlock(
+                    new List<Stmt>() {
+                        new ContinueStmt()
+                    }
+                )),
+
+            new WhileStmt(
+                new IntegerExpr(1),
+                new StmtBlock(
+                    new List<Stmt>()
+                    {
+                        new BreakStmt()
+                    })),
+
+            new DoWhileStmt(
+                new IntegerExpr(1),
+                new StmtBlock(
+                    new List<Stmt>()
+                    {
+                        new BreakStmt()
+                    })),
+
+            /*new ForStmt(
+                new DeclStmt(
+                    new VarDecl("i",
+                    new IdentifierTypespec(
+                        new IdentifierExpr("s32")),
+                    new IntegerExpr(0))),
+                null,
+                null,
+                new StmtBlock(new List<Stmt>() {
+                    new ContinueStmt()
+                }))*/
+        };
+
+        foreach (Stmt stmt in stmts)
+        {
+            PrintStmt(stmt);
+            Console.WriteLine();
+        }
     }
 }

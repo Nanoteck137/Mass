@@ -16,11 +16,10 @@ namespace Mass
             //Lexer lexer = new Lexer("test.ma", fileContent);
             //lexer.NextToken();
 
-            Lexer.Test();
-            Parser.Test();
+            // Lexer.Test();
+            // Parser.Test();
             Printer.Test();
 
-            return;
             /*Parser parser = new Parser(lexer);
 
             List<DeclAST> root = parser.Parse();
