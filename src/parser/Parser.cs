@@ -251,7 +251,7 @@ class Parser
             if (lexer.MatchToken(TokenType.KEYWORD_IF))
             {
                 if (elseBlock != null)
-                    lexer.Error("Else block needs to be at the bottom of the if stmt", SourceSpan.FromTo(elseStart, elseBlock.Span));
+                    Log.Error("Else block needs to be at the bottom of the if stmt", SourceSpan.FromTo(elseStart, elseBlock.Span));
                 lexer.NextToken();
 
                 lexer.ExpectToken(TokenType.OPEN_PAREN);
@@ -267,7 +267,7 @@ class Parser
                 lastSpan = block.Span;
 
                 if (elseBlock != null)
-                    lexer.Error("Multiple elses", SourceSpan.FromTo(span, lastSpan));
+                    Log.Error("Multiple elses", SourceSpan.FromTo(span, lastSpan));
                 else
                 {
                     elseBlock = block;
@@ -434,7 +434,7 @@ class Parser
             else
             {
                 // TODO: Better message
-                lexer.Fatal("Var decls is only supported decls in decls");
+                Log.Fatal("Var decls is only supported decls in decls", null);
                 return null;
             }
         }
@@ -601,7 +601,7 @@ class Parser
                 {
                     if (varArgs)
                     {
-                        lexer.Error("Multiple ellipsis in function decl", lexer.CurrentTokenSpan);
+                        Log.Error("Multiple ellipsis in function decl", lexer.CurrentTokenSpan);
                     }
 
                     varArgsSpan = lexer.CurrentTokenSpan;
@@ -613,7 +613,7 @@ class Parser
                 {
                     if (varArgs)
                     {
-                        lexer.Error("Ellipsis must be last parameter in function decl", varArgsSpan);
+                        Log.Error("Ellipsis must be last parameter in function decl", varArgsSpan);
                     }
                     parameters.Add(ParseFuncParam());
                 }
@@ -673,23 +673,64 @@ class Parser
         return result;
     }
 
+    private List<DeclAttribute> ParseDeclAttributes()
+    {
+        List<DeclAttribute> result = new List<DeclAttribute>();
+
+        if (lexer.MatchToken(TokenType.HASHTAG))
+        {
+            while (lexer.MatchToken(TokenType.HASHTAG))
+            {
+                lexer.NextToken();
+                string name = lexer.CurrentIdentifier;
+                lexer.ExpectToken(TokenType.IDENTIFIER);
+
+                if (name == "external")
+                {
+                    result.Add(new ExternalDeclAttribute());
+                }
+                else if (name == "inline")
+                {
+                    result.Add(new InlineDeclAttribute());
+                }
+                else
+                {
+                    //TODO(patrik): Error or warning
+                    Debug.Assert(false);
+                }
+            }
+        }
+
+        return result;
+    }
+
     private Decl ParseDecl()
     {
+        List<DeclAttribute> attributes = ParseDeclAttributes();
+
         if (lexer.MatchToken(TokenType.KEYWORD_VAR))
         {
-            return ParseVarDecl();
+            Decl decl = ParseVarDecl();
+            decl.Attributes = attributes;
+            return decl;
         }
         else if (lexer.MatchToken(TokenType.KEYWORD_CONST))
         {
-            return ParseConstDecl();
+            Decl decl = ParseConstDecl();
+            decl.Attributes = attributes;
+            return decl;
         }
         else if (lexer.MatchToken(TokenType.KEYWORD_FUNC))
         {
-            return ParseFuncDecl();
+            Decl decl = ParseFuncDecl();
+            decl.Attributes = attributes;
+            return decl;
         }
         else if (lexer.MatchToken(TokenType.KEYWORD_STRUCT))
         {
-            return ParseStructDecl();
+            Decl decl = ParseStructDecl();
+            decl.Attributes = attributes;
+            return decl;
         }
 
         return null;

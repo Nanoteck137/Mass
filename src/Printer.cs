@@ -266,10 +266,13 @@ class Printer
                 Console.Write("void");
             }
 
-            indent++;
-            PrintNewline();
-            PrintStmtBlock(funcDecl.Body);
-            indent--;
+            if (funcDecl.Body != null)
+            {
+                indent++;
+                PrintNewline();
+                PrintStmtBlock(funcDecl.Body);
+                indent--;
+            }
 
             Console.Write(")");
         }

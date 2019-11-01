@@ -82,48 +82,6 @@ enum TokenMod
     FLOAT,
 }
 
-class SourceSpan
-{
-    public int FromLineNumber { get; set; }
-    public int FromColumnNumber { get; set; }
-
-    public int ToLineNumber { get; set; }
-    public int ToColumnNumber { get; set; }
-
-    public SourceSpan(int lineNumber, int columnNumber)
-    {
-        this.FromLineNumber = lineNumber;
-        this.FromColumnNumber = columnNumber;
-
-        this.ToLineNumber = lineNumber;
-        this.ToColumnNumber = columnNumber;
-    }
-
-    public SourceSpan(int fromLineNumber, int fromLineColumn, int toLineNumber, int toColumnNumber)
-    {
-        this.FromLineNumber = fromLineNumber;
-        this.FromColumnNumber = fromLineColumn;
-
-        this.ToLineNumber = toLineNumber;
-        this.ToColumnNumber = toColumnNumber;
-    }
-
-    public SourceSpan Clone()
-    {
-        return new SourceSpan(this.FromLineNumber, this.FromColumnNumber, this.ToLineNumber, this.ToColumnNumber);
-    }
-
-    public override string ToString()
-    {
-        return string.Format("({0}:{1}, {2}:{3})", this.FromLineNumber, this.FromColumnNumber, this.ToLineNumber, this.ToColumnNumber);
-    }
-
-    public static SourceSpan FromTo(SourceSpan from, SourceSpan to)
-    {
-        return new SourceSpan(from.FromLineNumber, from.FromColumnNumber, to.ToLineNumber, to.ToColumnNumber);
-    }
-}
-
 class Lexer
 {
     public string FileName { get; private set; }
@@ -197,7 +155,7 @@ class Lexer
     {
         this.text = text.Replace("\r\n", "\n").Replace("\r", "");
         this.ptr = 0;
-        this.currentTokenSpan = new SourceSpan(1, 1, 1, 1);
+        this.currentTokenSpan = new SourceSpan(this.FileName, 1, 1, 1, 1);
 
         ResetToken();
     }
@@ -214,29 +172,13 @@ class Lexer
         CurrentFloat = 0.0;
     }
 
-    public void Fatal(string message)
-    {
-        Console.WriteLine("{0}: fatal error: {1}", FileName, message);
-        Debugger.Break();
-        Environment.Exit(-1);
-    }
 
-    public void Error(string message, SourceSpan span)
-    {
-        //TODO: Add Error recovery
-        Console.WriteLine("{0}({1}:{2}, {3}:{4}): error: {5}", FileName, span.FromLineNumber, span.FromColumnNumber, span.ToLineNumber, span.ToColumnNumber, message);
-    }
-
-    public void Warning(string message, SourceSpan span)
-    {
-        Console.WriteLine("{0}({1}:{2}, {3}:{4}): warning: {5}", FileName, span.FromLineNumber, span.FromColumnNumber, span.ToLineNumber, span.ToColumnNumber, message);
-    }
 
     public void ExpectToken(TokenType type, bool skip = true)
     {
         if (CurrentToken != type)
         {
-            Error(string.Format("Unexpected token '{0}' expected '{1}'", CurrentToken.ToString(), type.ToString()), currentTokenSpan);
+            Log.Error($"Unexpected token '{CurrentToken.ToString()}' expected '{type.ToString()}'", currentTokenSpan);
             Debug.Assert(false);
         }
         else
@@ -553,12 +495,11 @@ class Lexer
 
                     if (ptr >= text.Length)
                     {
-                        Error("String never ends", new SourceSpan(currentTokenSpan.FromLineNumber,
-                                                                  currentTokenSpan.FromLineNumber,
-                                                                  currentTokenSpan.FromLineNumber,
-                                                                  currentTokenSpan.FromLineNumber + 1));
-                        //TODO: Add a fatal method to terminate the lexer
-                        Debug.Assert(false);
+                        Log.Fatal("String never ends", new SourceSpan(currentTokenSpan.FileName,
+                                                                      currentTokenSpan.FromLineNumber,
+                                                                      currentTokenSpan.FromLineNumber,
+                                                                      currentTokenSpan.FromLineNumber,
+                                                                      currentTokenSpan.FromLineNumber + 1));
                     }
                 }
 

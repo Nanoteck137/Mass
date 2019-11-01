@@ -17,13 +17,19 @@ namespace Mass
 
             string fileContent = File.ReadAllText("test.ma");
 
-            Lexer lexer = new Lexer("test.ma", fileContent);
+            /*Lexer lexer = new Lexer("test.ma", fileContent);
             lexer.NextToken();
 
             Parser parser = new Parser(lexer);
 
             List<Decl> root = parser.Parse();
-            Printer.PrintDeclList(root);
+            Printer.PrintDeclList(root);*/
+
+            SourceSpan span = new SourceSpan("test.ma", 1, 1, 2, 10);
+            Log.Note("This is a note message", span);
+            Log.Error("This is a error message", span);
+            Log.Warning("This is a warning message", span);
+            Log.Fatal("This is a fatal message", span);
 
             /*Printer printer = new Printer();
             //printer.Test();

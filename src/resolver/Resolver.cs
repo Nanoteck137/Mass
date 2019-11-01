@@ -194,7 +194,7 @@ class Resolver
             Symbol symbol = ResolveName(identSpec.Value.Value);
             if (symbol.Kind != SymbolKind.TYPE)
             {
-                lexer.Fatal(string.Format("{0} is not a type", symbol.Name));
+                Log.Fatal($"{symbol.Name} is not a type", spec.Span);
             }
             return symbol.Type;
         }
@@ -217,12 +217,12 @@ class Resolver
 
         if (!(left.Type is IntType))
         {
-            lexer.Fatal("Left operand of + is not int");
+            Log.Fatal("Left operand of + is not int", expr.Span);
         }
 
         if (right.Type.GetType() != left.Type.GetType())
         {
-            lexer.Fatal("Left and Right operand of + must have same type");
+            Log.Fatal("Left and Right operand of + must have same type", expr.Span);
         }
 
         Type type = left.Type;
@@ -258,7 +258,7 @@ class Resolver
         }
         else
         {
-            lexer.Fatal(string.Format("{0} must denote a var or const", ident.Value));
+            Log.Fatal($"{ident.Value} must denote a var or const", ident.Span);
         }
 
         return null;
@@ -273,7 +273,7 @@ class Resolver
         ResolvedExpr func = ResolveExpr(call.Expr);
         if (!(func.Type is FunctionType))
         {
-            lexer.Fatal("Trying to call a non-function value");
+            Log.Fatal("Trying to call a non-function value", call.Span);
         }
 
         FunctionType funcType = (FunctionType)func.Type;
@@ -331,7 +331,7 @@ class Resolver
 
         if (!result.Type.Equals(type))
         {
-            lexer.Fatal("Declared var type does not match inferred type");
+            Log.Fatal("Declared var type does not match inferred type", null);
         }
 
         return type;
@@ -360,7 +360,7 @@ class Resolver
             ResolvedExpr expr = ResolveExpr(returnStmt.Value);
             if (!returnType.Equals(expr.Type))
             {
-                lexer.Fatal("Return type mismatch");
+                Log.Fatal("Return type mismatch", stmt.Span);
             }
         }
         else if (stmt is DeclStmt declStmt)
@@ -373,14 +373,14 @@ class Resolver
 
                 if (!result.Type.Equals(type))
                 {
-                    lexer.Fatal("Declared var type does not match inferred type");
+                    Log.Fatal("Declared var type does not match inferred type", null);
                 }
 
                 PushVar(varDecl.Name, type);
             }
             else
             {
-                lexer.Fatal("Only supports var decls in other decls");
+                Log.Fatal("Only supports var decls in other decls", null);
             }
         }
         else if (stmt is ExprStmt exprStmt)
@@ -433,7 +433,7 @@ class Resolver
 
         if (symbol.State == SymbolState.RESOLVING)
         {
-            lexer.Fatal("Cyclic Dependency");
+            Log.Fatal("Cyclic Dependency", null);
             return;
         }
 
@@ -468,7 +468,7 @@ class Resolver
         Symbol sym = GetSymbol(name);
         if (sym == null)
         {
-            lexer.Fatal(string.Format("Unknown symbol name: '{0}'", name));
+            Log.Fatal($"Unknown symbol name: '{name}'", null);
         }
 
         ResolveSymbol(sym);

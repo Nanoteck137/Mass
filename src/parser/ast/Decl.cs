@@ -2,9 +2,16 @@
 using System.Collections.Generic;
 using System.Text;
 
+abstract class DeclAttribute { }
+
+// TODO(patrik): Add an alias to the external function if the user wants it
+class ExternalDeclAttribute : DeclAttribute { }
+class InlineDeclAttribute : DeclAttribute { }
+
 abstract class Decl
 {
     public string Name { get; protected set; }
+    public List<DeclAttribute> Attributes { get; set; }
 }
 
 class VarDecl : Decl
@@ -62,15 +69,6 @@ class FunctionDecl : Decl
     }
 }
 
-/*
-
-    struct Hello {
-        x: int;
-        y: int;
-    }
-
- */
-
 class StructItem
 {
     public string Name { get; private set; }
@@ -83,7 +81,6 @@ class StructItem
     }
 }
 
-// TODO(patrik): Fill out
 class StructDecl : Decl
 {
     public List<StructItem> Items { get; private set; }
