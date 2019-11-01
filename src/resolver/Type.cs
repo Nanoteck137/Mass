@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 abstract class Type
@@ -18,7 +19,15 @@ abstract class Type
 
     public static void Test()
     {
+        Type type1 = new PtrType(Type.S32Type);
+        Type type2 = new PtrType(Type.U32Type);
+        Debug.Assert(type1 != type2);
 
+        Type type3 = new PtrType(Type.U32Type);
+        int hash1 = type3.GetHashCode();
+        Type type4 = new PtrType(Type.U32Type);
+        int hash2 = type4.GetHashCode();
+        Debug.Assert(type3 == type4);
     }
 }
 
@@ -66,6 +75,11 @@ class PtrType : Type
         return base.Equals(obj);
     }
 
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(this.Base);
+    }
+
     public static bool operator ==(PtrType obj1, PtrType obj2)
     {
         if (ReferenceEquals(obj1, obj2))
@@ -73,17 +87,17 @@ class PtrType : Type
             return true;
         }
 
-        if (obj1 is null)
+        if (obj1 == null)
         {
             return false;
         }
 
-        if (obj2 is null)
+        if (obj2 == null)
         {
             return false;
         }
 
-        return obj1.Equals(obj2);
+        return obj1.Base.Equals(obj2.Base);
     }
 
     public static bool operator !=(PtrType obj1, PtrType obj2)

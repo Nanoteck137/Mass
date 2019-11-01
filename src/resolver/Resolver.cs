@@ -5,6 +5,7 @@ using System.Diagnostics;
 enum SymbolKind
 {
     NONE,
+
     VAR,
     CONST,
     FUNC,
@@ -61,18 +62,13 @@ class ResolvedExpr
 
 class Resolver
 {
-    //TODO: Remove the lexer dependency, used for error and fatal messages
-    private Lexer lexer;
-
     private List<Symbol> localSymbols;
     private Dictionary<string, Symbol> globalSymbols;
 
     public List<Symbol> ResolvedSymbols { get; private set; }
 
-    public Resolver(Lexer lexer)
+    public Resolver()
     {
-        this.lexer = lexer;
-
         localSymbols = new List<Symbol>();
         globalSymbols = new Dictionary<string, Symbol>();
         ResolvedSymbols = new List<Symbol>();
@@ -82,10 +78,10 @@ class Resolver
         AddGlobalType("u32", Type.U32Type);
         AddGlobalType("u64", Type.U64Type);
 
-        AddGlobalType("s8", Type.U8Type);
-        AddGlobalType("s16", Type.U16Type);
-        AddGlobalType("s32", Type.U32Type);
-        AddGlobalType("s64", Type.U64Type);
+        AddGlobalType("s8", Type.S8Type);
+        AddGlobalType("s16", Type.S16Type);
+        AddGlobalType("s32", Type.S32Type);
+        AddGlobalType("s64", Type.S64Type);
     }
 
     private void AddGlobalType(string name, Type type)
@@ -187,7 +183,7 @@ class Resolver
         localSymbols.RemoveRange(index, count);
     }
 
-    public Type ResolveTypespec(Typespec spec)
+    /*public Type ResolveTypespec(Typespec spec)
     {
         if (spec is IdentifierTypespec identSpec)
         {
@@ -335,7 +331,7 @@ class Resolver
         }
 
         return type;
-    }
+    }*/
 
     /*public Type ResolveFuncPrototype(FunctionPrototype prototype)
     {
@@ -353,7 +349,7 @@ class Resolver
         return new FunctionType(parameters, returnType, prototype.VarArgs);
     }*/
 
-    public void ResolveStmt(Stmt stmt, Type returnType)
+    /*public void ResolveStmt(Stmt stmt, Type returnType)
     {
         if (stmt is ReturnStmt returnStmt)
         {
@@ -421,7 +417,7 @@ class Resolver
 
         ResolveStmtBlock(decl.Body, returnType);
         LeaveScope(scope);
-    }
+    }*/
 
 
     public void ResolveSymbol(Symbol symbol)
@@ -439,7 +435,35 @@ class Resolver
 
         symbol.State = SymbolState.RESOLVING;
 
+        /*
+        VarDecl
+        ConstDecl
+        FunctionDecl
+        StructDecl
+         */
+
         if (symbol.Decl is VarDecl varDecl)
+        {
+
+        }
+        else if (symbol.Decl is ConstDecl constDecl)
+        {
+
+        }
+        else if (symbol.Decl is FunctionDecl funcDecl)
+        {
+
+        }
+        else if (symbol.Decl is StructDecl structDecl)
+        {
+
+        }
+        else
+        {
+            Debug.Assert(false);
+        }
+
+        /*if (symbol.Decl is VarDecl varDecl)
         {
             symbol.Type = ResolveVarDecl(varDecl); //ResolveTypespec(varDecl.Type);
         }
@@ -457,7 +481,7 @@ class Resolver
         else
         {
             Debug.Assert(false);
-        }
+        }*/
 
         symbol.State = SymbolState.RESOLVED;
         ResolvedSymbols.Add(symbol);
