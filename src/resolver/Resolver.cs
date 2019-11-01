@@ -2,43 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
-enum SymbolKind
-{
-    NONE,
-
-    VAR,
-    CONST,
-    FUNC,
-    TYPE
-}
-
-enum SymbolState
-{
-    UNRESOLVED,
-    RESOLVING,
-    RESOLVED
-}
-
-class Symbol
-{
-    public string Name { get; private set; }
-    public SymbolKind Kind { get; private set; }
-    public SymbolState State { get; set; }
-    public Decl Decl { get; private set; }
-    public Type Type { get; set; }
-    public ulong Val { get; set; }
-
-    public Symbol(string name, SymbolKind kind, SymbolState state, Decl decl)
-    {
-        this.Name = name;
-        this.State = state;
-        this.Kind = kind;
-        this.Decl = decl;
-        this.Type = null;
-        this.Val = 0;
-    }
-}
-
 class ResolvedExpr
 {
     public Type Type { get; private set; }
@@ -419,6 +382,107 @@ class Resolver
         LeaveScope(scope);
     }*/
 
+    private ResolvedExpr ResolveIdentifierExpr(IdentifierExpr expr)
+    {
+        Symbol symbol = ResolveName(expr.Value);
+        if (symbol.Kind == SymbolKind.VAR)
+        {
+            return ResolvedLValue(symbol.Type);
+        }
+        else if (symbol.Kind == SymbolKind.CONST)
+        {
+            return ResolvedConst(symbol.Val);
+        }
+        else
+        {
+            Log.Fatal($"{expr.Value} must be a var or const", null);
+        }
+
+        return null;
+    }
+
+    private ResolvedExpr ResolveExpr(Expr expr)
+    {
+        /*
+        IntegerExpr x
+        FloatExpr
+        IdentifierExpr
+        StringExpr
+        BinaryOpExpr
+        CallExpr
+        IndexExpr
+         */
+        if (expr is IntegerExpr integerExpr)
+        {
+            return ResolvedConst(integerExpr.Value);
+        }
+        else if (expr is IdentifierExpr identExpr)
+        {
+            return ResolveIdentifierExpr(identExpr);
+        }
+        else
+        {
+            Debug.Assert(false);
+        }
+
+        Debug.Assert(false);
+        return null;
+    }
+
+    private Type ResolveTypespec(Typespec typespec)
+    {
+        /*
+         PtrTypespec
+         ArrayTypespec
+         IdentifierTypespec
+         */
+
+        if (typespec is IdentifierTypespec identTypespec)
+        {
+            Symbol symbol = ResolveName(identTypespec.Value.Value);
+            return symbol.Type;
+        }
+        else
+        {
+            Debug.Assert(false);
+        }
+
+        return null;
+    }
+
+    private Type ResolveVarDecl(VarDecl decl)
+    {
+        Type type = ResolveTypespec(decl.Type);
+
+        if (decl.Value != null)
+        {
+            ResolvedExpr expr = ResolveExpr(decl.Value);
+            if (expr.Type != type)
+            {
+                Log.Fatal("Var type value mismatch", null);
+            }
+        }
+
+        return type;
+    }
+
+    private Type ResolveConstDecl(ConstDecl decl)
+    {
+        Debug.Assert(false);
+        return null;
+    }
+
+    private Type ResolveFuncDecl(FunctionDecl decl)
+    {
+        Debug.Assert(false);
+        return null;
+    }
+
+    private Type ResolveStructDecl(StructDecl decl)
+    {
+        Debug.Assert(false);
+        return null;
+    }
 
     public void ResolveSymbol(Symbol symbol)
     {
@@ -444,19 +508,19 @@ class Resolver
 
         if (symbol.Decl is VarDecl varDecl)
         {
-
+            symbol.Type = ResolveVarDecl(varDecl);
         }
         else if (symbol.Decl is ConstDecl constDecl)
         {
-
+            symbol.Type = ResolveConstDecl(constDecl);
         }
         else if (symbol.Decl is FunctionDecl funcDecl)
         {
-
+            symbol.Type = ResolveFuncDecl(funcDecl);
         }
         else if (symbol.Decl is StructDecl structDecl)
         {
-
+            symbol.Type = ResolveStructDecl(structDecl);
         }
         else
         {
@@ -508,8 +572,10 @@ class Resolver
         }
     }
 
-    public void Test()
+    public static void Test()
     {
+        Resolver resolver = new Resolver();
+
         /*Debug.Assert(GetSymbol("foo") == null);
 
         VarDecl decl = new VarDecl(new Identifier("foo"), new IdentifierTypespec(new Identifier("i32")), new Number(123));
@@ -530,7 +596,7 @@ class Resolver
 
         ResolveSymbol(sym);*/
 
-        int scope1 = EnterScope();
+        /*int scope1 = EnterScope();
 
         PushVar("a", Type.U32Type);
         PushVar("b", Type.U32Type);
@@ -553,53 +619,22 @@ class Resolver
         LeaveScope(scope1);
 
         Debug.Assert(GetSymbol("a") == null);
-        Debug.Assert(GetSymbol("b") == null);
+        Debug.Assert(GetSymbol("b") == null);*/
 
         Decl[] decls = new Decl[]
         {
-            new ConstDecl(
-                "A",
-                new IdentifierTypespec(
-                    new IdentifierExpr("s32")),
-                new IntegerExpr(123)),
-
             new VarDecl(
-                "b",
+                "test",
                 new IdentifierTypespec(
-                    new IdentifierExpr("s32")),
-                new BinaryOpExpr(
-                    new IdentifierExpr("A"),
-                    new IntegerExpr(321),
-                    TokenType.PLUS)),
-
-            /*new FunctionDecl(
-                new FunctionPrototype(
-                    new IdentifierExpr("add"),
-                    new List<FunctionParameter>() {
-                        new FunctionParameter(
-                            new IdentifierExpr("a"),
-                            new IdentifierTypespec(new IdentifierExpr("s32"))),
-                        new FunctionParameter(
-                            new IdentifierExpr("b"),
-                            new IdentifierTypespec(new IdentifierExpr("s32")))
-                    },
-                    new IdentifierTypespec(
-                        new IdentifierExpr("s32")),
-                    true),
-                new StmtBlock(new List<Stmt>() {
-                    new ReturnStmt(
-                        new BinaryOpExpr(
-                            new IdentifierExpr("a"),
-                            new IdentifierExpr("b"),
-                            Operation.ADD))
-            }))*/
+                    new IdentifierExpr("u32")),
+                new IntegerExpr(123))
         };
 
         foreach (Decl decl in decls)
         {
-            AddSymbol(decl);
+            resolver.AddSymbol(decl);
         }
 
-        ResolveSymbols();
+        resolver.ResolveSymbols();
     }
 }

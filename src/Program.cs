@@ -14,8 +14,8 @@ namespace Mass
             // Lexer.Test();
             // Parser.Test();
             // Printer.Test();
-
-            Type.Test();
+            // Type.Test();
+            Resolver.Test();
 
             string fileContent = File.ReadAllText("test.ma");
 
