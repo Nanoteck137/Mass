@@ -11,20 +11,21 @@ namespace Mass
     {
         static void Main(string[] args)
         {
-            string fileContent = File.ReadAllText("test.ma");
-
-            //Lexer lexer = new Lexer("test.ma", fileContent);
-            //lexer.NextToken();
-
             // Lexer.Test();
             // Parser.Test();
-            Printer.Test();
+            // Printer.Test();
 
-            /*Parser parser = new Parser(lexer);
+            string fileContent = File.ReadAllText("test.ma");
 
-            List<DeclAST> root = parser.Parse();
+            Lexer lexer = new Lexer("test.ma", fileContent);
+            lexer.NextToken();
 
-            Printer printer = new Printer();
+            Parser parser = new Parser(lexer);
+
+            List<Decl> root = parser.Parse();
+            Printer.PrintDeclList(root);
+
+            /*Printer printer = new Printer();
             //printer.Test();
             foreach (DeclAST decl in root)
             {

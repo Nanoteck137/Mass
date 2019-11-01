@@ -2,7 +2,7 @@
 // const B: i32 = A;
 // const A: i32 = 1 + 2;
 
-external func printf(format: u8*, ...) -> s32;
+// external func printf(format: u8*, ...) -> s32;
 
 func test() {
 	printf("Hello World\n");

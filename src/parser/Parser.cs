@@ -119,6 +119,8 @@ class Parser
                 SourceSpan lastSpan = lexer.CurrentTokenSpan;
                 lexer.ExpectToken(TokenType.CLOSE_PAREN);
 
+                lexer.ExpectToken(TokenType.SEMICOLON);
+
                 expr = new CallExpr(expr, arguments)
                 {
                     Span = SourceSpan.FromTo(firstSpan, lastSpan)
@@ -418,8 +420,23 @@ class Parser
         }
         else
         {
-            Debug.Assert(false);
-            return null;
+            Decl decl = ParseDecl();
+            if (decl == null)
+            {
+                Expr expr = ParseExpr();
+                return new ExprStmt(expr);
+            }
+
+            if (decl is VarDecl)
+            {
+                return new DeclStmt(decl);
+            }
+            else
+            {
+                // TODO: Better message
+                lexer.Fatal("Var decls is only supported decls in decls");
+                return null;
+            }
         }
     }
     #endregion
@@ -674,15 +691,23 @@ class Parser
         {
             return ParseStructDecl();
         }
-        else
-        {
-            Debug.Assert(false);
-        }
 
         return null;
     }
 
     #endregion
+
+    public List<Decl> Parse()
+    {
+        List<Decl> result = new List<Decl>();
+
+        while (!lexer.MatchToken(TokenType.EOF))
+        {
+            result.Add(ParseDecl());
+        }
+
+        return result;
+    }
 
     public static void Test()
     {

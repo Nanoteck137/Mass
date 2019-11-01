@@ -253,6 +253,9 @@ class Lexer
 
     private void RemoveComments()
     {
+        if (ptr >= text.Length)
+            return;
+
         if (text[ptr] == '/' && text[ptr + 1] == '/')
         {
             while (ptr < text.Length && text[ptr] == '/' && text[ptr + 1] == '/')

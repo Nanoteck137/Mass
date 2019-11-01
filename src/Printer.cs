@@ -47,11 +47,16 @@ class Printer
         {
             Console.Write("(");
             PrintExpr(callExpr.Expr);
+            Console.Write(" ");
+
+            Console.Write("(");
             foreach (Expr arg in callExpr.Arguments)
             {
                 Console.Write(" ");
                 PrintExpr(arg);
             }
+            Console.Write(")");
+
             Console.Write(")");
         }
         else if (expr is IndexExpr indexExpr)
@@ -287,6 +292,16 @@ class Printer
         else
         {
             Debug.Assert(false);
+        }
+    }
+
+    public static void PrintDeclList(List<Decl> decls)
+    {
+        foreach (Decl decl in decls)
+        {
+            PrintDecl(decl);
+            Console.WriteLine();
+            Console.WriteLine();
         }
     }
 
