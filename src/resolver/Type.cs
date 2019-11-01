@@ -24,10 +24,51 @@ abstract class Type
         Debug.Assert(type1 != type2);
 
         Type type3 = new PtrType(Type.U32Type);
-        int hash1 = type3.GetHashCode();
         Type type4 = new PtrType(Type.U32Type);
-        int hash2 = type4.GetHashCode();
         Debug.Assert(type3 == type4);
+
+        Type type5 = new ArrayType(Type.U32Type, 3);
+        Type type6 = new ArrayType(Type.U32Type, 3);
+        Debug.Assert(type5 == type6);
+
+        Type type7 = Type.U32Type;
+        Type type8 = Type.U32Type;
+        Debug.Assert(type7 == type8);
+    }
+
+    public override bool Equals(object obj)
+    {
+        return base.Equals(obj);
+    }
+
+    public override int GetHashCode()
+    {
+        return base.GetHashCode();
+    }
+
+    public static bool operator ==(Type obj1, Type obj2)
+    {
+        if (obj1 is null)
+        {
+            return false;
+        }
+
+        if (obj2 is null)
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(obj1, obj2))
+        {
+            return true;
+        }
+
+        return obj1.Equals(obj2);
+    }
+
+    public static bool operator !=(Type obj1, Type obj2)
+    {
+        return !(obj1 == obj2);
     }
 }
 
@@ -51,6 +92,23 @@ class IntType : Type
     public IntType(IntKind kind)
     {
         this.Kind = kind;
+    }
+
+    public override bool Equals(object obj)
+    {
+        if (GetType() == obj.GetType())
+        {
+            IntType other = (IntType)obj;
+            if (Kind == other.Kind)
+                return true;
+        }
+
+        return base.Equals(obj);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(base.GetHashCode(), this.Kind);
     }
 }
 
@@ -79,30 +137,34 @@ class PtrType : Type
     {
         return HashCode.Combine(this.Base);
     }
+}
 
-    public static bool operator ==(PtrType obj1, PtrType obj2)
+class ArrayType : Type
+{
+    public Type Base { get; private set; }
+    public ulong Size { get; private set; }
+
+    public ArrayType(Type basee, ulong size)
     {
-        if (ReferenceEquals(obj1, obj2))
-        {
-            return true;
-        }
-
-        if (obj1 == null)
-        {
-            return false;
-        }
-
-        if (obj2 == null)
-        {
-            return false;
-        }
-
-        return obj1.Base.Equals(obj2.Base);
+        this.Base = basee;
+        this.Size = size;
     }
 
-    public static bool operator !=(PtrType obj1, PtrType obj2)
+    public override bool Equals(object obj)
     {
-        return !(obj1 == obj2);
+        if (GetType() == obj.GetType())
+        {
+            ArrayType other = (ArrayType)obj;
+            if (Base.Equals(other.Base) && this.Size == other.Size)
+                return true;
+        }
+
+        return base.Equals(obj);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(this.Base, this.Size);
     }
 }
 
