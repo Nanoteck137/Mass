@@ -5,34 +5,37 @@ using System.Text;
 
 abstract class Type
 {
-    public static Type U8Type { get; } = new IntType(IntKind.U8);
-    public static Type U16Type { get; } = new IntType(IntKind.U16);
-    public static Type U32Type { get; } = new IntType(IntKind.U32);
-    public static Type U64Type { get; } = new IntType(IntKind.U64);
+    public static Type U8 { get; } = new IntType(IntKind.U8);
+    public static Type U16 { get; } = new IntType(IntKind.U16);
+    public static Type U32 { get; } = new IntType(IntKind.U32);
+    public static Type U64 { get; } = new IntType(IntKind.U64);
 
-    public static Type S8Type { get; } = new IntType(IntKind.S8);
-    public static Type S16Type { get; } = new IntType(IntKind.S16);
-    public static Type S32Type { get; } = new IntType(IntKind.S32);
-    public static Type S64Type { get; } = new IntType(IntKind.S64);
+    public static Type S8 { get; } = new IntType(IntKind.S8);
+    public static Type S16 { get; } = new IntType(IntKind.S16);
+    public static Type S32 { get; } = new IntType(IntKind.S32);
+    public static Type S64 { get; } = new IntType(IntKind.S64);
+
+    public static Type F32 { get; } = new FloatType(FloatKind.F32);
+    public static Type F64 { get; } = new FloatType(FloatKind.F64);
 
     public static Type VoidType { get; } = new VoidType();
 
     public static void Test()
     {
-        Type type1 = new PtrType(Type.S32Type);
-        Type type2 = new PtrType(Type.U32Type);
+        Type type1 = new PtrType(Type.S32);
+        Type type2 = new PtrType(Type.U32);
         Debug.Assert(type1 != type2);
 
-        Type type3 = new PtrType(Type.U32Type);
-        Type type4 = new PtrType(Type.U32Type);
+        Type type3 = new PtrType(Type.U32);
+        Type type4 = new PtrType(Type.U32);
         Debug.Assert(type3 == type4);
 
-        Type type5 = new ArrayType(Type.U32Type, 3);
-        Type type6 = new ArrayType(Type.U32Type, 3);
+        Type type5 = new ArrayType(Type.U32, 3);
+        Type type6 = new ArrayType(Type.U32, 3);
         Debug.Assert(type5 == type6);
 
-        Type type7 = Type.U32Type;
-        Type type8 = Type.U32Type;
+        Type type7 = Type.U32;
+        Type type8 = Type.U32;
         Debug.Assert(type7 == type8);
     }
 
@@ -99,6 +102,39 @@ class IntType : Type
         if (GetType() == obj.GetType())
         {
             IntType other = (IntType)obj;
+            if (Kind == other.Kind)
+                return true;
+        }
+
+        return base.Equals(obj);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(base.GetHashCode(), this.Kind);
+    }
+}
+
+enum FloatKind
+{
+    F32,
+    F64
+}
+
+class FloatType : Type
+{
+    public FloatKind Kind { get; private set; }
+
+    public FloatType(FloatKind kind)
+    {
+        this.Kind = kind;
+    }
+
+    public override bool Equals(object obj)
+    {
+        if (GetType() == obj.GetType())
+        {
+            FloatType other = (FloatType)obj;
             if (Kind == other.Kind)
                 return true;
         }

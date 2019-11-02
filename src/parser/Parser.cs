@@ -704,7 +704,7 @@ class Parser
         return result;
     }
 
-    private Decl ParseDecl()
+    public Decl ParseDecl()
     {
         List<DeclAttribute> attributes = ParseDeclAttributes();
 

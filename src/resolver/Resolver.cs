@@ -36,15 +36,18 @@ class Resolver
         globalSymbols = new Dictionary<string, Symbol>();
         ResolvedSymbols = new List<Symbol>();
 
-        AddGlobalType("u8", Type.U8Type);
-        AddGlobalType("u16", Type.U16Type);
-        AddGlobalType("u32", Type.U32Type);
-        AddGlobalType("u64", Type.U64Type);
+        AddGlobalType("u8", Type.U8);
+        AddGlobalType("u16", Type.U16);
+        AddGlobalType("u32", Type.U32);
+        AddGlobalType("u64", Type.U64);
 
-        AddGlobalType("s8", Type.S8Type);
-        AddGlobalType("s16", Type.S16Type);
-        AddGlobalType("s32", Type.S32Type);
-        AddGlobalType("s64", Type.S64Type);
+        AddGlobalType("s8", Type.S8);
+        AddGlobalType("s16", Type.S16);
+        AddGlobalType("s32", Type.S32);
+        AddGlobalType("s64", Type.S64);
+
+        AddGlobalType("f32", Type.F32);
+        AddGlobalType("f64", Type.F64);
     }
 
     private void AddGlobalType(string name, Type type)
@@ -70,7 +73,7 @@ class Resolver
 
     private ResolvedExpr ResolvedConst(ulong val)
     {
-        return new ResolvedExpr(Type.U32Type, val, true);
+        return new ResolvedExpr(Type.S32, val, true);
     }
 
     public Symbol GetSymbol(string name)
@@ -115,10 +118,7 @@ class Resolver
             Debug.Assert(false);
         }
 
-        Symbol sym = new Symbol(decl.Name, kind, SymbolState.UNRESOLVED, decl)
-        {
-            Type = Type.U32Type
-        };
+        Symbol sym = new Symbol(decl.Name, kind, SymbolState.UNRESOLVED, decl);
         globalSymbols.Add(decl.Name, sym);
     }
 
@@ -401,13 +401,28 @@ class Resolver
         return null;
     }
 
+    private ResolvedExpr ResolveBinaryOpExpr(BinaryOpExpr expr)
+    {
+        return null;
+    }
+
+    private ResolvedExpr ResolveCallExpr(CallExpr expr)
+    {
+        return null;
+    }
+
+    private ResolvedExpr ResolveIndexExpr(IndexExpr epxr)
+    {
+        return null;
+    }
+
     private ResolvedExpr ResolveExpr(Expr expr)
     {
         /*
         IntegerExpr x
-        FloatExpr
-        IdentifierExpr
-        StringExpr
+        FloatExpr x
+        IdentifierExpr x
+        StringExpr x
         BinaryOpExpr
         CallExpr
         IndexExpr
@@ -416,16 +431,35 @@ class Resolver
         {
             return ResolvedConst(integerExpr.Value);
         }
+        else if (expr is FloatExpr floatExpr)
+        {
+            return ResolvedRValue(floatExpr.IsFloat ? Type.F32 : Type.F64);
+        }
+        else if (expr is StringExpr strExpr)
+        {
+            return ResolvedRValue(new PtrType(Type.U8));
+        }
         else if (expr is IdentifierExpr identExpr)
         {
             return ResolveIdentifierExpr(identExpr);
+        }
+        else if (expr is BinaryOpExpr binaryOpExpr)
+        {
+            return ResolveBinaryOpExpr(binaryOpExpr);
+        }
+        else if (expr is CallExpr callExpr)
+        {
+            return ResolveCallExpr(callExpr);
+        }
+        else if (expr is IndexExpr indexExpr)
+        {
+            return ResolveIndexExpr(indexExpr);
         }
         else
         {
             Debug.Assert(false);
         }
 
-        Debug.Assert(false);
         return null;
     }
 
@@ -501,6 +535,9 @@ class Resolver
 
         /*
         VarDecl
+
+        var test: s32 = a + 123;
+
         ConstDecl
         FunctionDecl
         StructDecl
@@ -526,26 +563,6 @@ class Resolver
         {
             Debug.Assert(false);
         }
-
-        /*if (symbol.Decl is VarDecl varDecl)
-        {
-            symbol.Type = ResolveVarDecl(varDecl); //ResolveTypespec(varDecl.Type);
-        }
-        else if (symbol.Decl is FunctionDecl funcDecl)
-        {
-            //symbol.Type = ResolveFuncPrototype(funcDecl.Prototype);
-            //ResolveFuncBody(symbol);
-        }
-        else if (symbol.Decl is ConstDecl)
-        {
-            ulong val = 0;
-            symbol.Type = ResolveConstDecl(symbol, ref val);
-            symbol.Val = val;
-        }
-        else
-        {
-            Debug.Assert(false);
-        }*/
 
         symbol.State = SymbolState.RESOLVED;
         ResolvedSymbols.Add(symbol);
@@ -621,17 +638,21 @@ class Resolver
         Debug.Assert(GetSymbol("a") == null);
         Debug.Assert(GetSymbol("b") == null);*/
 
-        Decl[] decls = new Decl[]
+        Lexer lexer = new Lexer("ResolverTest", "");
+        Parser parser = new Parser(lexer);
+
+        string[] code = new string[]
         {
-            new VarDecl(
-                "test",
-                new IdentifierTypespec(
-                    new IdentifierExpr("u32")),
-                new IntegerExpr(123))
+            "var a: s32 = b;",
+            "var b: s32 = c;",
         };
 
-        foreach (Decl decl in decls)
+        foreach (string c in code)
         {
+            lexer.Reset(c);
+            lexer.NextToken();
+
+            Decl decl = parser.ParseDecl();
             resolver.AddSymbol(decl);
         }
 
