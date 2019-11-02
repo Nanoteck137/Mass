@@ -403,16 +403,20 @@ class Resolver
 
     private ResolvedExpr ResolveBinaryOpExpr(BinaryOpExpr expr)
     {
+        Debug.Assert(expr != null);
+
         return null;
     }
 
     private ResolvedExpr ResolveCallExpr(CallExpr expr)
     {
+        Debug.Assert(expr != null);
         return null;
     }
 
-    private ResolvedExpr ResolveIndexExpr(IndexExpr epxr)
+    private ResolvedExpr ResolveIndexExpr(IndexExpr expr)
     {
+        Debug.Assert(expr != null);
         return null;
     }
 
