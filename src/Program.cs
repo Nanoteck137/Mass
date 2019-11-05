@@ -12,10 +12,10 @@ namespace Mass
         static void Main(string[] args)
         {
             // Lexer.Test();
-            // Parser.Test();
+            Parser.Test();
             // Printer.Test();
             // Type.Test();
-            Resolver.Test();
+            // Resolver.Test();
 
             string fileContent = File.ReadAllText("test.ma");
 

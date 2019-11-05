@@ -86,3 +86,48 @@ class IndexExpr : Expr
         this.Index = index;
     }
 }
+
+class CompoundField
+{
+    public Expr Init { get; private set; }
+    public SourceSpan Span { get; set; }
+
+    public CompoundField(Expr init)
+    {
+        this.Init = init;
+    }
+}
+
+class NameCompoundField : CompoundField
+{
+    public IdentifierExpr Name { get; private set; }
+
+    public NameCompoundField(Expr init, IdentifierExpr name)
+        : base(init)
+    {
+        this.Name = name;
+    }
+}
+
+class IndexCompoundField : CompoundField
+{
+    public Expr Index { get; private set; }
+
+    public IndexCompoundField(Expr init, Expr index)
+        : base(init)
+    {
+        this.Index = index;
+    }
+}
+
+class CompoundExpr : Expr
+{
+    public Typespec Type { get; private set; }
+    public List<CompoundField> Fields { get; private set; }
+
+    public CompoundExpr(Typespec type, List<CompoundField> fields)
+    {
+        this.Type = type;
+        this.Fields = fields;
+    }
+}
