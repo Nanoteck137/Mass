@@ -297,3 +297,42 @@ class FunctionType : Type
         return HashCode.Combine(base.GetHashCode(), this.Parameters, this.ReturnType, this.VarArgs);
     }
 }
+
+class StructItemType
+{
+    public string Name { get; private set; }
+    public Type Type { get; private set; }
+
+    public StructItemType(string name, Type type)
+    {
+        this.Name = name;
+        this.Type = type;
+    }
+
+    public override bool Equals(object obj)
+    {
+        if (GetType() == obj.GetType())
+        {
+            StructItemType other = (StructItemType)obj;
+            if (Name.Equals(other.Name) && Type.Equals(other.Type))
+                return true;
+        }
+
+        return base.Equals(obj);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Name, Type);
+    }
+}
+
+class StructType : Type
+{
+    public List<StructItemType> Items { get; private set; }
+
+    public StructType(List<StructItemType> items)
+    {
+        this.Items = items;
+    }
+}

@@ -52,7 +52,7 @@ class Resolver
 
     private void AddGlobalType(string name, Type type)
     {
-        Symbol sym = new Symbol(name, SymbolKind.TYPE, SymbolState.RESOLVED, null)
+        Symbol sym = new Symbol(name, SymbolKind.Type, SymbolState.Resolved, null)
         {
             Type = type
         };
@@ -100,31 +100,35 @@ class Resolver
         Debug.Assert(decl.Name != null);
         Debug.Assert(GetSymbol(decl.Name) == null);
 
-        SymbolKind kind = SymbolKind.NONE;
+        SymbolKind kind = SymbolKind.None;
         if (decl is VarDecl)
         {
-            kind = SymbolKind.VAR;
+            kind = SymbolKind.Var;
         }
         else if (decl is ConstDecl)
         {
-            kind = SymbolKind.CONST;
+            kind = SymbolKind.Const;
         }
         else if (decl is FunctionDecl)
         {
-            kind = SymbolKind.FUNC;
+            kind = SymbolKind.Func;
+        }
+        else if (decl is StructDecl)
+        {
+            kind = SymbolKind.Type;
         }
         else
         {
             Debug.Assert(false);
         }
 
-        Symbol sym = new Symbol(decl.Name, kind, SymbolState.UNRESOLVED, decl);
+        Symbol sym = new Symbol(decl.Name, kind, SymbolState.Unresolved, decl);
         globalSymbols.Add(decl.Name, sym);
     }
 
     public void PushVar(string name, Type type)
     {
-        Symbol symbol = new Symbol(name, SymbolKind.VAR, SymbolState.RESOLVED, null)
+        Symbol symbol = new Symbol(name, SymbolKind.Var, SymbolState.Resolved, null)
         {
             Type = type
         };
@@ -385,11 +389,11 @@ class Resolver
     private ResolvedExpr ResolveIdentifierExpr(IdentifierExpr expr)
     {
         Symbol symbol = ResolveName(expr.Value);
-        if (symbol.Kind == SymbolKind.VAR)
+        if (symbol.Kind == SymbolKind.Var)
         {
             return ResolvedLValue(symbol.Type);
         }
-        else if (symbol.Kind == SymbolKind.CONST)
+        else if (symbol.Kind == SymbolKind.Const)
         {
             return ResolvedConst(symbol.Val);
         }
@@ -420,6 +424,8 @@ class Resolver
 
     private ResolvedExpr ResolveCallExpr(CallExpr expr)
     {
+        Debug.Assert(false);
+
         Debug.Assert(expr != null);
 
         ResolvedExpr func = ResolveExpr(expr.Expr);
@@ -546,24 +552,34 @@ class Resolver
 
     private Type ResolveStructDecl(StructDecl decl)
     {
-        Debug.Assert(false);
-        return null;
+        Debug.Assert(decl != null);
+
+        List<StructItemType> items = new List<StructItemType>();
+        foreach (StructItem item in decl.Items)
+        {
+            string name = item.Name;
+            Type type = ResolveTypespec(item.Type);
+
+            items.Add(new StructItemType(name, type));
+        }
+
+        return new StructType(items);
     }
 
     public void ResolveSymbol(Symbol symbol)
     {
-        if (symbol.State == SymbolState.RESOLVED)
+        if (symbol.State == SymbolState.Resolved)
         {
             return;
         }
 
-        if (symbol.State == SymbolState.RESOLVING)
+        if (symbol.State == SymbolState.Resolving)
         {
             Log.Fatal("Cyclic Dependency", null);
             return;
         }
 
-        symbol.State = SymbolState.RESOLVING;
+        symbol.State = SymbolState.Resolving;
 
         /*
         VarDecl x
@@ -593,7 +609,7 @@ class Resolver
             Debug.Assert(false);
         }
 
-        symbol.State = SymbolState.RESOLVED;
+        symbol.State = SymbolState.Resolved;
         ResolvedSymbols.Add(symbol);
     }
 
@@ -672,8 +688,9 @@ class Resolver
 
         string[] code = new string[]
         {
-            "func test(a: s32, b: s32) {}",
-            "var a: s32 = b;",
+            "struct T { a: s32; }",
+            "func test(a: s32, b: s32) -> s32 {}",
+            "var a: T = b;",
             "var b: s32 = 3 + 5;",
         };
 

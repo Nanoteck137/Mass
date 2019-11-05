@@ -4,18 +4,18 @@ using System.Text;
 
 enum SymbolKind
 {
-    NONE,
-    VAR,
-    CONST,
-    FUNC,
-    TYPE
+    None,
+    Var,
+    Const,
+    Func,
+    Type
 }
 
 enum SymbolState
 {
-    UNRESOLVED,
-    RESOLVING,
-    RESOLVED
+    Unresolved,
+    Resolving,
+    Resolved
 }
 
 class Symbol

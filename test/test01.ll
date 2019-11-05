@@ -3,6 +3,7 @@ source_filename = "test01.c"
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-linux-gnu"
 
+@a = global [4 x i32] [i32 0, i32 1, i32 2, i32 3], align 16
 @.str = private unnamed_addr constant [13 x i8] c"Hello World\0A\00", align 1
 @.str.1 = private unnamed_addr constant [5 x i8] c"Wooh\00", align 1
 @.str.2 = private unnamed_addr constant [5 x i8] c"Test\00", align 1

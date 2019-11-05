@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+int a[4] = { [1] = 1, 2, 3, };
+
 void Test()
 {
 	printf("Hello World\n");
