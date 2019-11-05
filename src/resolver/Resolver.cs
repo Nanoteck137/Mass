@@ -405,12 +405,29 @@ class Resolver
     {
         Debug.Assert(expr != null);
 
-        return null;
+        ResolvedExpr left = ResolveExpr(expr.Left);
+        ResolvedExpr right = ResolveExpr(expr.Right);
+
+        // TODO(patrik): More type checking here and maybe const folding
+
+        if (left.Type != right.Type)
+        {
+            Log.Fatal("left and right operand of + must have same type", null);
+        }
+
+        return ResolvedRValue(left.Type);
     }
 
     private ResolvedExpr ResolveCallExpr(CallExpr expr)
     {
         Debug.Assert(expr != null);
+
+        ResolvedExpr func = ResolveExpr(expr.Expr);
+        /*if (func.Type is FunctionType)
+        {
+
+        }*/
+
         return null;
     }
 
@@ -439,7 +456,7 @@ class Resolver
         {
             return ResolvedRValue(floatExpr.IsFloat ? Type.F32 : Type.F64);
         }
-        else if (expr is StringExpr strExpr)
+        else if (expr is StringExpr)
         {
             return ResolvedRValue(new PtrType(Type.U8));
         }
@@ -512,8 +529,19 @@ class Resolver
 
     private Type ResolveFuncDecl(FunctionDecl decl)
     {
-        Debug.Assert(false);
-        return null;
+        Type returnType = Type.Void;
+        if (decl.ReturnType != null)
+            returnType = ResolveTypespec(decl.ReturnType);
+
+        List<FunctionParameterType> parameters = new List<FunctionParameterType>();
+        foreach (FunctionParameter param in decl.Parameters)
+        {
+            string name = param.Name;
+            Type type = ResolveTypespec(param.Type);
+            parameters.Add(new FunctionParameterType(name, type));
+        }
+
+        return new FunctionType(parameters, returnType, decl.VarArgs);
     }
 
     private Type ResolveStructDecl(StructDecl decl)
@@ -538,12 +566,9 @@ class Resolver
         symbol.State = SymbolState.RESOLVING;
 
         /*
-        VarDecl
-
-        var test: s32 = a + 123;
-
+        VarDecl x
         ConstDecl
-        FunctionDecl
+        FunctionDecl x
         StructDecl
          */
 
@@ -647,8 +672,9 @@ class Resolver
 
         string[] code = new string[]
         {
+            "func test(a: s32, b: s32) {}",
             "var a: s32 = b;",
-            "var b: s32 = c;",
+            "var b: s32 = 3 + 5;",
         };
 
         foreach (string c in code)

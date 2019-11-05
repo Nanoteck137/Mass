@@ -18,7 +18,7 @@ abstract class Type
     public static Type F32 { get; } = new FloatType(FloatKind.F32);
     public static Type F64 { get; } = new FloatType(FloatKind.F64);
 
-    public static Type VoidType { get; } = new VoidType();
+    public static Type Void { get; } = new VoidType();
 
     public static void Test()
     {
@@ -37,6 +37,22 @@ abstract class Type
         Type type7 = Type.U32;
         Type type8 = Type.U32;
         Debug.Assert(type7 == type8);
+
+        Type type9 = new FunctionType(
+            new List<FunctionParameterType>()
+            {
+                new FunctionParameterType("a", Type.S32),
+                new FunctionParameterType("b", Type.S32),
+            }, Type.S32, false);
+
+        Type type10 = new FunctionType(
+            new List<FunctionParameterType>()
+            {
+                new FunctionParameterType("a", Type.S32),
+                new FunctionParameterType("b", Type.S32),
+            }, Type.S32, false);
+
+        Debug.Assert(type9 == type10);
     }
 
     public override bool Equals(object obj)
@@ -219,6 +235,23 @@ class FunctionParameterType
         this.Name = name;
         this.Type = type;
     }
+
+    public override bool Equals(object obj)
+    {
+        if (GetType() == obj.GetType())
+        {
+            FunctionParameterType other = (FunctionParameterType)obj;
+            if (Name.Equals(other.Name) && Type.Equals(other.Type))
+                return true;
+        }
+
+        return base.Equals(obj);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(this.Name, this.Type);
+    }
 }
 
 class FunctionType : Type
@@ -232,5 +265,35 @@ class FunctionType : Type
         this.Parameters = parameters;
         this.ReturnType = returnType;
         this.VarArgs = varArgs;
+    }
+
+    public override bool Equals(object obj)
+    {
+        if (GetType() == obj.GetType())
+        {
+            FunctionType other = (FunctionType)obj;
+            if (ReturnType.Equals(other.ReturnType) && VarArgs == other.VarArgs)
+            {
+                if (Parameters.Count != other.Parameters.Count)
+                    return false;
+
+                for (int i = 0; i < Parameters.Count; i++)
+                {
+                    if (!Parameters[i].Equals(other.Parameters[i]))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+        }
+
+        return base.Equals(obj);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(base.GetHashCode(), this.Parameters, this.ReturnType, this.VarArgs);
     }
 }
