@@ -24,8 +24,9 @@ class Symbol
     public SymbolKind Kind { get; private set; }
     public SymbolState State { get; set; }
     public Decl Decl { get; private set; }
+
     public Type Type { get; set; }
-    public ulong Val { get; set; }
+    public Val Val { get; set; }
 
     public Symbol(string name, SymbolKind kind, SymbolState state, Decl decl)
     {
@@ -34,6 +35,10 @@ class Symbol
         this.Kind = kind;
         this.Decl = decl;
         this.Type = null;
-        this.Val = 0;
+
+        this.Val = new Val
+        {
+            u32 = 0
+        };
     }
 }
