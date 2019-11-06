@@ -48,6 +48,8 @@ class Resolver
 
     public List<Symbol> ResolvedSymbols { get; private set; }
 
+    private Dictionary<Type, int> typeRank;
+
     public Resolver()
     {
         localSymbols = new List<Symbol>();
@@ -66,6 +68,42 @@ class Resolver
 
         AddGlobalType("f32", Type.F32);
         AddGlobalType("f64", Type.F64);
+
+        /*
+        [TYPE_CHAR] = 1,
+        [TYPE_SCHAR] = 1,
+        [TYPE_UCHAR] = 1,
+        [TYPE_SHORT] = 2,
+        [TYPE_USHORT] = 2,
+        [TYPE_INT] = 3,
+        [TYPE_UINT] = 3,
+        [TYPE_LONG] = 4,
+        [TYPE_ULONG] = 4,
+        [TYPE_LONGLONG] = 5,
+        [TYPE_ULONGLONG] = 5,
+         */
+
+        typeRank = new Dictionary<Type, int>()
+        {
+            { Type.U8, 1 },
+            { Type.S8, 1 },
+
+            { Type.U16, 2 },
+            { Type.S16, 2 },
+
+            { Type.U32, 3 },
+            { Type.S32, 3 },
+
+            { Type.U64, 4 },
+            { Type.S64, 4 },
+        };
+    }
+
+    private int GetTypeRank(Type type)
+    {
+        Debug.Assert(typeRank.ContainsKey(type));
+
+        return typeRank[type];
     }
 
     private void AddGlobalType(string name, Type type)
@@ -654,6 +692,115 @@ class Resolver
         operand.Type = type;
     }
 
+    private void PromoteOperand(Operand operand)
+    {
+        if (operand.Type is IntType intType)
+        {
+            switch (intType.Kind)
+            {
+                case IntKind.U8:
+                case IntKind.S8:
+                case IntKind.S16:
+                case IntKind.U16:
+                    ConvertOperand(operand, Type.S32);
+                    break;
+            }
+        }
+    }
+
+    private Type UnsignedType(Type type)
+    {
+        if (type is IntType intType)
+        {
+            switch (intType.Kind)
+            {
+                case IntKind.S8:
+                case IntKind.U8:
+                    return Type.U8;
+                case IntKind.S16:
+                case IntKind.U16:
+                    return Type.U16;
+                case IntKind.S32:
+                case IntKind.U32:
+                    return Type.U32;
+                case IntKind.S64:
+                case IntKind.U64:
+                    return Type.U64;
+                default:
+                    Debug.Assert(false);
+                    return null;
+            }
+        }
+        else
+        {
+            Debug.Assert(false);
+            return null;
+        }
+    }
+
+    private void UnifyArithmeticOperands(Operand left, Operand right)
+    {
+        if (left.Type == Type.F64)
+        {
+            ConvertOperand(right, Type.F64);
+        }
+        else if (right.Type == Type.F64)
+        {
+            ConvertOperand(left, Type.F64);
+        }
+        else if (left.Type == Type.F32)
+        {
+            ConvertOperand(left, Type.F32);
+        }
+        else if (right.Type == Type.F32)
+        {
+            ConvertOperand(left, Type.F32);
+        }
+        else
+        {
+            PromoteOperand(left);
+            PromoteOperand(right);
+            if (left.Type != right.Type)
+            {
+                if (Type.IsTypeSigned(left.Type) == Type.IsTypeSigned(right.Type))
+                {
+                    if (GetTypeRank(left.Type) <= GetTypeRank(right.Type))
+                    {
+                        ConvertOperand(left, right.Type);
+                    }
+                    else
+                    {
+                        ConvertOperand(right, left.Type);
+                    }
+                }
+                else if (Type.IsTypeSigned(left.Type) && GetTypeRank(right.Type) >= GetTypeRank(left.Type))
+                {
+                    ConvertOperand(left, right.Type);
+                }
+                else if (Type.IsTypeSigned(right.Type) && GetTypeRank(left.Type) >= GetTypeRank(right.Type))
+                {
+                    ConvertOperand(right, left.Type);
+                }
+                else if (Type.IsTypeSigned(left.Type) && left.Type.Size > right.Type.Size)
+                {
+                    ConvertOperand(right, left.Type);
+                }
+                else if (Type.IsTypeSigned(right.Type) && right.Type.Size > left.Type.Size)
+                {
+                    ConvertOperand(left, right.Type);
+                }
+                else
+                {
+                    Type type = UnsignedType(Type.IsTypeSigned(left.Type) ? left.Type : right.Type);
+                    ConvertOperand(left, type);
+                    ConvertOperand(right, type);
+                }
+            }
+        }
+
+        Debug.Assert(left.Type == right.Type);
+    }
+
     private Operand ResolveIdentifierExpr(IdentifierExpr expr)
     {
         Symbol symbol = ResolveName(expr.Value);
@@ -679,6 +826,8 @@ class Resolver
 
         Operand left = ResolveExpr(expr.Left);
         Operand right = ResolveExpr(expr.Right);
+
+        UnifyArithmeticOperands(left, right);
 
         // TODO(patrik): More type checking here and maybe const folding
 
@@ -912,10 +1061,14 @@ class Resolver
         Resolver resolver = new Resolver();
 
         Val val = new Val();
-        val.f32 = 3.14f;
+        val.u32 = 3;
 
-        Operand operand = resolver.OperandConst(Type.F32, val);
-        resolver.ConvertOperand(operand, Type.S32);
+        Operand operand = resolver.OperandConst(Type.U32, val);
+        resolver.ConvertOperand(operand, Type.F32);
+
+        Operand op1 = resolver.OperandRValue(Type.U64);
+        Operand op2 = resolver.OperandRValue(Type.U16);
+        resolver.UnifyArithmeticOperands(op1, op2);
 
         Lexer lexer = new Lexer("ResolverTest", "");
         Parser parser = new Parser(lexer);
@@ -927,7 +1080,7 @@ class Resolver
             "var a: T = b;",
             "var b: s32 = 3 + 5;",*/
 
-            "var a: s32 = 3;"
+            "var a: s32 = 3 + 6;"
         };
 
         foreach (string c in code)

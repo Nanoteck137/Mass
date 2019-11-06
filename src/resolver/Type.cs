@@ -20,9 +20,28 @@ abstract class Type
 
     public static Type Void { get; } = new VoidType();
 
+    public abstract int Size { get; }
+
     public abstract bool IsInteger();
     public abstract bool IsFloatingPoint();
     public abstract bool IsArithmetic();
+
+    public static bool IsTypeSigned(Type type)
+    {
+        if (type is IntType intType)
+        {
+            switch (intType.Kind)
+            {
+                case IntKind.S8:
+                case IntKind.S16:
+                case IntKind.S32:
+                case IntKind.S64:
+                    return true;
+            }
+        }
+
+        return false;
+    }
 
     public static void Test()
     {
@@ -57,6 +76,16 @@ abstract class Type
             }, Type.S32, false);
 
         Debug.Assert(type9 == type10);
+
+        Debug.Assert(IsTypeSigned(Type.S8));
+        Debug.Assert(IsTypeSigned(Type.S16));
+        Debug.Assert(IsTypeSigned(Type.S32));
+        Debug.Assert(IsTypeSigned(Type.S64));
+
+        Debug.Assert(!IsTypeSigned(Type.U8));
+        Debug.Assert(!IsTypeSigned(Type.U16));
+        Debug.Assert(!IsTypeSigned(Type.U32));
+        Debug.Assert(!IsTypeSigned(Type.U64));
     }
 
     public override bool Equals(object obj)
@@ -112,6 +141,30 @@ class IntType : Type
 {
     public IntKind Kind { get; private set; }
 
+    public override int Size
+    {
+        get
+        {
+            switch (Kind)
+            {
+                case IntKind.U8:
+                case IntKind.S8:
+                    return 1;
+                case IntKind.U16:
+                case IntKind.S16:
+                    return 2;
+                case IntKind.U32:
+                case IntKind.S32:
+                    return 4;
+                case IntKind.U64:
+                case IntKind.S64:
+                    return 8;
+            }
+
+            return 0;
+        }
+    }
+
     public IntType(IntKind kind)
     {
         this.Kind = kind;
@@ -160,6 +213,22 @@ class FloatType : Type
 {
     public FloatKind Kind { get; private set; }
 
+    public override int Size
+    {
+        get
+        {
+            switch (Kind)
+            {
+                case FloatKind.F32:
+                    return 4;
+                case FloatKind.F64:
+                    return 8;
+            }
+
+            return 0;
+        }
+    }
+
     public FloatType(FloatKind kind)
     {
         this.Kind = kind;
@@ -202,6 +271,9 @@ class PtrType : Type
 {
     public Type Base { get; private set; }
 
+    // TODO(patrik): Pointer Size is platform dependent 8 bytes for 64 bit platforms
+    public override int Size => 8;
+
     public PtrType(Type basee)
     {
         this.Base = basee;
@@ -243,12 +315,14 @@ class PtrType : Type
 class ArrayType : Type
 {
     public Type Base { get; private set; }
-    public ulong Size { get; private set; }
+    public ulong Count { get; private set; }
 
-    public ArrayType(Type basee, ulong size)
+    public override int Size => throw new NotImplementedException();
+
+    public ArrayType(Type basee, ulong count)
     {
         this.Base = basee;
-        this.Size = size;
+        this.Count = count;
     }
 
     public override bool Equals(object obj)
@@ -286,6 +360,8 @@ class ArrayType : Type
 
 class VoidType : Type
 {
+    public override int Size => throw new NotImplementedException();
+
     public VoidType() { }
 
     public override bool IsInteger()
@@ -338,6 +414,9 @@ class FunctionType : Type
     public List<FunctionParameterType> Parameters { get; private set; }
     public Type ReturnType { get; private set; }
     public bool VarArgs { get; private set; }
+
+    // TODO(patrik): Using 64 bit platform pointer size
+    public override int Size => 8;
 
     public FunctionType(List<FunctionParameterType> parameters, Type returnType, bool varArgs)
     {
@@ -424,6 +503,15 @@ class StructItemType
 class StructType : Type
 {
     public List<StructItemType> Items { get; private set; }
+
+    public override int Size
+    {
+        get
+        {
+            Debug.Assert(false);
+            return 0;
+        }
+    }
 
     public StructType(List<StructItemType> items)
     {
