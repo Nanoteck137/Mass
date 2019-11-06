@@ -15,6 +15,32 @@ class Printer
         Console.Write("\n{0}", identStr.Substring(0, indent * 2));
     }
 
+    public static void PrintCompoundField(CompoundField field)
+    {
+        if (field is NameCompoundField nameField)
+        {
+            Console.Write("(name ");
+            PrintExpr(nameField.Name);
+            Console.Write(" ");
+            PrintExpr(nameField.Init);
+            Console.Write(")");
+        }
+        else if (field is IndexCompoundField indexField)
+        {
+            Console.Write("(index ");
+            PrintExpr(indexField.Index);
+            Console.Write(" ");
+            PrintExpr(indexField.Init);
+            Console.Write(")");
+        }
+        else
+        {
+            Console.Write("(nil ");
+            PrintExpr(field.Init);
+            Console.Write(")");
+        }
+    }
+
     public static void PrintExpr(Expr expr)
     {
         if (expr is IntegerExpr integerExpr)
@@ -65,6 +91,23 @@ class Printer
             PrintExpr(indexExpr.Expr);
             Console.Write(" ");
             PrintExpr(indexExpr.Index);
+            Console.Write(")");
+        }
+        else if (expr is CompoundExpr compoundExpr)
+        {
+            Console.Write("(compound");
+            if (compoundExpr.Type != null)
+            {
+                Console.Write(" ");
+                PrintTypespec(compoundExpr.Type);
+            }
+
+            foreach (CompoundField field in compoundExpr.Fields)
+            {
+                Console.Write(" ");
+                PrintCompoundField(field);
+            }
+
             Console.Write(")");
         }
         else
@@ -310,7 +353,7 @@ class Printer
 
     public static void Test()
     {
-        Expr[] exprs = new Expr[]
+        /*Expr[] exprs = new Expr[]
         {
             new BinaryOpExpr(new IntegerExpr(123), new FloatExpr(3.14, true), TokenType.PLUS),
             new CallExpr(
@@ -329,7 +372,7 @@ class Printer
         {
             PrintExpr(expr);
             Console.WriteLine();
-        }
+        }*/
 
         /*
         ForStmt
@@ -393,8 +436,8 @@ class Printer
 
         foreach (Stmt stmt in stmts)
         {
-            PrintStmt(stmt);
-            Console.WriteLine();
+            //PrintStmt(stmt);
+            //Console.WriteLine();
         }
 
         Typespec[] types = new Typespec[]
@@ -406,8 +449,8 @@ class Printer
 
         foreach (Typespec typespec in types)
         {
-            PrintTypespec(typespec);
-            Console.WriteLine();
+            //PrintTypespec(typespec);
+            //Console.WriteLine();
         }
 
         Typespec type = new IdentifierTypespec(new IdentifierExpr("s32"));
@@ -437,6 +480,25 @@ class Printer
 
         foreach (Decl decl in decls)
         {
+            //PrintDecl(decl);
+            //Console.WriteLine();
+        }
+
+        Lexer lexer = new Lexer("Printer Test", "");
+        Parser parser = new Parser(lexer);
+
+        string[] code = new string[]
+        {
+            "var t: s32 = 123;",
+            "var t: T = T { [1] = 1, test = 2, 3 };",
+        };
+
+        foreach (string c in code)
+        {
+            lexer.Reset(c);
+            lexer.NextToken();
+
+            Decl decl = parser.ParseDecl();
             PrintDecl(decl);
             Console.WriteLine();
         }

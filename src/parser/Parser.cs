@@ -19,6 +19,7 @@ class Parser
     #region Expr Parsing
     private CompoundField ParseCompoundField()
     {
+        SourceSpan firstSpan = lexer.CurrentTokenSpan;
         // Format 1: expr
         //        2: identifier = expr
         //        3: [expr] = expr
@@ -27,13 +28,20 @@ class Parser
         if (lexer.MatchToken(TokenType.OPEN_BRACKET))
         {
             lexer.NextToken();
+
             Expr index = ParseExpr();
+
             lexer.ExpectToken(TokenType.CLOSE_BRACKET);
             lexer.ExpectToken(TokenType.EQUAL);
 
             Expr init = ParseExpr();
 
-            return new IndexCompoundField(init, index);
+            IndexCompoundField result = new IndexCompoundField(init, index)
+            {
+                Span = SourceSpan.FromTo(firstSpan, init.Span)
+            };
+
+            return result;
         }
         else
         {
@@ -52,11 +60,21 @@ class Parser
 
                 Expr init = ParseExpr();
 
-                return new NameCompoundField(init, (IdentifierExpr)expr);
+                NameCompoundField result = new NameCompoundField(init, (IdentifierExpr)expr)
+                {
+                    Span = SourceSpan.FromTo(expr.Span, init.Span)
+                };
+
+                return result;
             }
             else
             {
-                return new CompoundField(expr);
+                CompoundField result = new CompoundField(expr)
+                {
+                    Span = expr.Span
+                };
+
+                return result;
             }
         }
     }
@@ -66,6 +84,8 @@ class Parser
         // Format 1: { expr, ... }
         //        2: { identifier = expr, ... }
         //        3: { [expr] = expr, ... }
+
+        SourceSpan firstSpan = lexer.CurrentTokenSpan;
         lexer.ExpectToken(TokenType.OPEN_BRACE);
 
         List<CompoundField> fields = new List<CompoundField>();
@@ -84,9 +104,14 @@ class Parser
             }
         }
 
+        SourceSpan lastSpan = lexer.CurrentTokenSpan;
         lexer.ExpectToken(TokenType.CLOSE_BRACE);
 
-        CompoundExpr result = new CompoundExpr(type, fields);
+        CompoundExpr result = new CompoundExpr(type, fields)
+        {
+            Span = SourceSpan.FromTo(firstSpan, lastSpan)
+        };
+
         return result;
     }
 
@@ -95,70 +120,78 @@ class Parser
         switch (lexer.CurrentToken)
         {
             case TokenType.INTEGER:
+            {
+                IntegerExpr result = new IntegerExpr(lexer.CurrentInteger)
                 {
-                    IntegerExpr result = new IntegerExpr(lexer.CurrentInteger)
-                    {
-                        Span = lexer.CurrentTokenSpan
-                    };
-                    lexer.NextToken();
+                    Span = lexer.CurrentTokenSpan
+                };
+                lexer.NextToken();
 
-                    return result;
-                }
+                return result;
+            }
 
             case TokenType.FLOAT:
+            {
+                FloatExpr result = new FloatExpr(lexer.CurrentFloat, lexer.TokenMod == TokenMod.FLOAT)
                 {
-                    FloatExpr result = new FloatExpr(lexer.CurrentFloat, lexer.TokenMod == TokenMod.FLOAT)
-                    {
-                        Span = lexer.CurrentTokenSpan
-                    };
-                    lexer.NextToken();
+                    Span = lexer.CurrentTokenSpan
+                };
+                lexer.NextToken();
 
-                    return result;
-                }
+                return result;
+            }
 
             case TokenType.IDENTIFIER:
+            {
+                IdentifierExpr ident = new IdentifierExpr(lexer.CurrentIdentifier)
                 {
-                    IdentifierExpr ident = new IdentifierExpr(lexer.CurrentIdentifier)
-                    {
-                        Span = lexer.CurrentTokenSpan
-                    };
-                    lexer.NextToken();
+                    Span = lexer.CurrentTokenSpan
+                };
+                lexer.NextToken();
 
-                    if (lexer.MatchToken(TokenType.OPEN_BRACE))
+                if (lexer.MatchToken(TokenType.OPEN_BRACE))
+                {
+                    Typespec typespec = new IdentifierTypespec(ident)
                     {
-                        return ParseCompound(new IdentifierTypespec(ident));
-                    }
-                    else
-                    {
-                        return ident;
-                    }
+                        Span = ident.Span
+                    };
+                    return ParseCompound(typespec);
                 }
+                else
+                {
+                    return ident;
+                }
+            }
 
             case TokenType.STRING:
+            {
+                StringExpr result = new StringExpr(lexer.CurrentString)
                 {
-                    StringExpr result = new StringExpr(lexer.CurrentString)
-                    {
-                        Span = lexer.CurrentTokenSpan
-                    };
-                    lexer.NextToken();
+                    Span = lexer.CurrentTokenSpan
+                };
+                lexer.NextToken();
 
-                    return result;
-                }
+                return result;
+            }
 
             case TokenType.OPEN_PAREN:
-                {
-                    SourceSpan firstSpan = lexer.CurrentTokenSpan;
-                    lexer.NextToken();
+            {
+                SourceSpan firstSpan = lexer.CurrentTokenSpan;
+                lexer.NextToken();
 
-                    Expr result = ParseExpr();
+                Expr result = ParseExpr();
 
-                    SourceSpan lastSpan = lexer.CurrentTokenSpan;
-                    lexer.ExpectToken(TokenType.CLOSE_PAREN);
+                SourceSpan lastSpan = lexer.CurrentTokenSpan;
+                lexer.ExpectToken(TokenType.CLOSE_PAREN);
 
-                    result.Span = SourceSpan.FromTo(firstSpan, lastSpan);
+                result.Span = SourceSpan.FromTo(firstSpan, lastSpan);
 
-                    return result;
-                }
+                return result;
+            }
+            case TokenType.OPEN_BRACE:
+            {
+                return ParseCompound(null);
+            }
 
             default:
                 //TODO: Error?!?!?!
@@ -858,6 +891,12 @@ class Parser
         lexer.NextToken();
         Expr expr5 = parser.ParseExpr();
         Debug.Assert(expr5 is CompoundExpr);
+
+        lexer.Reset("{ test = 1, [4] = 2 }");
+        lexer.NextToken();
+        Expr expr6 = parser.ParseExpr();
+        Debug.Assert(expr6 is CompoundExpr);
+
         #endregion
 
         #region Stmts Testing
