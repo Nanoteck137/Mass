@@ -1,22 +1,20 @@
 #include <stdio.h>
 
-int a[4] = { [1] = 1, 2, 3, };
+typedef struct R {
+	int a;
+	int b;
+} R;
 
-void Test()
-{
-	printf("Hello World\n");
-}
+typedef struct T {
+	R a;
+	int b;
+	int c;
+} T;
+
+T w = { {1, 2}, 2, 3 };
 
 int main(int argc, char** argv)
 {
-	unsigned int x = 0;
-	if (x >= 4)
-	{
-		printf("Wooh");
-	}
-	else {
-		printf("Test");
-	}
-
+	T e = { {1, 2}, 2, 3 };
 	return 0;
 }

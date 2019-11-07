@@ -548,6 +548,19 @@ class StructType : Type
         this.Items = items;
     }
 
+    public int GetItemIndex(string name)
+    {
+        for (int i = 0; i < Items.Count; i++)
+        {
+            if (Items[i].Name == name)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
     public override bool IsInteger()
     {
         return false;
