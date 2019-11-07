@@ -708,36 +708,6 @@ class Resolver
         }
     }
 
-    private Type UnsignedType(Type type)
-    {
-        if (type is IntType intType)
-        {
-            switch (intType.Kind)
-            {
-                case IntKind.S8:
-                case IntKind.U8:
-                    return Type.U8;
-                case IntKind.S16:
-                case IntKind.U16:
-                    return Type.U16;
-                case IntKind.S32:
-                case IntKind.U32:
-                    return Type.U32;
-                case IntKind.S64:
-                case IntKind.U64:
-                    return Type.U64;
-                default:
-                    Debug.Assert(false);
-                    return null;
-            }
-        }
-        else
-        {
-            Debug.Assert(false);
-            return null;
-        }
-    }
-
     private void UnifyArithmeticOperands(Operand left, Operand right)
     {
         if (left.Type == Type.F64)
@@ -791,7 +761,7 @@ class Resolver
                 }
                 else
                 {
-                    Type type = UnsignedType(Type.IsTypeSigned(left.Type) ? left.Type : right.Type);
+                    Type type = Type.GetUnsignedType(Type.IsTypeSigned(left.Type) ? left.Type : right.Type);
                     ConvertOperand(left, type);
                     ConvertOperand(right, type);
                 }
@@ -1080,7 +1050,7 @@ class Resolver
             "var a: T = b;",
             "var b: s32 = 3 + 5;",*/
 
-            "var a: s32 = 3 + 6;"
+            "var a: s32 = 3 + 6;",
         };
 
         foreach (string c in code)

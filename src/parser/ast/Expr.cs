@@ -131,3 +131,15 @@ class CompoundExpr : Expr
         this.Fields = fields;
     }
 }
+
+class FieldExpr : Expr
+{
+    public Expr Expr { get; private set; }
+    public IdentifierExpr Name { get; private set; }
+
+    public FieldExpr(Expr expr, IdentifierExpr name)
+    {
+        this.Expr = expr;
+        this.Name = name;
+    }
+}

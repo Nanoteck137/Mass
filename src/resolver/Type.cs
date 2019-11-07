@@ -43,6 +43,36 @@ abstract class Type
         return false;
     }
 
+    public static Type GetUnsignedType(Type type)
+    {
+        if (type is IntType intType)
+        {
+            switch (intType.Kind)
+            {
+                case IntKind.S8:
+                case IntKind.U8:
+                    return Type.U8;
+                case IntKind.S16:
+                case IntKind.U16:
+                    return Type.U16;
+                case IntKind.S32:
+                case IntKind.U32:
+                    return Type.U32;
+                case IntKind.S64:
+                case IntKind.U64:
+                    return Type.U64;
+                default:
+                    Debug.Assert(false);
+                    return null;
+            }
+        }
+        else
+        {
+            Debug.Assert(false);
+            return null;
+        }
+    }
+
     public static void Test()
     {
         Type type1 = new PtrType(Type.S32);
