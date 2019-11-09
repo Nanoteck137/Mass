@@ -47,6 +47,8 @@ class SourceSpan
 
     public static SourceSpan FromTo(SourceSpan from, SourceSpan to)
     {
+        Debug.Assert(from != null);
+        Debug.Assert(to != null);
         Debug.Assert(from.FileName == to.FileName);
 
         return new SourceSpan(from.FileName, from.FromLineNumber, from.FromColumnNumber, to.ToLineNumber, to.ToColumnNumber);

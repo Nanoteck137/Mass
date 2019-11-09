@@ -22,9 +22,9 @@ abstract class Type
 
     public abstract int Size { get; }
 
-    public abstract bool IsInteger();
-    public abstract bool IsFloatingPoint();
-    public abstract bool IsArithmetic();
+    public virtual bool IsInteger { get { return false; } }
+    public virtual bool IsFloatingPoint { get { return false; } }
+    public virtual bool IsArithmetic { get { return false; } }
 
     public static bool IsTypeSigned(Type type)
     {
@@ -195,6 +195,9 @@ class IntType : Type
         }
     }
 
+    public override bool IsInteger => true;
+    public override bool IsArithmetic => true;
+
     public IntType(IntKind kind)
     {
         this.Kind = kind;
@@ -215,21 +218,6 @@ class IntType : Type
     public override int GetHashCode()
     {
         return HashCode.Combine(base.GetHashCode(), this.Kind);
-    }
-
-    public override bool IsInteger()
-    {
-        return true;
-    }
-
-    public override bool IsFloatingPoint()
-    {
-        return false;
-    }
-
-    public override bool IsArithmetic()
-    {
-        return true;
     }
 }
 
@@ -259,6 +247,9 @@ class FloatType : Type
         }
     }
 
+    public override bool IsFloatingPoint => true;
+    public override bool IsArithmetic => true;
+
     public FloatType(FloatKind kind)
     {
         this.Kind = kind;
@@ -279,21 +270,6 @@ class FloatType : Type
     public override int GetHashCode()
     {
         return HashCode.Combine(base.GetHashCode(), this.Kind);
-    }
-
-    public override bool IsInteger()
-    {
-        return false;
-    }
-
-    public override bool IsFloatingPoint()
-    {
-        return false;
-    }
-
-    public override bool IsArithmetic()
-    {
-        return true;
     }
 }
 
@@ -324,21 +300,6 @@ class PtrType : Type
     public override int GetHashCode()
     {
         return HashCode.Combine(this.Base);
-    }
-
-    public override bool IsInteger()
-    {
-        return false;
-    }
-
-    public override bool IsFloatingPoint()
-    {
-        return false;
-    }
-
-    public override bool IsArithmetic()
-    {
-        return false;
     }
 }
 
@@ -371,21 +332,6 @@ class ArrayType : Type
     {
         return HashCode.Combine(this.Base, this.Size);
     }
-
-    public override bool IsInteger()
-    {
-        return false;
-    }
-
-    public override bool IsFloatingPoint()
-    {
-        return false;
-    }
-
-    public override bool IsArithmetic()
-    {
-        return false;
-    }
 }
 
 class VoidType : Type
@@ -393,21 +339,6 @@ class VoidType : Type
     public override int Size => throw new NotImplementedException();
 
     public VoidType() { }
-
-    public override bool IsInteger()
-    {
-        return false;
-    }
-
-    public override bool IsFloatingPoint()
-    {
-        return false;
-    }
-
-    public override bool IsArithmetic()
-    {
-        return false;
-    }
 }
 
 class FunctionParameterType
@@ -484,21 +415,6 @@ class FunctionType : Type
     {
         return HashCode.Combine(base.GetHashCode(), this.Parameters, this.ReturnType, this.VarArgs);
     }
-
-    public override bool IsInteger()
-    {
-        return false;
-    }
-
-    public override bool IsFloatingPoint()
-    {
-        return false;
-    }
-
-    public override bool IsArithmetic()
-    {
-        return false;
-    }
 }
 
 class StructItemType
@@ -538,8 +454,13 @@ class StructType : Type
     {
         get
         {
-            Debug.Assert(false);
-            return 0;
+            int result = 0;
+            foreach (StructItemType item in Items)
+            {
+                result += item.Type.Size;
+            }
+
+            return result;
         }
     }
 
@@ -559,20 +480,5 @@ class StructType : Type
         }
 
         return -1;
-    }
-
-    public override bool IsInteger()
-    {
-        return false;
-    }
-
-    public override bool IsFloatingPoint()
-    {
-        return false;
-    }
-
-    public override bool IsArithmetic()
-    {
-        return false;
     }
 }

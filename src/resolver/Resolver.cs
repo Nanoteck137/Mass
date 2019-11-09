@@ -48,7 +48,7 @@ class Resolver
 
     public List<Symbol> ResolvedSymbols { get; private set; }
 
-    private Dictionary<Type, int> typeRank;
+    private readonly Dictionary<Type, int> typeRank;
 
     public Resolver()
     {
@@ -68,20 +68,6 @@ class Resolver
 
         AddGlobalType("f32", Type.F32);
         AddGlobalType("f64", Type.F64);
-
-        /*
-        [TYPE_CHAR] = 1,
-        [TYPE_SCHAR] = 1,
-        [TYPE_UCHAR] = 1,
-        [TYPE_SHORT] = 2,
-        [TYPE_USHORT] = 2,
-        [TYPE_INT] = 3,
-        [TYPE_UINT] = 3,
-        [TYPE_LONG] = 4,
-        [TYPE_ULONG] = 4,
-        [TYPE_LONGLONG] = 5,
-        [TYPE_ULONGLONG] = 5,
-         */
 
         typeRank = new Dictionary<Type, int>()
         {
@@ -112,6 +98,7 @@ class Resolver
         {
             Type = type
         };
+
         globalSymbols.Add(name, sym);
     }
 
@@ -213,7 +200,7 @@ class Resolver
         {
             return true;
         }
-        else if (dest.IsArithmetic() && src.IsArithmetic())
+        else if (dest.IsArithmetic && src.IsArithmetic)
         {
             return true;
         }
@@ -934,6 +921,8 @@ class Resolver
         CompoundExpr
         FieldExpr
          */
+
+        Operand result = null;
         if (expr is IntegerExpr integerExpr)
         {
             Val val = new Val
@@ -941,46 +930,46 @@ class Resolver
                 u64 = integerExpr.Value
             };
 
-            return OperandConst(Type.S32, val);
+            result = OperandConst(Type.S32, val);
         }
         else if (expr is FloatExpr floatExpr)
         {
-            return OperandRValue(floatExpr.IsFloat ? Type.F32 : Type.F64);
+            result = OperandRValue(floatExpr.IsFloat ? Type.F32 : Type.F64);
         }
         else if (expr is StringExpr)
         {
-            return OperandRValue(new PtrType(Type.U8));
+            result = OperandRValue(new PtrType(Type.U8));
         }
         else if (expr is IdentifierExpr identExpr)
         {
-            return ResolveIdentifierExpr(identExpr);
+            result = ResolveIdentifierExpr(identExpr);
         }
         else if (expr is BinaryOpExpr binaryOpExpr)
         {
-            return ResolveBinaryOpExpr(binaryOpExpr);
+            result = ResolveBinaryOpExpr(binaryOpExpr);
         }
         else if (expr is CallExpr callExpr)
         {
-            return ResolveCallExpr(callExpr);
+            result = ResolveCallExpr(callExpr);
         }
         else if (expr is IndexExpr indexExpr)
         {
-            return ResolveIndexExpr(indexExpr);
+            result = ResolveIndexExpr(indexExpr);
         }
         else if (expr is CompoundExpr compoundExpr)
         {
-            return ResolveCompoundExpr(compoundExpr, expectedType);
+            result = ResolveCompoundExpr(compoundExpr, expectedType);
         }
         else if (expr is FieldExpr fieldExpr)
         {
-            return ResolveFieldExpr(fieldExpr);
+            result = ResolveFieldExpr(fieldExpr);
         }
         else
         {
             Debug.Assert(false);
         }
 
-        return null;
+        return result;
     }
 
     private Operand ResolveExpr(Expr expr)
@@ -988,18 +977,51 @@ class Resolver
         return ResolveExpectedExpr(expr, null);
     }
 
+    private Operand ResolveConstExpr(Expr expr)
+    {
+        Operand result = ResolveExpr(expr);
+        if (!result.IsConst)
+        {
+            Log.Fatal("Expected const expr", null);
+        }
+
+        return result;
+    }
+
     private Type ResolveTypespec(Typespec typespec)
     {
-        /*
-         PtrTypespec
-         ArrayTypespec
-         IdentifierTypespec
-         */
-
         if (typespec is IdentifierTypespec identTypespec)
         {
             Symbol symbol = ResolveName(identTypespec.Value.Value);
             return symbol.Type;
+        }
+        else if (typespec is PtrTypespec ptrTypespec)
+        {
+            PtrType result = new PtrType(ResolveTypespec(ptrTypespec.Type));
+            return result;
+        }
+        else if (typespec is ArrayTypespec arrayTypespec)
+        {
+            int size = 0;
+            if (arrayTypespec.Size != null)
+            {
+                Operand operand = ResolveConstExpr(arrayTypespec.Size);
+
+                if (!operand.Type.IsInteger)
+                {
+                    Log.Fatal("Array size must be a integer", null);
+                }
+
+                ConvertOperand(operand, Type.S32);
+                size = operand.Val.s32;
+                if (size <= 0)
+                {
+                    Log.Fatal("Array size cant be negative", null);
+                }
+            }
+
+            ArrayType result = new ArrayType(ResolveTypespec(arrayTypespec.Type), (ulong)size);
+            return result;
         }
         else
         {
@@ -1031,7 +1053,7 @@ class Resolver
 
         if (decl.Value != null)
         {
-            Operand expr = ResolveExpectedExpr(decl.Value, type);
+            Operand expr = ResolveConstExpr(decl.Value);
             if (expr.Type != type)
             {
                 Log.Fatal("Var type value mismatch", null);
@@ -1089,13 +1111,6 @@ class Resolver
 
         symbol.State = SymbolState.Resolving;
 
-        /*
-        VarDecl x
-        ConstDecl x
-        FunctionDecl x
-        StructDecl x
-         */
-
         if (symbol.Decl is VarDecl varDecl)
         {
             symbol.Type = ResolveVarDecl(varDecl);
@@ -1140,14 +1155,26 @@ class Resolver
         {
             ResolveSymbol(item.Value);
         }
+
+        // TODO(patrik): Finalize Symbols here??
+    }
+
+    public void FinalizeSymbols()
+    {
+        // TODO(patrik): Resolve the function bodies
     }
 
     public static void Test()
     {
         Resolver resolver = new Resolver();
 
-        Val val = new Val();
-        val.u32 = 3;
+        Typespec typespec = new ArrayTypespec(new IdentifierTypespec(new IdentifierExpr("s32")), new IntegerExpr(123));
+        Type type = resolver.ResolveTypespec(typespec);
+
+        Val val = new Val
+        {
+            u32 = 3
+        };
 
         Operand operand = resolver.OperandConst(Type.U32, val);
         resolver.ConvertOperand(operand, Type.F32);
@@ -1169,6 +1196,8 @@ class Resolver
             "struct R { h: s32; j: s32; }",
             "struct T { a: R; b: s64; c: s32; }",
             "var a: T = { { 1, 2 }, 2, 3 };",
+            "var b: s32[4];",
+            "func add(val: T) -> T { ret { val.a, val.b + 2, val.c + 4 }; }",
         };
 
         foreach (string c in code)

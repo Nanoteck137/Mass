@@ -51,6 +51,7 @@ class CodeGenerator : IDisposable
 
     private LLVMValueRef GetStringValue(LLVMBuilderRef builder, string str)
     {
+
         if (strings.ContainsKey(str))
         {
             return strings[str];
