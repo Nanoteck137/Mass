@@ -308,7 +308,7 @@ class ArrayType : Type
     public Type Base { get; private set; }
     public ulong Count { get; private set; }
 
-    public override int Size => throw new NotImplementedException();
+    public override int Size => Base.Size * (int)Count;
 
     public ArrayType(Type basee, ulong count)
     {
@@ -336,7 +336,7 @@ class ArrayType : Type
 
 class VoidType : Type
 {
-    public override int Size => throw new NotImplementedException();
+    public override int Size => 0;
 
     public VoidType() { }
 }
@@ -457,6 +457,7 @@ class StructType : Type
             int result = 0;
             foreach (StructItemType item in Items)
             {
+                //TODO(patrik): Count alignment too
                 result += item.Type.Size;
             }
 
