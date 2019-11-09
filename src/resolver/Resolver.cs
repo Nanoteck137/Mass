@@ -792,9 +792,13 @@ class Resolver
         {
             return OperandConst(symbol.Type, symbol.Val);
         }
+        else if (symbol.Kind == SymbolKind.Func)
+        {
+            return OperandRValue(symbol.Type);
+        }
         else
         {
-            Log.Fatal($"{expr.Value} must be a var or const", null);
+            Log.Fatal($"{expr.Value} must be a var, const or func", null);
         }
 
         return null;
@@ -821,15 +825,47 @@ class Resolver
 
     private Operand ResolveCallExpr(CallExpr expr)
     {
-        Debug.Assert(false);
-
         Debug.Assert(expr != null);
 
         Operand func = ResolveExpr(expr.Expr);
-        /*if (func.Type is FunctionType)
+        if (func.Type is FunctionType type)
         {
+            if (expr.Arguments.Count < type.Parameters.Count)
+            {
+                Log.Fatal("Too few arguments for function call", null);
+            }
 
-        }*/
+            if (expr.Arguments.Count > type.Parameters.Count && !type.VarArgs)
+            {
+                Log.Fatal("Too many arguments for function call", null);
+            }
+
+            for (int i = 0; i < type.Parameters.Count; i++)
+            {
+                Type paramType = type.Parameters[i].Type;
+                Operand argument = ResolveExpr(expr.Arguments[i]);
+                if (argument.Type != paramType)
+                {
+                    Log.Fatal($"Function argument type mismatch with argument '{i + 1}'", null);
+                }
+
+                if (!ConvertOperand(argument, paramType))
+                {
+                    Log.Fatal($"Invalid type in function call argument '{i + 1}'", null);
+                }
+            }
+
+            for (int i = type.Parameters.Count; i < expr.Arguments.Count; i++)
+            {
+                ResolveExpr(expr.Arguments[i]);
+            }
+
+            return OperandRValue(type.ReturnType);
+        }
+        else
+        {
+            Log.Fatal("Calling a non-function value", null);
+        }
 
         return null;
     }
@@ -911,12 +947,7 @@ class Resolver
     private Operand ResolveExpectedExpr(Expr expr, Type expectedType)
     {
         /*
-        IntegerExpr x
-        FloatExpr x
-        IdentifierExpr x
-        StringExpr x
         BinaryOpExpr
-        CallExpr
         IndexExpr
         CompoundExpr
         FieldExpr
@@ -1159,9 +1190,179 @@ class Resolver
         // TODO(patrik): Finalize Symbols here??
     }
 
+    private void ResolveIfStmt(IfStmt stmt)
+    {
+        Debug.Assert(stmt != null);
+        Debug.Assert(false);
+    }
+
+    private void ResolveForStmt(ForStmt stmt)
+    {
+        Debug.Assert(stmt != null);
+        Debug.Assert(false);
+    }
+
+    private void ResolveWhileStmt(WhileStmt stmt)
+    {
+        Debug.Assert(stmt != null);
+        Debug.Assert(false);
+    }
+
+    private void ResolveDoWhileStmt(DoWhileStmt stmt)
+    {
+        Debug.Assert(stmt != null);
+        Debug.Assert(false);
+    }
+
+    private void ResolveReturnStmt(ReturnStmt stmt, Type returnType)
+    {
+        Debug.Assert(stmt != null);
+
+        Operand expr = ResolveExpectedExpr(stmt.Value, returnType);
+        if (expr.Type != returnType)
+        {
+            Log.Fatal("Return type mismatch", null);
+        }
+    }
+
+    private void ResolveExprStmt(ExprStmt stmt)
+    {
+        Debug.Assert(stmt != null);
+
+        if (stmt.Expr is CallExpr)
+        {
+            _ = ResolveExpr(stmt.Expr);
+        }
+        else
+        {
+            Log.Fatal("Only call expressions can be used a statement", null);
+        }
+    }
+
+    private void ResolveDeclStmt(DeclStmt stmt)
+    {
+        Debug.Assert(stmt != null);
+
+        if (stmt.Decl is VarDecl varDecl)
+        {
+            Type type = ResolveTypespec(varDecl.Type);
+            Operand expr = ResolveExpectedExpr(varDecl.Value, type);
+            if (expr.Type != expr.Type)
+            {
+                Log.Error("'Var decl stmt' value type mismatch", null);
+            }
+
+            PushVar(varDecl.Name, type);
+        }
+        else
+        {
+            Log.Fatal("Var decls is the only supported decl in stmts", null);
+        }
+    }
+
+    private void ResolveStmt(Stmt stmt, Type returnType)
+    {
+        /*
+        IfStmt
+        ForStmt
+        WhileStmt
+        DoWhileStmt
+        ContinueStmt
+        BreakStmt
+         */
+
+        if (stmt is StmtBlock stmtBlock)
+        {
+            ResolveStmtBlock(stmtBlock, returnType);
+        }
+        else if (stmt is IfStmt ifStmt)
+        {
+            ResolveIfStmt(ifStmt);
+        }
+        else if (stmt is ForStmt forStmt)
+        {
+            ResolveForStmt(forStmt);
+        }
+        else if (stmt is WhileStmt whileStmt)
+        {
+            ResolveWhileStmt(whileStmt);
+        }
+        else if (stmt is DoWhileStmt doWhileStmt)
+        {
+            ResolveDoWhileStmt(doWhileStmt);
+        }
+        else if (stmt is ReturnStmt returnStmt)
+        {
+            ResolveReturnStmt(returnStmt, returnType);
+        }
+        else if (stmt is ContinueStmt) { }
+        else if (stmt is BreakStmt) { }
+        else if (stmt is ExprStmt exprStmt)
+        {
+            ResolveExprStmt(exprStmt);
+        }
+        else if (stmt is DeclStmt declStmt)
+        {
+            ResolveDeclStmt(declStmt);
+        }
+        else
+        {
+            Debug.Assert(false);
+        }
+    }
+
+    private void ResolveStmtBlock(StmtBlock block, Type returnType)
+    {
+        int scope = EnterScope();
+
+        foreach (Stmt stmt in block.Stmts)
+        {
+            ResolveStmt(stmt, returnType);
+        }
+
+        LeaveScope(scope);
+    }
+
+    private void ResolveFuncBody(Symbol symbol)
+    {
+        Debug.Assert(symbol != null);
+        Debug.Assert(symbol.Kind == SymbolKind.Func);
+        Debug.Assert(symbol.Decl is FunctionDecl);
+        Debug.Assert(symbol.State == SymbolState.Resolved);
+        Debug.Assert(symbol.Type is FunctionType);
+
+        FunctionDecl decl = (FunctionDecl)symbol.Decl;
+        FunctionType type = (FunctionType)symbol.Type;
+
+        Debug.Assert(decl.Body != null);
+
+        int scope = EnterScope();
+
+        foreach (FunctionParameterType param in type.Parameters)
+        {
+            PushVar(param.Name, param.Type);
+        }
+
+        ResolveStmtBlock(decl.Body, type.ReturnType);
+
+        LeaveScope(scope);
+    }
+
     public void FinalizeSymbols()
     {
         // TODO(patrik): Resolve the function bodies
+        foreach (Symbol symbol in ResolvedSymbols)
+        {
+            if (symbol.Kind == SymbolKind.Func)
+            {
+                FunctionDecl decl = (FunctionDecl)symbol.Decl;
+                if (decl.Body != null)
+                {
+                    Console.WriteLine($"Resolve {decl.Name}");
+                    ResolveFuncBody(symbol);
+                }
+            }
+        }
     }
 
     public static void Test()
@@ -1188,16 +1389,12 @@ class Resolver
 
         string[] code = new string[]
         {
-            /*"struct T { a: s32; }",
-            "func test(a: s32, b: s32) -> s32 {}",
-            "var a: T = b;",
-            "var b: s32 = 3 + 5;",*/
-
             "struct R { h: s32; j: s32; }",
             "struct T { a: R; b: s64; c: s32; }",
             "var a: T = { { 1, 2 }, 2, 3 };",
             "var b: s32[4];",
-            "func add(val: T) -> T { ret { val.a, val.b + 2, val.c + 4 }; }",
+            "func test(a: s32, ...);",
+            "func add(val: T) -> s32 { var testVar: s32 = 321; test(3, 3.14f); ret testVar + 123; }",
         };
 
         foreach (string c in code)
@@ -1210,5 +1407,6 @@ class Resolver
         }
 
         resolver.ResolveSymbols();
+        resolver.FinalizeSymbols();
     }
 }

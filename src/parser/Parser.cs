@@ -260,13 +260,17 @@ class Parser
             {
                 lexer.NextToken();
 
-                IdentifierExpr name = new IdentifierExpr(lexer.CurrentIdentifier);
-                name.Span = lexer.CurrentTokenSpan;
+                IdentifierExpr name = new IdentifierExpr(lexer.CurrentIdentifier)
+                {
+                    Span = lexer.CurrentTokenSpan
+                };
                 lexer.ExpectToken(TokenType.IDENTIFIER);
 
                 SourceSpan firstSpan = expr.Span;
-                expr = new FieldExpr(expr, name);
-                expr.Span = SourceSpan.FromTo(firstSpan, name.Span);
+                expr = new FieldExpr(expr, name)
+                {
+                    Span = SourceSpan.FromTo(firstSpan, name.Span)
+                };
             }
             else
             {
@@ -554,6 +558,7 @@ class Parser
             if (decl == null)
             {
                 Expr expr = ParseExpr();
+                lexer.ExpectToken(TokenType.SEMICOLON);
                 return new ExprStmt(expr);
             }
 
