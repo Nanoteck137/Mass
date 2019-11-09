@@ -5,6 +5,7 @@ using System.Text;
 abstract class Expr
 {
     public SourceSpan Span { get; set; }
+    public Type ResolvedType { get; set; }
 }
 
 class IntegerExpr : Expr

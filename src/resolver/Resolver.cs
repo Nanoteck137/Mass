@@ -1000,6 +1000,7 @@ class Resolver
             Debug.Assert(false);
         }
 
+        expr.ResolvedType = result.Type;
         return result;
     }
 
@@ -1069,10 +1070,18 @@ class Resolver
         if (decl.Value != null)
         {
             Operand expr = ResolveExpectedExpr(decl.Value, type);
-            if (expr.Type != type)
+            if (!ConvertOperand(expr, type))
             {
-                Log.Fatal("Var type value mismatch", null);
+                Log.Fatal("Invalid type in variable initializer", null);
             }
+
+            if (!expr.IsConst)
+            {
+                Log.Fatal("Var initializer needs to be a constant value", null);
+            }
+
+            type = expr.Type;
+            decl.Value.ResolvedType = type;
         }
 
         return type;

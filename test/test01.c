@@ -1,9 +1,9 @@
 #include <stdio.h>
 
-int b = 3;
-int a = 2 + b;
+int a[4] = {1, 2, 3, 4};
 
 int main(int argc, char **argv)
 {
+	puts("Wooh");
 	return 0;
 }
