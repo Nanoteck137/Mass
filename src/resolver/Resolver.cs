@@ -1389,12 +1389,14 @@ class Resolver
 
         string[] code = new string[]
         {
-            "struct R { h: s32; j: s32; }",
-            "struct T { a: R; b: s64; c: s32; }",
-            "var a: T = { { 1, 2 }, 2, 3 };",
-            "var b: s32[4];",
-            "func test(a: s32, ...);",
-            "func add(val: T) -> s32 { var testVar: s32 = 321; test(3, 3.14f); ret testVar + 123; }",
+            //"struct R { h: s32; j: s32; }",
+            //"struct T { a: R; b: s64; c: s32; }",
+            //"var a: T = { { 1, 2 }, 2, 3 };",
+            //"var b: s32[4];",
+            "var ta: s32 = 4;",
+            "var tb: s32 = 4 + ta;",
+            //"func test(a: s32, ...);",
+            //"func add(val: T) -> s32 { var testVar: s32 = 321; test(3, 3.14f); ret testVar + 123; }",
         };
 
         foreach (string c in code)

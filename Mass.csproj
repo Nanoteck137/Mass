@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="src\CodeGenerator.cs" />
+    <None Include="src\gen\CodeGenerator.cs" />
     <None Include="src\resolver\Resolver.cs" />
   </ItemGroup>
 
