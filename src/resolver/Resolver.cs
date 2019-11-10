@@ -1247,6 +1247,29 @@ class Resolver
         }
     }
 
+    private void ResolveAssignStmt(AssignStmt stmt)
+    {
+        Debug.Assert(stmt != null);
+
+        Operand left = ResolveExpr(stmt.Left);
+        if (!left.IsLValue)
+        {
+            Log.Fatal("Cannot assign to non-lvalue", null);
+        }
+
+        Operand right = ResolveExpr(stmt.Right);
+        Operand result = null;
+        if (stmt.Op == TokenType.EQUAL)
+        {
+            result = right;
+        }
+
+        if (!ConvertOperand(result, left.Type))
+        {
+            Log.Fatal("Invalid type in assignment", null);
+        }
+    }
+
     private void ResolveExprStmt(ExprStmt stmt)
     {
         Debug.Assert(stmt != null);
@@ -1319,6 +1342,10 @@ class Resolver
         }
         else if (stmt is ContinueStmt) { }
         else if (stmt is BreakStmt) { }
+        else if (stmt is AssignStmt assignStmt)
+        {
+            ResolveAssignStmt(assignStmt);
+        }
         else if (stmt is ExprStmt exprStmt)
         {
             ResolveExprStmt(exprStmt);
@@ -1415,10 +1442,12 @@ class Resolver
             //"struct T { a: R; b: s64; c: s32; }",
             //"var a: T = { { 1, 2 }, 2, 3 };",
             //"var b: s32[4];",
-            "var ta: s32 = 4;",
-            "var tb: s32 = 4 + ta;",
+            //"var ta: s32 = 4;",
+            //"var tb: s32 = 4 + ta;",
             //"func test(a: s32, ...);",
             //"func add(val: T) -> s32 { var testVar: s32 = 321; test(3, 3.14f); ret testVar + 123; }",
+            "var a: s32 = 4;",
+            "func test() { a = 10; }"
         };
 
         foreach (string c in code)

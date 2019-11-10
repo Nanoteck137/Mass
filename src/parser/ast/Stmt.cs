@@ -99,6 +99,20 @@ class ContinueStmt : Stmt { }
 
 class BreakStmt : Stmt { }
 
+class AssignStmt : Stmt
+{
+    public Expr Left { get; private set; }
+    public Expr Right { get; private set; }
+    public TokenType Op { get; private set; }
+
+    public AssignStmt(Expr left, Expr right, TokenType op)
+    {
+        this.Left = left;
+        this.Right = right;
+        this.Op = op;
+    }
+}
+
 class ExprStmt : Stmt
 {
     public Expr Expr { get; private set; }

@@ -522,6 +522,27 @@ class Parser
         return result;
     }
 
+    private Stmt ParseSimpleStmt()
+    {
+        Stmt result;
+
+        Expr expr = ParseExpr();
+        if (lexer.MatchToken(TokenType.EQUAL))
+        {
+            TokenType op = lexer.CurrentToken;
+            lexer.NextToken();
+
+            Expr right = ParseExpr();
+            result = new AssignStmt(expr, right, op);
+        }
+        else
+        {
+            result = new ExprStmt(expr);
+        }
+
+        return result;
+    }
+
     private Stmt ParseStmt()
     {
         if (lexer.MatchToken(TokenType.KEYWORD_IF))
@@ -557,9 +578,13 @@ class Parser
             Decl decl = ParseDecl();
             if (decl == null)
             {
-                Expr expr = ParseExpr();
+                SourceSpan firstSpan = lexer.CurrentTokenSpan;
+                Stmt stmt = ParseSimpleStmt();
+                SourceSpan lastSpan = lexer.CurrentTokenSpan;
                 lexer.ExpectToken(TokenType.SEMICOLON);
-                return new ExprStmt(expr);
+
+                stmt.Span = SourceSpan.FromTo(firstSpan, lastSpan);
+                return stmt;
             }
 
             if (decl is VarDecl)
@@ -957,6 +982,11 @@ class Parser
         lexer.NextToken();
         Stmt stmt5 = parser.ParseStmt();
         Debug.Assert(stmt5 is DoWhileStmt);
+
+        lexer.Reset("a = 2;");
+        lexer.NextToken();
+        Stmt stmt6 = parser.ParseStmt();
+        Debug.Assert(stmt6 is AssignStmt);
         #endregion
 
         #region Typespec Testing

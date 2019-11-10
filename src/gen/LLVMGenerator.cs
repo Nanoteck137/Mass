@@ -235,7 +235,10 @@ class LLVMGenerator : CodeGenerator
             else
                 ptr = globals[identExpr.Value];
 
-            return ptr;
+            if (load)
+                return builder.BuildLoad(ptr);
+            else
+                return ptr;
         }
         else if (expr is BinaryOpExpr binaryOpExpr)
         {
@@ -325,6 +328,16 @@ class LLVMGenerator : CodeGenerator
         else if (stmt is BreakStmt)
         {
             Debug.Assert(false);
+        }
+        else if (stmt is AssignStmt assignStmt)
+        {
+            LLVMValueRef ptr = GenExpr(builder, assignStmt.Left);
+            LLVMValueRef value = GenLoadedExpr(builder, assignStmt.Right);
+
+            if (assignStmt.Op == TokenType.EQUAL)
+            {
+                builder.BuildStore(value, ptr);
+            }
         }
         else if (stmt is ExprStmt exprStmt)
         {
@@ -498,8 +511,8 @@ class LLVMGenerator : CodeGenerator
 
         string[] code = new string[]
         {
-            /*"var a: s8 = 1;",
-            "var b: s16 = 2;",
+            "var a: s32 = 1;",
+            /*"var b: s16 = 2;",
             "var c: s32 = 3;",
             "var d: s64 = 4;",
             "var e: s32[4];",
@@ -508,8 +521,7 @@ class LLVMGenerator : CodeGenerator
             "struct T { a: R; b: s32; }",
             "var structTest: T = { { 321, 2, 3 }, 4 };",
             "func printf(format: u8*, ...) -> s32;",
-            "func test() { printf(\"Test: %d\n\", structTest.a.c); }",
-            //"func test() { printf(\"Testing\\n\"); }",
+            "func test() { printf(\"Before: %d\n\", a); a = 123; printf(\"After: %d\n\", a); }",
         };
 
         foreach (string c in code)
@@ -525,16 +537,6 @@ class LLVMGenerator : CodeGenerator
         resolver.FinalizeSymbols();
 
         gen.Generate();
-
-        LLVMTypeRef type = gen.module.Context.CreateNamedStruct("TestStruct");
-
-        LLVMTypeRef[] members = new LLVMTypeRef[]
-        {
-            LLVMTypeRef.Int32, LLVMTypeRef.Int32
-        };
-
-        type.StructSetBody(members, false);
-
         gen.DebugPrint();
 
         Console.WriteLine("----------- RUNNING PROGRAM -----------");
@@ -546,6 +548,7 @@ class LLVMGenerator : CodeGenerator
         LLVM.InitializeX86AsmPrinter();
 
         LLVMExecutionEngineRef engine = gen.module.CreateExecutionEngine();
+
         LLVMValueRef t = engine.FindFunction("test");
         engine.RunFunction(t, new LLVMGenericValueRef[] { });
     }
