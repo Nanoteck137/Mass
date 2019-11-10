@@ -261,7 +261,14 @@ class LLVMGenerator : CodeGenerator
         }
         else if (expr is IndexExpr indexExpr)
         {
-            Debug.Assert(false);
+            LLVMValueRef ptr = GenExpr(builder, indexExpr.Expr);
+            LLVMValueRef index = GenLoadedExpr(builder, indexExpr.Index);
+            LLVMValueRef elementPtr = builder.BuildGEP(ptr, new LLVMValueRef[] { index, index });
+
+            if (load)
+                return builder.BuildLoad(elementPtr);
+            else
+                return elementPtr;
         }
         else if (expr is CompoundExpr compoundExpr)
         {
@@ -511,7 +518,7 @@ class LLVMGenerator : CodeGenerator
 
         string[] code = new string[]
         {
-            "var a: s32 = 1;",
+            "var a: s32[4];",
             /*"var b: s16 = 2;",
             "var c: s32 = 3;",
             "var d: s64 = 4;",
@@ -521,7 +528,7 @@ class LLVMGenerator : CodeGenerator
             "struct T { a: R; b: s32; }",
             "var structTest: T = { { 321, 2, 3 }, 4 };",
             "func printf(format: u8*, ...) -> s32;",
-            "func test() { printf(\"Before: %d\n\", a); a = 123; printf(\"After: %d\n\", a); }",
+            "func test() { printf(\"Before: %d\n\", a[0]); a[0] = 123; printf(\"After: %d\n\", a[1]); }",
         };
 
         foreach (string c in code)

@@ -53,16 +53,16 @@ abstract class Type
             {
                 case IntKind.S8:
                 case IntKind.U8:
-                    return Type.U8;
+                    return U8;
                 case IntKind.S16:
                 case IntKind.U16:
-                    return Type.U16;
+                    return U16;
                 case IntKind.S32:
                 case IntKind.U32:
-                    return Type.U32;
+                    return U32;
                 case IntKind.S64:
                 case IntKind.U64:
-                    return Type.U64;
+                    return U64;
                 default:
                     Debug.Assert(false);
                     return null;

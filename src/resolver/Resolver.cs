@@ -120,6 +120,22 @@ class Resolver
         return new Operand(type, val, true);
     }
 
+    private Operand OperandDecay(Operand operand)
+    {
+        if (operand.Type is ArrayType arrayType)
+        {
+            operand.Type = new PtrType(arrayType.Base);
+        }
+
+        operand.IsLValue = false;
+        return operand;
+    }
+
+    private Operand ResolveRValue(Expr expr)
+    {
+        return OperandDecay(ResolveExpr(expr));
+    }
+
     public Symbol GetSymbol(string name)
     {
         for (int i = localSymbols.Count - 1; i >= 0; i--)
@@ -873,7 +889,21 @@ class Resolver
     private Operand ResolveIndexExpr(IndexExpr expr)
     {
         Debug.Assert(expr != null);
-        return null;
+
+        Operand operand = ResolveRValue(expr.Expr);
+        if (!(operand.Type is PtrType))
+        {
+            Log.Fatal("Can only index arrays and ptrs", null);
+        }
+
+        Operand index = ResolveRValue(expr.Index);
+        if (!index.Type.IsInteger)
+        {
+            Log.Fatal("Index must be an integer", null);
+        }
+
+        PtrType ptrType = (PtrType)operand.Type;
+        return OperandLValue(ptrType.Base);
     }
 
     private Operand ResolveCompoundExpr(CompoundExpr expr, Type expectedType)
@@ -1446,8 +1476,11 @@ class Resolver
             //"var tb: s32 = 4 + ta;",
             //"func test(a: s32, ...);",
             //"func add(val: T) -> s32 { var testVar: s32 = 321; test(3, 3.14f); ret testVar + 123; }",
-            "var a: s32 = 4;",
-            "func test() { a = 10; }"
+            /*"var a: s32 = 4;",
+            "func test() { a = 10; }"*/
+
+            "var a: s32[4];",
+            "func test() { a[0] = 123; }"
         };
 
         foreach (string c in code)
