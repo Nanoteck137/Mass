@@ -45,15 +45,27 @@ class LLVMGenerator : CodeGenerator
                 case IntKind.U64:
                 case IntKind.S64:
                     return LLVMTypeRef.Int64;
+                default:
+                    Debug.Assert(false);
+                    break;
             }
         }
         else if (type is FloatType floatType)
         {
-            Debug.Assert(false);
+            switch (floatType.Kind)
+            {
+                case FloatKind.F32:
+                    return LLVMTypeRef.Float;
+                case FloatKind.F64:
+                    return LLVMTypeRef.Double;
+                default:
+                    Debug.Assert(false);
+                    break;
+            }
         }
         else if (type is PtrType ptrType)
         {
-            Debug.Assert(false);
+            return LLVMTypeRef.CreatePointer(GetType(ptrType.Base), 0);
         }
         else if (type is ArrayType arrayType)
         {
@@ -156,7 +168,11 @@ class LLVMGenerator : CodeGenerator
             LLVMTypeRef type = GetType(symbol.Type);
             LLVMValueRef varDef = module.AddGlobal(type, varDecl.Name);
             varDef.IsGlobalConstant = false;
-            varDef.Initializer = GenConstExpr(varDecl.Value);
+            varDef.IsExternallyInitialized = false;
+            if (varDecl.Value != null)
+                varDef.Initializer = GenConstExpr(varDecl.Value);
+            else
+                varDef.Initializer = LLVMValueRef.CreateConstNull(type);
 
             globals[varDecl.Name] = varDef;
         }
@@ -206,9 +222,13 @@ class LLVMGenerator : CodeGenerator
 
         string[] code = new string[]
         {
-            "var a: s8 = 123;",
-            "var b: s64 = 321;",
-            "func add(a: s32, b: s32) {}"
+            "var a: s8 = 1;",
+            "var b: s16 = 2;",
+            "var c: s32 = 3;",
+            "var d: s64 = 4;",
+            "var e: s32[4];",
+            "var f: s32*;",
+            "func add(a: s32, b: s32) {}",
         };
 
         foreach (string c in code)
