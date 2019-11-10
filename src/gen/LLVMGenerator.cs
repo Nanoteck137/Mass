@@ -153,6 +153,55 @@ class LLVMGenerator : CodeGenerator
         return null;
     }
 
+    private LLVMValueRef GenVarDecl(VarDecl decl, Type varType)
+    {
+        LLVMTypeRef type = GetType(varType);
+        LLVMValueRef varDef = module.AddGlobal(type, decl.Name);
+        varDef.IsGlobalConstant = false;
+        varDef.IsExternallyInitialized = false;
+
+        if (decl.Value != null)
+        {
+            varDef.Initializer = GenConstExpr(decl.Value);
+        }
+        else
+        {
+            varDef.Linkage = LLVMLinkage.LLVMCommonLinkage;
+            varDef.Initializer = LLVMValueRef.CreateConstNull(type);
+        }
+
+        return varDef;
+    }
+
+    private LLVMValueRef GenConstDecl(ConstDecl decl)
+    {
+        Debug.Assert(false);
+        return null;
+    }
+
+    private LLVMValueRef GenFuncDecl(FunctionDecl decl, Type funcType)
+    {
+        Debug.Assert(decl != null);
+        Debug.Assert(funcType != null);
+        Debug.Assert(funcType is FunctionType);
+
+        LLVMValueRef func = module.AddFunction(decl.Name, GetType(funcType));
+        for (int i = 0; i < decl.Parameters.Count; i++)
+        {
+            func.Params[i].Name = decl.Parameters[i].Name;
+        }
+
+        //GenFuncBody();
+
+        return func;
+    }
+
+    private LLVMValueRef GenStructDecl(StructDecl decl)
+    {
+        Debug.Assert(false);
+        return null;
+    }
+
     private void GenDecl(Symbol symbol)
     {
         Decl decl = symbol.Decl;
@@ -165,28 +214,18 @@ class LLVMGenerator : CodeGenerator
 
         if (decl is VarDecl varDecl)
         {
-            LLVMTypeRef type = GetType(symbol.Type);
-            LLVMValueRef varDef = module.AddGlobal(type, varDecl.Name);
-            varDef.IsGlobalConstant = false;
-            varDef.IsExternallyInitialized = false;
-            if (varDecl.Value != null)
-                varDef.Initializer = GenConstExpr(varDecl.Value);
-            else
-                varDef.Initializer = LLVMValueRef.CreateConstNull(type);
-
-            globals[varDecl.Name] = varDef;
+            LLVMValueRef value = GenVarDecl(varDecl, symbol.Type);
+            globals[varDecl.Name] = value;
         }
         else if (decl is ConstDecl constDecl)
         {
-
+            LLVMValueRef value = GenConstDecl(constDecl);
+            globals[constDecl.Name] = value;
         }
         else if (decl is FunctionDecl functionDecl)
         {
-            LLVMValueRef func = module.AddFunction(functionDecl.Name, GetType(symbol.Type));
-            for (int i = 0; i < functionDecl.Parameters.Count; i++)
-            {
-                func.Params[i].Name = functionDecl.Parameters[i].Name;
-            }
+            LLVMValueRef value = GenFuncDecl(functionDecl, symbol.Type);
+            globals[functionDecl.Name] = value;
         }
         else if (decl is StructDecl structDecl)
         {

@@ -3,9 +3,9 @@ source_filename = "test01.c"
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-linux-gnu"
 
+@b = global i32 1, align 4
 @.str = private unnamed_addr constant [5 x i8] c"Wooh\00", align 1
 @a = common global [4 x i32] zeroinitializer, align 16
-@b = common global i32 0, align 4
 @c = common global i32* null, align 8
 
 ; Function Attrs: noinline nounwind optnone uwtable
