@@ -3,20 +3,24 @@ source_filename = "test01.c"
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-linux-gnu"
 
+%struct.Wooh = type { i32, i32 }
+
 @b = global i32 1, align 4
+@c = global i32* inttoptr (i64 1 to i32*), align 8
+@l = global %struct.Wooh { i32 0, i32 1 }, align 4
 @.str = private unnamed_addr constant [5 x i8] c"Wooh\00", align 1
 @a = common global [4 x i32] zeroinitializer, align 16
-@c = common global i32* null, align 8
 
 ; Function Attrs: noinline nounwind optnone uwtable
 define i32 @main(i32, i8**) #0 {
   %3 = alloca i32, align 4
   %4 = alloca i32, align 4
   %5 = alloca i8**, align 8
+  %6 = alloca %struct.Wooh, align 4
   store i32 0, i32* %3, align 4
   store i32 %0, i32* %4, align 4
   store i8** %1, i8*** %5, align 8
-  %6 = call i32 @puts(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str, i32 0, i32 0))
+  %7 = call i32 @puts(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str, i32 0, i32 0))
   ret i32 0
 }
 

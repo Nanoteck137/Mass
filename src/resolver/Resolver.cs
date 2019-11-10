@@ -940,8 +940,20 @@ class Resolver
 
     private Operand ResolveFieldExpr(FieldExpr expr)
     {
-        Debug.Assert(false);
-        return null;
+        Operand operand = ResolveExpr(expr.Expr);
+        if (!(operand.Type is StructType))
+        {
+            Log.Fatal("Field expr needs to have a struct type", null);
+        }
+
+        StructType structType = (StructType)operand.Type;
+        int index = structType.GetItemIndex(expr.Name.Value);
+        if (index == -1)
+        {
+            Log.Fatal($"Struct has no field with name '{expr.Name.Value}'", null);
+        }
+
+        return OperandRValue(structType.Items[index].Type);
     }
 
     private Operand ResolveExpectedExpr(Expr expr, Type expectedType)
@@ -1020,7 +1032,7 @@ class Resolver
         return result;
     }
 
-    private Type ResolveTypespec(Typespec typespec)
+    public Type ResolveTypespec(Typespec typespec)
     {
         if (typespec is IdentifierTypespec identTypespec)
         {
@@ -1075,10 +1087,10 @@ class Resolver
                 Log.Fatal("Invalid type in variable initializer", null);
             }
 
-            if (!expr.IsConst)
+            /*if (!expr.IsConst)
             {
                 Log.Fatal("Var initializer needs to be a constant value", null);
-            }
+            }*/
 
             type = expr.Type;
             decl.Value.ResolvedType = type;
@@ -1166,6 +1178,7 @@ class Resolver
         else if (symbol.Decl is StructDecl structDecl)
         {
             symbol.Type = ResolveStructDecl(structDecl);
+            symbol.Type.Symbol = symbol;
         }
         else
         {

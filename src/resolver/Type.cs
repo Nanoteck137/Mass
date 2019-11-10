@@ -20,6 +20,8 @@ abstract class Type
 
     public static Type Void { get; } = new VoidType();
 
+    public Symbol Symbol { get; set; }
+
     public abstract int Size { get; }
 
     public virtual bool IsInteger { get { return false; } }
