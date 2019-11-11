@@ -131,9 +131,14 @@ class Resolver
         return operand;
     }
 
-    private Operand ResolveRValue(Expr expr)
+    private Operand ResolveExprRValue(Expr expr)
     {
         return OperandDecay(ResolveExpr(expr));
+    }
+
+    private Operand ResolveExpectedExprRValue(Expr expr, Type expectedType)
+    {
+        return OperandDecay(ResolveExpectedExpr(expr, expectedType));
     }
 
     public Symbol GetSymbol(string name)
@@ -219,6 +224,16 @@ class Resolver
         else if (dest.IsArithmetic && src.IsArithmetic)
         {
             return true;
+        }
+        else if (src is ArrayType && dest is PtrType)
+        {
+            ArrayType srcArray = (ArrayType)src;
+            PtrType destPtr = (PtrType)dest;
+
+            if (srcArray.Base == destPtr.Base)
+            {
+                return true;
+            }
         }
 
         return false;
@@ -890,13 +905,13 @@ class Resolver
     {
         Debug.Assert(expr != null);
 
-        Operand operand = ResolveRValue(expr.Expr);
+        Operand operand = ResolveExprRValue(expr.Expr);
         if (!(operand.Type is PtrType))
         {
             Log.Fatal("Can only index arrays and ptrs", null);
         }
 
-        Operand index = ResolveRValue(expr.Index);
+        Operand index = ResolveExprRValue(expr.Index);
         if (!index.Type.IsInteger)
         {
             Log.Fatal("Index must be an integer", null);
@@ -920,9 +935,9 @@ class Resolver
             type = expectedType;
 
         // TODO(patrik): Array type too
-        if (!(type is StructType))
+        if (!(type is StructType) && !(type is ArrayType))
         {
-            Log.Fatal("Compound literals can only be applied to struct types", null);
+            Log.Fatal("Compound literals can only be applied to struct and array types", null);
         }
 
         if (type is StructType structType)
@@ -950,11 +965,46 @@ class Resolver
                 }
 
                 Type itemType = structType.Items[index].Type;
-                Operand init = ResolveExpectedExpr(field.Init, itemType);
+                Operand init = ResolveExpectedExprRValue(field.Init, itemType);
 
                 if (!ConvertOperand(init, itemType))
                 {
                     Log.Fatal("Illegal conversion in compound literal initializer", null);
+                }
+
+                index++;
+            }
+        }
+        else if (type is ArrayType arrayType)
+        {
+            int index = 0;
+            for (int i = 0; i < expr.Fields.Count; i++)
+            {
+                CompoundField field = expr.Fields[i];
+                if (field is NameCompoundField)
+                {
+                    Log.Fatal("Named Field initializer not allowd for array compounds", null);
+                }
+                else if (field is IndexCompoundField indexField)
+                {
+                    Operand operand = ResolveConstExpr(indexField.Index);
+                    if (!(operand.Type is IntType))
+                    {
+                        Log.Fatal("Field initializer index expression must have integer type", null);
+                    }
+
+                    index = operand.Val.s32;
+                }
+
+                if (index >= (int)arrayType.Count)
+                {
+                    Log.Fatal("Field initializer in array compound out of range", null);
+                }
+
+                Operand init = ResolveExpectedExprRValue(field.Init, arrayType.Base);
+                if (!ConvertOperand(init, arrayType.Base))
+                {
+                    Log.Fatal("Invalid type in compound literal initializer", null);
                 }
 
                 index++;
@@ -965,7 +1015,7 @@ class Resolver
             Debug.Assert(false);
         }
 
-        return OperandRValue(type);
+        return OperandLValue(type);
     }
 
     private Operand ResolveFieldExpr(FieldExpr expr)

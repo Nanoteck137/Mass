@@ -160,35 +160,70 @@ class LLVMGenerator : CodeGenerator
         }
         else if (expr is CompoundExpr compoundExpr)
         {
-            Debug.Assert(compoundExpr.ResolvedType is StructType);
-
-            StructType structType = (StructType)compoundExpr.ResolvedType;
-
-            LLVMValueRef[] values = new LLVMValueRef[structType.Items.Count];
-            for (int i = 0; i < values.Length; i++)
+            if (compoundExpr.ResolvedType is StructType structType)
             {
-                values[i] = LLVMValueRef.CreateConstNull(GetType(structType.Items[i].Type));
-            }
-
-            int index = 0;
-            for (int i = 0; i < compoundExpr.Fields.Count; i++)
-            {
-                //TODO(patrik): CompoundFields
-                CompoundField field = compoundExpr.Fields[i];
-                if (field is NameCompoundField name)
+                LLVMValueRef[] values = new LLVMValueRef[structType.Items.Count];
+                for (int i = 0; i < values.Length; i++)
                 {
-                    index = structType.GetItemIndex(name.Name.Value);
-                    values[index] = GenConstExpr(field.Init);
-                }
-                else
-                {
-                    values[index] = GenConstExpr(field.Init);
+                    values[i] = LLVMValueRef.CreateConstNull(GetType(structType.Items[i].Type));
                 }
 
-                index++;
-            }
+                int index = 0;
+                for (int i = 0; i < compoundExpr.Fields.Count; i++)
+                {
+                    //TODO(patrik): CompoundFields
+                    CompoundField field = compoundExpr.Fields[i];
+                    if (field is NameCompoundField name)
+                    {
+                        index = structType.GetItemIndex(name.Name.Value);
+                        values[index] = GenConstExpr(field.Init);
+                    }
+                    else
+                    {
+                        values[index] = GenConstExpr(field.Init);
+                    }
 
-            return LLVMValueRef.CreateConstNamedStruct(GetType(structType), values);
+                    index++;
+                }
+
+                return LLVMValueRef.CreateConstNamedStruct(GetType(structType), values);
+            }
+            else if (compoundExpr.ResolvedType is ArrayType arrayType)
+            {
+                LLVMTypeRef elementType = GetType(arrayType.Base);
+                LLVMValueRef[] values = new LLVMValueRef[arrayType.Count];
+
+                for (int i = 0; i < values.Length; i++)
+                {
+                    values[i] = LLVMValueRef.CreateConstNull(elementType);
+                }
+
+                int index = 0;
+                for (int i = 0; i < compoundExpr.Fields.Count; i++)
+                {
+                    CompoundField field = compoundExpr.Fields[i];
+                    if (field is IndexCompoundField indexField)
+                    {
+                        //index = structType.GetItemIndex(name.Name.Value);
+                        //index = index.Index;
+                        IntegerExpr intExpr = (IntegerExpr)indexField.Index;
+                        index = (int)intExpr.Value;
+                        values[index] = GenConstExpr(field.Init);
+                    }
+                    else
+                    {
+                        values[index] = GenConstExpr(field.Init);
+                    }
+
+                    index++;
+                }
+
+                return LLVMValueRef.CreateConstArray(elementType, values);
+            }
+            else
+            {
+                Debug.Assert(false);
+            }
         }
         else if (expr is FieldExpr fieldExpr)
         {
@@ -263,7 +298,7 @@ class LLVMGenerator : CodeGenerator
         {
             LLVMValueRef ptr = GenExpr(builder, indexExpr.Expr);
             LLVMValueRef index = GenLoadedExpr(builder, indexExpr.Index);
-            LLVMValueRef elementPtr = builder.BuildGEP(ptr, new LLVMValueRef[] { index, index });
+            LLVMValueRef elementPtr = builder.BuildGEP(ptr, new LLVMValueRef[] { LLVMValueRef.CreateConstInt(LLVMTypeRef.Int32, 0), index });
 
             if (load)
                 return builder.BuildLoad(elementPtr);
@@ -518,17 +553,12 @@ class LLVMGenerator : CodeGenerator
 
         string[] code = new string[]
         {
-            "var a: s32[4];",
-            /*"var b: s16 = 2;",
-            "var c: s32 = 3;",
-            "var d: s64 = 4;",
-            "var e: s32[4];",
-            "var f: s32*;",*/
+            "var a: s32[2][2] = { { 1, 2 }, { 3, 4 } };",
             "struct R { c: s32; d: s32; e: s32; }",
             "struct T { a: R; b: s32; }",
             "var structTest: T = { { 321, 2, 3 }, 4 };",
             "func printf(format: u8*, ...) -> s32;",
-            "func test() { printf(\"Before: %d\n\", a[0]); a[0] = 123; printf(\"After: %d\n\", a[1]); }",
+            "func test() { printf(\"Before: %d\n\", a[0][0]); a[0][0] = 123; printf(\"After: %d\n\", a[0][0]); }",
         };
 
         foreach (string c in code)
