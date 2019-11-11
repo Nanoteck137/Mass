@@ -19,15 +19,17 @@ struct TestStruct
 	a: s32[4];
 }
 
-var t: TestStruct = { { 4, 3, 2, 1 } };
-var ta: s32[4] = { 1, 2, 3, 4 };
+// var t: TestStruct = { { 4, 3, 2, 1 } };
+// var ta: s32[4] = { 1, 2, 3, 4 };
 
 func main(argc: s32, argv: u8**) -> s32 
 {
-	add(2, 3);
+	// add(2, 3);
 
-	ta = t.a;
-	t.a[0] = 123;
+	// ta = t.a;
+	// t.a[0] = 123;
+
+	var ta: s32[4] = { 4, 1, 3, 2 };
 	printf("Array: %d, %d, %d, %d", ta[0], ta[1], ta[2], ta[3]);
 
 	ret 0;

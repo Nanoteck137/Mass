@@ -37,48 +37,15 @@ namespace Mass
             resolver.ResolveSymbols();
             resolver.FinalizeSymbols();
 
-            /*CodeGenerator codeGenerator = new CodeGenerator(lexer, resolver, lexer.FileName);
-            codeGenerator.Generate();
-            codeGenerator.Test(); */
-
             LLVMGenerator.Setup();
 
-            LLVMGenerator gen = new LLVMGenerator(resolver);
+            using LLVMGenerator gen = new LLVMGenerator(resolver);
             gen.Generate();
             gen.DebugPrint();
 
             gen.RunCode();
 
             /*
-            LLVMTypeRef[] funcParams = new LLVMTypeRef[]
-            {
-                LLVMTypeRef.Int32, LLVMTypeRef.Int32
-            };
-
-            LLVMTypeRef sumFuncType = LLVMTypeRef.CreateFunction(LLVMTypeRef.Int32, funcParams);
-            LLVMValueRef sumFunc = module.AddFunction("add", sumFuncType);
-            sumFunc.Linkage = LLVMLinkage.LLVMExternalLinkage;
-
-            sumFunc.Params[0].Name = "a";
-            sumFunc.Params[1].Name = "b";
-
-            LLVMBasicBlockRef entry = sumFunc.AppendBasicBlock("entry");
-
-            LLVMBuilderRef builder = module.Context.CreateBuilder();
-            builder.PositionAtEnd(entry);
-
-            LLVMValueRef retVal = builder.BuildAdd(sumFunc.Params[0], sumFunc.Params[1], "tmp");
-            builder.BuildRet(retVal);
-
-            string str = module.PrintToString();
-            Console.WriteLine("Old Module");
-            Console.WriteLine(str);*/
-
-            /*LLVMModuleRef module = codeGenerator.Module;
-
-            LLVMValueRef func = codeGenerator.GetValueFromName("main");
-            //LLVMValueRef sumFunc = module.GetNamedFunction("add");
-
             LLVMPassManagerRef passManager = module.CreateFunctionPassManager();
             passManager.AddInstructionCombiningPass();
             passManager.AddReassociatePass();
@@ -88,26 +55,7 @@ namespace Mass
 
             //passManager.RunFunctionPassManager(sumFunc);
 
-            /*str = module.PrintToString();
-            Console.WriteLine("New Module");
-            Console.WriteLine(str);*/
-
-            /*codeGenerator.Test();
-
-            LLVM.LinkInMCJIT();
-            LLVM.InitializeX86TargetMC();
-            LLVM.InitializeX86Target();
-            LLVM.InitializeX86TargetInfo();
-            LLVM.InitializeX86AsmParser();
-            LLVM.InitializeX86AsmPrinter();
-
-            LLVMMCJITCompilerOptions options = new LLVMMCJITCompilerOptions()
-            {
-                NoFramePointerElim = 1
-            };
-
-            LLVMExecutionEngineRef engine = module.CreateExecutionEngine();
-            LLVMValueRef t = engine.FindFunction("test");
+            /*
             LLVMGenericValueRef val = new LLVMGenericValueRef();
             LLVMGenericValueRef one = val.CreateInt(LLVMTypeRef.Int32, 123, false);
             LLVMGenericValueRef two = val.CreateInt(LLVMTypeRef.Int32, 321, false);*/

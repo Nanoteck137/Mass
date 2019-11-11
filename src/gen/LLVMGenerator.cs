@@ -5,13 +5,15 @@ using System.Text;
 
 using LLVMSharp;
 
-class LLVMGenerator : CodeGenerator
+class LLVMGenerator : CodeGenerator, IDisposable
 {
     private LLVMModuleRef module;
 
     private Dictionary<string, LLVMValueRef> globals;
     private Dictionary<string, LLVMValueRef> locals;
     private Dictionary<string, LLVMTypeRef> structTypes;
+
+    private LLVMValueRef currentWorkingValue;
 
     public LLVMGenerator(Resolver resolver)
         : base(resolver)
@@ -20,6 +22,11 @@ class LLVMGenerator : CodeGenerator
         globals = new Dictionary<string, LLVMValueRef>();
         locals = new Dictionary<string, LLVMValueRef>();
         structTypes = new Dictionary<string, LLVMTypeRef>();
+    }
+
+    public void Dispose()
+    {
+        module.Dispose();
     }
 
     private LLVMTypeRef GetType(Type type)
@@ -307,7 +314,83 @@ class LLVMGenerator : CodeGenerator
         }
         else if (expr is CompoundExpr compoundExpr)
         {
-            Debug.Assert(false);
+            if (compoundExpr.ResolvedType is StructType structType)
+            {
+                LLVMValueRef[] values = new LLVMValueRef[structType.Items.Count];
+                for (int i = 0; i < values.Length; i++)
+                {
+                    values[i] = LLVMValueRef.CreateConstNull(GetType(structType.Items[i].Type));
+                }
+
+                int index = 0;
+                for (int i = 0; i < compoundExpr.Fields.Count; i++)
+                {
+                    //TODO(patrik): CompoundFields
+                    CompoundField field = compoundExpr.Fields[i];
+                    if (field is NameCompoundField name)
+                    {
+                        index = structType.GetItemIndex(name.Name.Value);
+                        values[index] = GenConstExpr(field.Init);
+                    }
+                    else
+                    {
+                        values[index] = GenConstExpr(field.Init);
+                    }
+
+                    index++;
+                }
+
+                return LLVMValueRef.CreateConstNamedStruct(GetType(structType), values);
+            }
+            else if (compoundExpr.ResolvedType is ArrayType arrayType)
+            {
+                LLVMTypeRef elementType = GetType(arrayType.Base);
+                LLVMValueRef[] values = new LLVMValueRef[arrayType.Count];
+
+                for (int i = 0; i < values.Length; i++)
+                {
+                    values[i] = LLVMValueRef.CreateConstNull(elementType);
+                }
+
+                int index = 0;
+                for (int i = 0; i < compoundExpr.Fields.Count; i++)
+                {
+                    CompoundField field = compoundExpr.Fields[i];
+                    if (field is IndexCompoundField indexField)
+                    {
+                        //index = structType.GetItemIndex(name.Name.Value);
+                        //index = index.Index;
+                        IntegerExpr intExpr = (IntegerExpr)indexField.Index;
+                        index = (int)intExpr.Value;
+                        values[index] = GenConstExpr(field.Init);
+                    }
+                    else
+                    {
+                        values[index] = GenConstExpr(field.Init);
+                    }
+
+                    index++;
+                }
+
+                LLVMTypeRef llvmArrayType = GetType(arrayType);
+                LLVMValueRef init = LLVMValueRef.CreateConstArray(elementType, values);
+                LLVMValueRef varInit = module.AddGlobal(llvmArrayType, "test");
+                varInit.Initializer = init;
+                varInit.Linkage = LLVMLinkage.LLVMLinkerPrivateLinkage;
+                varInit.IsGlobalConstant = true;
+
+                unsafe
+                {
+                    LLVMValueRef size = LLVMValueRef.CreateConstInt(LLVMTypeRef.Int64, (ulong)arrayType.Size);
+                    LLVM.BuildMemCpy(builder, currentWorkingValue, 0, varInit, 0, size);
+                }
+
+                return null;
+            }
+            else
+            {
+                Debug.Assert(false);
+            }
         }
         else if (expr is FieldExpr fieldExpr)
         {
@@ -392,13 +475,16 @@ class LLVMGenerator : CodeGenerator
 
             LLVMTypeRef type = GetType(resolver.ResolveTypespec(decl.Type));
             LLVMValueRef ptr = builder.BuildAlloca(type, decl.Name);
+            currentWorkingValue = ptr;
 
             if (decl.Value != null)
             {
                 LLVMValueRef value = GenLoadedExpr(builder, decl.Value);
-                builder.BuildStore(value, ptr);
+                if (value != null)
+                    builder.BuildStore(value, ptr);
             }
 
+            currentWorkingValue = null;
             locals[decl.Name] = ptr;
         }
         else

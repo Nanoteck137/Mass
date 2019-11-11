@@ -1371,10 +1371,14 @@ class Resolver
         if (stmt.Decl is VarDecl varDecl)
         {
             Type type = ResolveTypespec(varDecl.Type);
-            Operand expr = ResolveExpectedExpr(varDecl.Value, type);
-            if (expr.Type != expr.Type)
+
+            if (varDecl.Value != null)
             {
-                Log.Error("'Var decl stmt' value type mismatch", null);
+                Operand expr = ResolveExpectedExpr(varDecl.Value, type);
+                if (expr.Type != expr.Type)
+                {
+                    Log.Error("'Var decl stmt' value type mismatch", null);
+                }
             }
 
             PushVar(varDecl.Name, type);
