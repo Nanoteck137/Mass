@@ -5,21 +5,31 @@
 #external
 func printf(format: u8*, ...) -> s32;
 
-func test() {
-	printf("Hello World\n");
-}
-
 func add(a: s32, b: s32) -> s32
 {
     var sum: s32 = a + b;
-	test();
+
     printf("%d + %d = %d\n", a, b, sum);
 
     ret sum;
 }
 
-func main(argc: s32, argv: u8**) -> s32 {
+struct TestStruct
+{
+	a: s32[4];
+}
+
+var t: TestStruct = { { 4, 3, 2, 1 } };
+var ta: s32[4] = { 1, 2, 3, 4 };
+
+func main(argc: s32, argv: u8**) -> s32 
+{
 	add(2, 3);
+
+	ta = t.a;
+	t.a[0] = 123;
+	printf("Array: %d, %d, %d, %d", ta[0], ta[1], ta[2], ta[3]);
+
 	ret 0;
 }
 

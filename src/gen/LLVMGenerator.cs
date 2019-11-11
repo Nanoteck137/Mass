@@ -544,6 +544,31 @@ class LLVMGenerator : CodeGenerator
         Console.WriteLine(str);
     }
 
+    public void RunCode()
+    {
+        LLVMExecutionEngineRef engine = module.CreateExecutionEngine();
+
+        LLVMValueRef t = engine.FindFunction("main");
+        engine.RunFunctionAsMain(t, 0, new string[] { }, new string[] { });
+    }
+
+    private static bool initialized = false;
+
+    public static void Setup()
+    {
+        if (initialized)
+            return;
+
+        LLVM.LinkInMCJIT();
+        LLVM.InitializeX86TargetMC();
+        LLVM.InitializeX86Target();
+        LLVM.InitializeX86TargetInfo();
+        LLVM.InitializeX86AsmParser();
+        LLVM.InitializeX86AsmPrinter();
+
+        initialized = true;
+    }
+
     public static void Test()
     {
         Lexer lexer = new Lexer("LLVM Code Generator Test", "");
@@ -577,12 +602,7 @@ class LLVMGenerator : CodeGenerator
         gen.DebugPrint();
 
         Console.WriteLine("----------- RUNNING PROGRAM -----------");
-        LLVM.LinkInMCJIT();
-        LLVM.InitializeX86TargetMC();
-        LLVM.InitializeX86Target();
-        LLVM.InitializeX86TargetInfo();
-        LLVM.InitializeX86AsmParser();
-        LLVM.InitializeX86AsmPrinter();
+        Setup();
 
         LLVMExecutionEngineRef engine = gen.module.CreateExecutionEngine();
 

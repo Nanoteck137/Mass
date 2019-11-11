@@ -11,45 +11,43 @@ namespace Mass
     {
         static void Main(string[] args)
         {
-            Lexer.Test();
+            /*Lexer.Test();
             Parser.Test();
             Printer.Test();
             Type.Test();
             Resolver.Test();
-            LLVMGenerator.Test();
+            LLVMGenerator.Test();*/
 
             string fileContent = File.ReadAllText("test.ma");
 
-            /*Lexer lexer = new Lexer("test.ma", fileContent);
+            Lexer lexer = new Lexer("test.ma", fileContent);
             lexer.NextToken();
 
             Parser parser = new Parser(lexer);
 
             List<Decl> root = parser.Parse();
-            Printer.PrintDeclList(root);*/
 
-            /*Printer printer = new Printer();
-            //printer.Test();
-            foreach (DeclAST decl in root)
-            {
-                printer.PrintDecl(decl);
-                Console.WriteLine();
-            }
+            Resolver resolver = new Resolver();
 
-            Resolver resolver = new Resolver(lexer);
-            //resolver.Test();
-
-            foreach (DeclAST decl in root)
+            foreach (Decl decl in root)
             {
                 resolver.AddSymbol(decl);
             }
 
             resolver.ResolveSymbols();
+            resolver.FinalizeSymbols();
 
-            CodeGenerator codeGenerator = new CodeGenerator(lexer, resolver, lexer.FileName);
+            /*CodeGenerator codeGenerator = new CodeGenerator(lexer, resolver, lexer.FileName);
             codeGenerator.Generate();
-            codeGenerator.Test();*/
+            codeGenerator.Test(); */
 
+            LLVMGenerator.Setup();
+
+            LLVMGenerator gen = new LLVMGenerator(resolver);
+            gen.Generate();
+            gen.DebugPrint();
+
+            gen.RunCode();
 
             /*
             LLVMTypeRef[] funcParams = new LLVMTypeRef[]

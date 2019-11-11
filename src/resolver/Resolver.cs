@@ -131,16 +131,6 @@ class Resolver
         return operand;
     }
 
-    private Operand ResolveExprRValue(Expr expr)
-    {
-        return OperandDecay(ResolveExpr(expr));
-    }
-
-    private Operand ResolveExpectedExprRValue(Expr expr, Type expectedType)
-    {
-        return OperandDecay(ResolveExpectedExpr(expr, expectedType));
-    }
-
     public Symbol GetSymbol(string name)
     {
         for (int i = localSymbols.Count - 1; i >= 0; i--)
@@ -1110,6 +1100,16 @@ class Resolver
         }
 
         return result;
+    }
+
+    private Operand ResolveExprRValue(Expr expr)
+    {
+        return OperandDecay(ResolveExpr(expr));
+    }
+
+    private Operand ResolveExpectedExprRValue(Expr expr, Type expectedType)
+    {
+        return OperandDecay(ResolveExpectedExpr(expr, expectedType));
     }
 
     public Type ResolveTypespec(Typespec typespec)
