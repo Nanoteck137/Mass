@@ -11,11 +11,22 @@ define i32 @main(i32, i8**) #0 {
   %4 = alloca i32, align 4
   %5 = alloca i8**, align 8
   %6 = alloca [4 x i32], align 16
+  %7 = alloca i32, align 4
+  %8 = alloca i32, align 4
+  %9 = alloca i32, align 4
+  %10 = alloca i32*, align 8
   store i32 0, i32* %3, align 4
   store i32 %0, i32* %4, align 4
   store i8** %1, i8*** %5, align 8
-  %7 = bitcast [4 x i32]* %6 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %7, i8* bitcast ([4 x i32]* @main.a to i8*), i64 16, i32 16, i1 false)
+  %11 = bitcast [4 x i32]* %6 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %11, i8* bitcast ([4 x i32]* @main.a to i8*), i64 16, i32 16, i1 false)
+  store i32 5, i32* %7, align 4
+  store i32 1, i32* %8, align 4
+  %12 = load i32, i32* %7, align 4
+  %13 = load i32, i32* %8, align 4
+  %14 = add i32 %12, %13
+  store i32 %14, i32* %9, align 4
+  store i32* %9, i32** %10, align 8
   ret i32 0
 }
 

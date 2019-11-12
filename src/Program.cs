@@ -44,36 +44,6 @@ namespace Mass
             gen.DebugPrint();
 
             gen.RunCode();
-
-            /*
-            LLVMPassManagerRef passManager = module.CreateFunctionPassManager();
-            passManager.AddInstructionCombiningPass();
-            passManager.AddReassociatePass();
-            passManager.AddGVNPass();
-            passManager.AddCFGSimplificationPass();
-            passManager.InitializeFunctionPassManager();*/
-
-            //passManager.RunFunctionPassManager(sumFunc);
-
-            /*
-            LLVMGenericValueRef val = new LLVMGenericValueRef();
-            LLVMGenericValueRef one = val.CreateInt(LLVMTypeRef.Int32, 123, false);
-            LLVMGenericValueRef two = val.CreateInt(LLVMTypeRef.Int32, 321, false);*/
-
-            /*LLVMGenericValueRef[] funcArgs = new LLVMGenericValueRef[]
-            {
-                one, two
-            };*/
-
-            //int res = engine.RunFunctionAsMain(func, 0, null, null);
-
-            /*unsafe
-            {
-                ulong wooh = LLVM.GenericValueToInt(res, 0);
-                Console.WriteLine("Result: {0}", wooh);
-            }*/
-
-            //codeGenerator.Dispose();
         }
     }
 }

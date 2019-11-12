@@ -13,7 +13,8 @@ class LLVMGenerator : CodeGenerator, IDisposable
     private Dictionary<string, LLVMValueRef> locals;
     private Dictionary<string, LLVMTypeRef> structTypes;
 
-    private LLVMValueRef currentWorkingValue;
+    // private Symbol currentSymbol;
+    private LLVMValueRef currentValuePtr;
 
     public LLVMGenerator(Resolver resolver)
         : base(resolver)
@@ -31,15 +32,6 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
     private LLVMTypeRef GetType(Type type)
     {
-        /*
-        FloatType
-        PtrType
-        ArrayType
-        VoidType
-        FunctionType
-        StructType
-         */
-
         if (type is IntType intType)
         {
             switch (intType.Kind)
@@ -114,7 +106,6 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
             structTypes[name] = result;
             return result;
-            //return LLVMTypeRef.CreateStruct(items, false);
         }
         else
         {
@@ -243,6 +234,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
         return null;
     }
 
+
     private LLVMValueRef GenExpr(LLVMBuilderRef builder, Expr expr, bool load = false)
     {
         /*
@@ -287,7 +279,31 @@ class LLVMGenerator : CodeGenerator, IDisposable
             LLVMValueRef left = GenLoadedExpr(builder, binaryOpExpr.Left);
             LLVMValueRef right = GenLoadedExpr(builder, binaryOpExpr.Right);
 
-            return builder.BuildAdd(left, right);
+            LLVMValueRef result = null;
+            switch (binaryOpExpr.Op)
+            {
+                case TokenType.PLUS:
+                    result = builder.BuildAdd(left, right);
+                    break;
+                case TokenType.MINUS:
+                    result = builder.BuildSub(left, right);
+                    break;
+                case TokenType.MULTIPLY:
+                    result = builder.BuildMul(left, right);
+                    break;
+                case TokenType.DIVIDE:
+                    result = builder.BuildSDiv(left, right);
+                    break;
+                case TokenType.MODULO:
+                    result = builder.BuildSRem(left, right);
+                    break;
+                default:
+                    Debug.Assert(false);
+                    break;
+            }
+
+            Debug.Assert(result != null);
+            return result;
         }
         else if (expr is CallExpr callExpr)
         {
@@ -382,7 +398,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
                 unsafe
                 {
                     LLVMValueRef size = LLVMValueRef.CreateConstInt(LLVMTypeRef.Int64, (ulong)arrayType.Size);
-                    LLVM.BuildMemCpy(builder, currentWorkingValue, 0, varInit, 0, size);
+                    LLVM.BuildMemCpy(builder, currentValuePtr, 0, varInit, 0, size);
                 }
 
                 return null;
@@ -475,7 +491,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
             LLVMTypeRef type = GetType(resolver.ResolveTypespec(decl.Type));
             LLVMValueRef ptr = builder.BuildAlloca(type, decl.Name);
-            currentWorkingValue = ptr;
+            currentValuePtr = ptr;
 
             if (decl.Value != null)
             {
@@ -484,7 +500,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
                     builder.BuildStore(value, ptr);
             }
 
-            currentWorkingValue = null;
+            currentValuePtr = null;
             locals[decl.Name] = ptr;
         }
         else
@@ -660,7 +676,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
         Lexer lexer = new Lexer("LLVM Code Generator Test", "");
         Parser parser = new Parser(lexer);
         Resolver resolver = new Resolver();
-        LLVMGenerator gen = new LLVMGenerator(resolver);
+        using LLVMGenerator gen = new LLVMGenerator(resolver);
 
         string[] code = new string[]
         {
