@@ -244,6 +244,13 @@ class Parser
                             Span = SourceSpan.FromTo(firstSpan, lastSpan)
                         };
                     }
+                    else if (identExpr.Value == "deref")
+                    {
+                        expr = new SpecialFunctionCallExpr(SpecialFunctionKind.Deref, arguments)
+                        {
+                            Span = SourceSpan.FromTo(firstSpan, lastSpan)
+                        };
+                    }
                     else
                     {
                         expr = new CallExpr(expr, arguments)

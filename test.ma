@@ -15,7 +15,8 @@ func main(argc: s32, argv: u8**) -> s32
 
 	var ta: s32 = 3 + 4 * 2;
 
-	printf("ta Value: %d Address: %p\n", ta, addr(ta));
+	var ptr: s32* = addr(ta);
+	printf("ta Value: %d Address: %p Deref: %d\n", ta, ptr, deref(ptr));
 	printf("Test: %c\n", argv[0][0]);
 
 	ret 0;

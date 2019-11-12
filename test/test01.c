@@ -2,9 +2,8 @@
 
 int main(int argc, char **argv)
 {
-	int a[2][2] = {{1, 2}, {3, 4}};
-
-	int b = a[0][0];
-	printf("%c\n", argv[0][0]);
+	int a = 5;
+	int *b = &a;
+	int c = *b;
 	return 0;
 }

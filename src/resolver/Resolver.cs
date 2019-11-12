@@ -908,6 +908,29 @@ class Resolver
         return OperandRValue(new PtrType(arg.Type));
     }
 
+    private Operand ResolveSFDeref(List<Expr> arguments)
+    {
+        if (arguments.Count == 0)
+        {
+            Log.Fatal("Special Function 'deref' needs one argument", null);
+        }
+
+        if (arguments.Count > 1)
+        {
+            Log.Fatal("Special Function 'deref' too many arguments", null);
+        }
+
+        Operand arg = ResolveExpr(arguments[0]);
+
+        if (!(arg.Type is PtrType))
+        {
+            Log.Fatal("Dereferencing a non-ptr type", null);
+        }
+
+        PtrType ptrType = (PtrType)arg.Type;
+        return OperandRValue(ptrType.Base);
+    }
+
     private Operand ResolveSpecialFunctionCall(SpecialFunctionCallExpr expr)
     {
         Debug.Assert(expr != null);
@@ -916,6 +939,10 @@ class Resolver
         if (expr.Kind == SpecialFunctionKind.Addr)
         {
             result = ResolveSFAddr(expr.Arguments);
+        }
+        else if (expr.Kind == SpecialFunctionKind.Deref)
+        {
+            result = ResolveSFDeref(expr.Arguments);
         }
         else
         {

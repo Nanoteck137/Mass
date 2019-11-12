@@ -4,7 +4,7 @@ source_filename = "NO NAME"
 @ta = global [2 x [2 x i32]] [[2 x i32] [i32 1, i32 2], [2 x i32] [i32 3, i32 4]]
 @str = private unnamed_addr constant [23 x i8] c"Array: %d, %d, %d, %d\0A\00", align 1
 @str.1 = private unnamed_addr constant [11 x i8] c"Value: %d\0A\00", align 1
-@str.2 = private unnamed_addr constant [26 x i8] c"ta Value: %d Address: %p\0A\00", align 1
+@str.2 = private unnamed_addr constant [36 x i8] c"ta Value: %d Address: %p Deref: %d\0A\00", align 1
 @str.3 = private unnamed_addr constant [10 x i8] c"Test: %c\0A\00", align 1
 
 declare i32 @printf(i8*, ...)
@@ -23,13 +23,18 @@ define i32 @main(i32 %argc, i8** %argv) {
   %7 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @str.1, i32 0, i32 0), [2 x i32] %6)
   %ta = alloca i32
   store i32 11, i32* %ta
+  %ptr = alloca i32*
+  store i32* %ta, i32** %ptr
   %8 = load i32, i32* %ta
-  %9 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([26 x i8], [26 x i8]* @str.2, i32 0, i32 0), i32 %8, i32* %ta)
-  %10 = load i8**, i8*** %argv2
-  %11 = getelementptr i8*, i8** %10, i32 0
-  %12 = load i8*, i8** %11
-  %13 = getelementptr i8, i8* %12, i32 0
-  %14 = load i8, i8* %13
-  %15 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @str.3, i32 0, i32 0), i8 %14)
+  %9 = load i32*, i32** %ptr
+  %10 = load i32*, i32** %ptr
+  %11 = load i32, i32* %10
+  %12 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([36 x i8], [36 x i8]* @str.2, i32 0, i32 0), i32 %8, i32* %9, i32 %11)
+  %13 = load i8**, i8*** %argv2
+  %14 = getelementptr i8*, i8** %13, i32 0
+  %15 = load i8*, i8** %14
+  %16 = getelementptr i8, i8* %15, i32 0
+  %17 = load i8, i8* %16
+  %18 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @str.3, i32 0, i32 0), i8 %17)
   ret i32 0
 }

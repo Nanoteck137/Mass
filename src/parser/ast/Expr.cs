@@ -78,7 +78,8 @@ class CallExpr : Expr
 
 enum SpecialFunctionKind
 {
-    Addr
+    Addr,
+    Deref,
 };
 
 class SpecialFunctionCallExpr : Expr

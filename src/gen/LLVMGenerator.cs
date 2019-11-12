@@ -322,9 +322,25 @@ class LLVMGenerator : CodeGenerator, IDisposable
         }
         else if (expr is SpecialFunctionCallExpr sfCallExpr)
         {
-            LLVMValueRef value = GenExpr(builder, sfCallExpr.Arguments[0]);
+            if (sfCallExpr.Kind == SpecialFunctionKind.Addr)
+            {
+                LLVMValueRef value = GenExpr(builder, sfCallExpr.Arguments[0]);
 
-            return value;
+                return value;
+            }
+            else if (sfCallExpr.Kind == SpecialFunctionKind.Deref)
+            {
+                LLVMValueRef ptr = GenLoadedExpr(builder, sfCallExpr.Arguments[0]);
+                LLVMValueRef value = builder.BuildLoad(ptr);
+
+                return value;
+            }
+            else
+            {
+                Debug.Assert(false);
+            }
+
+
         }
         else if (expr is IndexExpr indexExpr)
         {
