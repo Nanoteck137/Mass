@@ -1,43 +1,35 @@
-; ModuleID = 'test.ma'
-source_filename = "test.ma"
+; ModuleID = 'NO NAME'
+source_filename = "NO NAME"
 
-@0 = private unnamed_addr constant [13 x i8] c"Hello World\0A\00", align 1
-@1 = private unnamed_addr constant [14 x i8] c"%d + %d = %d\0A\00", align 1
+@ta = global [2 x [2 x i32]] [[2 x i32] [i32 1, i32 2], [2 x i32] [i32 3, i32 4]]
+@str = private unnamed_addr constant [23 x i8] c"Array: %d, %d, %d, %d\0A\00", align 1
+@str.1 = private unnamed_addr constant [11 x i8] c"Value: %d\0A\00", align 1
+@str.2 = private unnamed_addr constant [26 x i8] c"ta Value: %d Address: %p\0A\00", align 1
+@str.3 = private unnamed_addr constant [10 x i8] c"Test: %c\0A\00", align 1
 
 declare i32 @printf(i8*, ...)
 
-define void @test() {
-entry:
-  %0 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([13 x i8], [13 x i8]* @0, i32 0, i32 0))
-  ret void
-}
-
-define i32 @add(i32 %a, i32 %b) {
-entry:
-  %s_a = alloca i32
-  store i32 %a, i32* %s_a
-  %s_b = alloca i32
-  store i32 %b, i32* %s_b
-  %sum = alloca i32
-  %0 = load i32, i32* %s_a
-  %1 = load i32, i32* %s_b
-  %addRes = add i32 %0, %1
-  store i32 %addRes, i32* %sum
-  call void @test()
-  %2 = load i32, i32* %s_a
-  %3 = load i32, i32* %s_b
-  %4 = load i32, i32* %sum
-  %5 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([14 x i8], [14 x i8]* @1, i32 0, i32 0), i32 %2, i32 %3, i32 %4)
-  %6 = load i32, i32* %sum
-  ret i32 %6
-}
-
 define i32 @main(i32 %argc, i8** %argv) {
-entry:
-  %s_argc = alloca i32
-  store i32 %argc, i32* %s_argc
-  %s_argv = alloca i8**
-  store i8** %argv, i8*** %s_argv
-  %0 = call i32 @add(i32 2, i32 3)
+  %argc1 = alloca i32
+  store i32 %argc, i32* %argc1
+  %argv2 = alloca i8**
+  store i8** %argv, i8*** %argv2
+  %1 = load [2 x i32], [2 x i32]* getelementptr inbounds ([2 x [2 x i32]], [2 x [2 x i32]]* @ta, i32 0, i32 0)
+  %2 = load [2 x i32], [2 x i32]* getelementptr inbounds ([2 x [2 x i32]], [2 x [2 x i32]]* @ta, i32 0, i32 1)
+  %3 = load [2 x i32], [2 x i32]* getelementptr inbounds ([2 x [2 x i32]], [2 x [2 x i32]]* @ta, i64 1, i32 0)
+  %4 = load [2 x i32], [2 x i32]* getelementptr ([2 x [2 x i32]], [2 x [2 x i32]]* @ta, i64 1, i32 1)
+  %5 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([23 x i8], [23 x i8]* @str, i32 0, i32 0), [2 x i32] %1, [2 x i32] %2, [2 x i32] %3, [2 x i32] %4)
+  %6 = load [2 x i32], [2 x i32]* getelementptr inbounds ([2 x [2 x i32]], [2 x [2 x i32]]* @ta, i32 0, i32 1)
+  %7 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @str.1, i32 0, i32 0), [2 x i32] %6)
+  %ta = alloca i32
+  store i32 11, i32* %ta
+  %8 = load i32, i32* %ta
+  %9 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([26 x i8], [26 x i8]* @str.2, i32 0, i32 0), i32 %8, i32* %ta)
+  %10 = load i8**, i8*** %argv2
+  %11 = getelementptr i8*, i8** %10, i32 0
+  %12 = load i8*, i8** %11
+  %13 = getelementptr i8, i8* %12, i32 0
+  %14 = load i8, i8* %13
+  %15 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @str.3, i32 0, i32 0), i8 %14)
   ret i32 0
 }

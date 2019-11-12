@@ -235,10 +235,30 @@ class Parser
                 SourceSpan lastSpan = lexer.CurrentTokenSpan;
                 lexer.ExpectToken(TokenType.CLOSE_PAREN);
 
-                expr = new CallExpr(expr, arguments)
+                if (expr is IdentifierExpr identExpr)
                 {
-                    Span = SourceSpan.FromTo(firstSpan, lastSpan)
-                };
+                    if (identExpr.Value == "addr")
+                    {
+                        expr = new SpecialFunctionCallExpr(SpecialFunctionKind.Addr, arguments)
+                        {
+                            Span = SourceSpan.FromTo(firstSpan, lastSpan)
+                        };
+                    }
+                    else
+                    {
+                        expr = new CallExpr(expr, arguments)
+                        {
+                            Span = SourceSpan.FromTo(firstSpan, lastSpan)
+                        };
+                    }
+                }
+                else
+                {
+                    expr = new CallExpr(expr, arguments)
+                    {
+                        Span = SourceSpan.FromTo(firstSpan, lastSpan)
+                    };
+                }
             }
             else if (lexer.MatchToken(TokenType.OPEN_BRACKET))
             {

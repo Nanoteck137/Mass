@@ -76,6 +76,23 @@ class CallExpr : Expr
     }
 }
 
+enum SpecialFunctionKind
+{
+    Addr
+};
+
+class SpecialFunctionCallExpr : Expr
+{
+    public SpecialFunctionKind Kind { get; private set; }
+    public List<Expr> Arguments { get; private set; }
+
+    public SpecialFunctionCallExpr(SpecialFunctionKind kind, List<Expr> arguments)
+    {
+        this.Kind = kind;
+        this.Arguments = arguments;
+    }
+}
+
 class IndexExpr : Expr
 {
     public Expr Expr { get; private set; }

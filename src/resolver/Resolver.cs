@@ -891,6 +891,40 @@ class Resolver
         return null;
     }
 
+    private Operand ResolveSFAddr(List<Expr> arguments)
+    {
+        if (arguments.Count == 0)
+        {
+            Log.Fatal("Special Function 'addr' needs one argument", null);
+        }
+
+        if (arguments.Count > 1)
+        {
+            Log.Fatal("Special Function 'addr' too many arguments", null);
+        }
+
+        Operand arg = ResolveExpr(arguments[0]);
+
+        return OperandRValue(new PtrType(arg.Type));
+    }
+
+    private Operand ResolveSpecialFunctionCall(SpecialFunctionCallExpr expr)
+    {
+        Debug.Assert(expr != null);
+
+        Operand result = null;
+        if (expr.Kind == SpecialFunctionKind.Addr)
+        {
+            result = ResolveSFAddr(expr.Arguments);
+        }
+        else
+        {
+            Debug.Assert(false);
+        }
+
+        return result;
+    }
+
     private Operand ResolveIndexExpr(IndexExpr expr)
     {
         Debug.Assert(expr != null);
@@ -1064,6 +1098,10 @@ class Resolver
         else if (expr is CallExpr callExpr)
         {
             result = ResolveCallExpr(callExpr);
+        }
+        else if (expr is SpecialFunctionCallExpr sfCallExpr)
+        {
+            result = ResolveSpecialFunctionCall(sfCallExpr);
         }
         else if (expr is IndexExpr indexExpr)
         {

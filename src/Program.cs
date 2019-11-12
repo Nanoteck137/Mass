@@ -42,6 +42,7 @@ namespace Mass
             using LLVMGenerator gen = new LLVMGenerator(resolver);
             gen.Generate();
             gen.DebugPrint();
+            gen.WriteToFile("test.ll");
 
             gen.RunCode();
         }

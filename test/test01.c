@@ -2,11 +2,9 @@
 
 int main(int argc, char **argv)
 {
-	int a[4] = {1, 2, 3, 4};
+	int a[2][2] = {{1, 2}, {3, 4}};
 
-	unsigned int b = 5;
-	unsigned int c = 1;
-	unsigned int d = b + c;
-	unsigned int *e = &d;
+	int b = a[0][0];
+	printf("%c\n", argv[0][0]);
 	return 0;
 }

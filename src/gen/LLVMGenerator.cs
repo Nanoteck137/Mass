@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
 
 using LLVMSharp;
@@ -15,6 +16,8 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
     // private Symbol currentSymbol;
     private LLVMValueRef currentValuePtr;
+
+    private Type prevType;
 
     public LLVMGenerator(Resolver resolver)
         : base(resolver)
@@ -317,11 +320,37 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
             builder.BuildCall(func, arguments);
         }
+        else if (expr is SpecialFunctionCallExpr sfCallExpr)
+        {
+            LLVMValueRef value = GenExpr(builder, sfCallExpr.Arguments[0]);
+
+            return value;
+        }
         else if (expr is IndexExpr indexExpr)
         {
-            LLVMValueRef ptr = GenExpr(builder, indexExpr.Expr);
+            LLVMValueRef ptr = null;
+            ptr = GenExpr(builder, indexExpr.Expr);
+
+            /*if (!(indexExpr.ResolvedType is PtrType))
+                
+            else
+                ptr = GenLoadedExpr(builder, indexExpr.Expr);*/
+
             LLVMValueRef index = GenLoadedExpr(builder, indexExpr.Index);
-            LLVMValueRef elementPtr = builder.BuildGEP(ptr, new LLVMValueRef[] { LLVMValueRef.CreateConstInt(LLVMTypeRef.Int32, 0), index });
+            LLVMValueRef elementPtr;
+            if (indexExpr.ResolvedType is ArrayType)
+                elementPtr = builder.BuildGEP(ptr, new LLVMValueRef[] { LLVMValueRef.CreateConstInt(LLVMTypeRef.Int32, 0), index });
+            else if (indexExpr.ResolvedType is PtrType || prevType is PtrType)
+            {
+                ptr = builder.BuildLoad(ptr);
+                elementPtr = builder.BuildGEP(ptr, new LLVMValueRef[] { index });
+            }
+            else
+            {
+                elementPtr = builder.BuildGEP(ptr, new LLVMValueRef[] { index });
+            }
+
+            prevType = indexExpr.ResolvedType;
 
             if (load)
                 return builder.BuildLoad(elementPtr);
@@ -646,12 +675,18 @@ class LLVMGenerator : CodeGenerator, IDisposable
         Console.WriteLine(str);
     }
 
+    public void WriteToFile(string fileName)
+    {
+        string content = module.PrintToString();
+        File.WriteAllText(fileName, content);
+    }
+
     public void RunCode()
     {
         LLVMExecutionEngineRef engine = module.CreateExecutionEngine();
 
         LLVMValueRef t = engine.FindFunction("main");
-        engine.RunFunctionAsMain(t, 0, new string[] { }, new string[] { });
+        engine.RunFunctionAsMain(t, 1, new string[] { "test.ma" }, new string[] { });
     }
 
     private static bool initialized = false;
