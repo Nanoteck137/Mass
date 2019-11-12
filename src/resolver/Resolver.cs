@@ -1282,15 +1282,18 @@ class Resolver
         Debug.Assert(decl != null);
 
         List<StructItemType> items = new List<StructItemType>();
-        foreach (StructItem item in decl.Items)
+        if (!decl.IsOpaque)
         {
-            string name = item.Name;
-            Type type = ResolveTypespec(item.Type);
+            foreach (StructItem item in decl.Items)
+            {
+                string name = item.Name;
+                Type type = ResolveTypespec(item.Type);
 
-            items.Add(new StructItemType(name, type));
+                items.Add(new StructItemType(name, type));
+            }
         }
 
-        return new StructType(items);
+        return new StructType(items, decl.IsOpaque);
     }
 
     public void ResolveSymbol(Symbol symbol)

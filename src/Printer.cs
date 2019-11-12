@@ -475,7 +475,7 @@ class Printer
             {
                 new StructItem("x", new IdentifierTypespec(new IdentifierExpr("f32"))),
                 new StructItem("y", new IdentifierTypespec(new IdentifierExpr("f32"))),
-            }),
+            }, false),
         };
 
         foreach (Decl decl in decls)

@@ -98,14 +98,22 @@ class LLVMGenerator : CodeGenerator, IDisposable
             if (structTypes.ContainsKey(name))
                 return structTypes[name];
 
-            LLVMTypeRef[] items = new LLVMTypeRef[structType.Items.Count];
-            for (int i = 0; i < items.Length; i++)
+            LLVMTypeRef result = null;
+            if (structType.IsOpaque)
             {
-                items[i] = GetType(structType.Items[i].Type);
+                result = LLVMContextRef.Global.CreateNamedStruct("struct." + name);
             }
+            else
+            {
+                LLVMTypeRef[] items = new LLVMTypeRef[structType.Items.Count];
+                for (int i = 0; i < items.Length; i++)
+                {
+                    items[i] = GetType(structType.Items[i].Type);
+                }
 
-            LLVMTypeRef result = LLVMContextRef.Global.CreateNamedStruct("struct." + name); //LLVMTypeRef.CreateStruct(items, false);
-            result.StructSetBody(items, false);
+                result = LLVMContextRef.Global.CreateNamedStruct("struct." + name);
+                result.StructSetBody(items, false);
+            }
 
             structTypes[name] = result;
             return result;
@@ -347,11 +355,6 @@ class LLVMGenerator : CodeGenerator, IDisposable
             LLVMValueRef ptr = null;
             ptr = GenExpr(builder, indexExpr.Expr);
 
-            /*if (!(indexExpr.ResolvedType is PtrType))
-                
-            else
-                ptr = GenLoadedExpr(builder, indexExpr.Expr);*/
-
             LLVMValueRef index = GenLoadedExpr(builder, indexExpr.Index);
             LLVMValueRef elementPtr;
             if (indexExpr.ResolvedType is ArrayType)
@@ -419,8 +422,6 @@ class LLVMGenerator : CodeGenerator, IDisposable
                     CompoundField field = compoundExpr.Fields[i];
                     if (field is IndexCompoundField indexField)
                     {
-                        //index = structType.GetItemIndex(name.Name.Value);
-                        //index = index.Index;
                         IntegerExpr intExpr = (IntegerExpr)indexField.Index;
                         index = (int)intExpr.Value;
                         values[index] = GenConstExpr(field.Init);

@@ -84,10 +84,12 @@ class StructItem
 class StructDecl : Decl
 {
     public List<StructItem> Items { get; private set; }
+    public bool IsOpaque { get; private set; }
 
-    public StructDecl(string name, List<StructItem> items)
+    public StructDecl(string name, List<StructItem> items, bool isOpaque)
     {
         this.Name = name;
         this.Items = items;
+        this.IsOpaque = isOpaque;
     }
 }

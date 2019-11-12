@@ -2,8 +2,7 @@
 
 int main(int argc, char **argv)
 {
-	int a = 5;
-	int *b = &a;
-	int c = *b;
+	FILE *file = fopen("test.txt", "rt");
+	fclose(file);
 	return 0;
 }

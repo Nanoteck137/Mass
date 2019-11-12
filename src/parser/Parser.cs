@@ -840,23 +840,32 @@ class Parser
         string name = lexer.CurrentIdentifier;
         lexer.ExpectToken(TokenType.IDENTIFIER);
 
-        lexer.ExpectToken(TokenType.OPEN_BRACE);
-
+        bool isOpaque = false;
         List<StructItem> items = new List<StructItem>();
-        while (!lexer.MatchToken(TokenType.CLOSE_BRACE))
+        if (lexer.MatchToken(TokenType.OPEN_BRACE))
         {
-            string itemName = lexer.CurrentIdentifier;
-            lexer.ExpectToken(TokenType.IDENTIFIER);
-            lexer.ExpectToken(TokenType.COLON);
-            Typespec itemType = ParseTypespec();
-            lexer.ExpectToken(TokenType.SEMICOLON);
+            lexer.NextToken();
 
-            items.Add(new StructItem(itemName, itemType));
+            while (!lexer.MatchToken(TokenType.CLOSE_BRACE))
+            {
+                string itemName = lexer.CurrentIdentifier;
+                lexer.ExpectToken(TokenType.IDENTIFIER);
+                lexer.ExpectToken(TokenType.COLON);
+                Typespec itemType = ParseTypespec();
+                lexer.ExpectToken(TokenType.SEMICOLON);
+
+                items.Add(new StructItem(itemName, itemType));
+            }
+
+            lexer.ExpectToken(TokenType.CLOSE_BRACE);
+        }
+        else
+        {
+            lexer.ExpectToken(TokenType.SEMICOLON);
+            isOpaque = true;
         }
 
-        lexer.ExpectToken(TokenType.CLOSE_BRACE);
-
-        StructDecl result = new StructDecl(name, items);
+        StructDecl result = new StructDecl(name, items, isOpaque);
         return result;
     }
 

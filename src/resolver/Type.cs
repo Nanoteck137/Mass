@@ -451,6 +451,7 @@ class StructItemType
 class StructType : Type
 {
     public List<StructItemType> Items { get; private set; }
+    public bool IsOpaque { get; private set; }
 
     public override int Size
     {
@@ -467,9 +468,10 @@ class StructType : Type
         }
     }
 
-    public StructType(List<StructItemType> items)
+    public StructType(List<StructItemType> items, bool isOpaque)
     {
         this.Items = items;
+        this.IsOpaque = isOpaque;
     }
 
     public int GetItemIndex(string name)
