@@ -3,8 +3,9 @@
 
 int main(int argc, char **argv)
 {
-	uint32_t a = 123;
-	uint8_t* b = (uint8_t*)&a;
+	float x = 3.14;
+	int y = 3;
+	float z = x + y;
 
 	return 0;
 }

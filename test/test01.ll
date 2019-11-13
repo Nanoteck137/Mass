@@ -8,14 +8,19 @@ define i32 @main(i32, i8**) #0 {
   %3 = alloca i32, align 4
   %4 = alloca i32, align 4
   %5 = alloca i8**, align 8
-  %6 = alloca i32, align 4
-  %7 = alloca i8*, align 8
+  %6 = alloca float, align 4
+  %7 = alloca i32, align 4
+  %8 = alloca float, align 4
   store i32 0, i32* %3, align 4
   store i32 %0, i32* %4, align 4
   store i8** %1, i8*** %5, align 8
-  store i32 123, i32* %6, align 4
-  %8 = bitcast i32* %6 to i8*
-  store i8* %8, i8** %7, align 8
+  store float 0x40091EB860000000, float* %6, align 4
+  store i32 3, i32* %7, align 4
+  %9 = load float, float* %6, align 4
+  %10 = load i32, i32* %7, align 4
+  %11 = sitofp i32 %10 to float
+  %12 = fadd float %9, %11
+  store float %12, float* %8, align 4
   ret i32 0
 }
 

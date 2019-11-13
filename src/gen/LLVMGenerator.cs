@@ -292,6 +292,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
         }
         else if (expr is BinaryOpExpr binaryOpExpr)
         {
+            if (binaryOpExpr.Left.ResolvedType is
             LLVMValueRef left = GenLoadedExpr(builder, binaryOpExpr.Left);
             LLVMValueRef right = GenLoadedExpr(builder, binaryOpExpr.Right);
 

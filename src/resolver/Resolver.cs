@@ -105,13 +105,13 @@ class Resolver
     }
 
     //NOTE(patrik): Helper function
-    private Operand OperandRValue(Type type)
+    public Operand OperandRValue(Type type)
     {
         return new Operand(type, false);
     }
 
     //NOTE(patrik): Helper function
-    private Operand OperandLValue(Type type)
+    public Operand OperandLValue(Type type)
     {
         return new Operand(type, true);
     }
@@ -741,7 +741,7 @@ class Resolver
         }
     }
 
-    private void UnifyArithmeticOperands(Operand left, Operand right)
+    public void UnifyArithmeticOperands(Operand left, Operand right)
     {
         if (left.Type == Type.F64)
         {
