@@ -22,7 +22,7 @@ func main(argc: s32, argv: u8**) -> s32
 	var y: u32 = 3;
 	var z: f32 = x + y;
 
+	printf("Value: %f\n", z);
+
 	ret 0;
 }
-
-// Wooh

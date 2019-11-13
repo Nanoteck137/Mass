@@ -292,15 +292,37 @@ class LLVMGenerator : CodeGenerator, IDisposable
         }
         else if (expr is BinaryOpExpr binaryOpExpr)
         {
-            if (binaryOpExpr.Left.ResolvedType is
             LLVMValueRef left = GenLoadedExpr(builder, binaryOpExpr.Left);
             LLVMValueRef right = GenLoadedExpr(builder, binaryOpExpr.Right);
+
+            bool isFloatingPoint = false;
+
+            Type leftType = binaryOpExpr.Left.ResolvedType;
+            Type rightType = binaryOpExpr.Right.ResolvedType;
+
+            if (leftType is FloatType && !(rightType is FloatType))
+            {
+                right = builder.BuildUIToFP(right, GetType(leftType));
+                isFloatingPoint = true;
+            }
+            else if (rightType is FloatType && !(leftType is FloatType))
+            {
+                left = builder.BuildUIToFP(left, GetType(rightType));
+                isFloatingPoint = true;
+            }
 
             LLVMValueRef result = null;
             switch (binaryOpExpr.Op)
             {
                 case TokenType.PLUS:
-                    result = builder.BuildAdd(left, right);
+                    if (isFloatingPoint)
+                    {
+                        result = builder.BuildFAdd(left, right);
+                    }
+                    else
+                    {
+                        result = builder.BuildAdd(left, right);
+                    }
                     break;
                 case TokenType.MINUS:
                     result = builder.BuildSub(left, right);
@@ -330,6 +352,13 @@ class LLVMGenerator : CodeGenerator, IDisposable
             for (int i = 0; i < arguments.Length; i++)
             {
                 arguments[i] = GenLoadedExpr(builder, callExpr.Arguments[i]);
+                if (callExpr.Arguments[i].ResolvedType is FloatType floatType)
+                {
+                    if (floatType.IsFloatingPoint)
+                    {
+                        arguments[i] = builder.BuildFPExt(arguments[i], LLVMTypeRef.Double);
+                    }
+                }
             }
 
             return builder.BuildCall(func, arguments);

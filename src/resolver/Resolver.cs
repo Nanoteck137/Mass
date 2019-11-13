@@ -842,8 +842,8 @@ class Resolver
             Log.Fatal("left and right operand of + must have same type", null);
         }
 
-        expr.Left.ResolvedType = left.Type;
-        expr.Right.ResolvedType = right.Type;
+        // expr.Left.ResolvedType = left.Type;
+        // expr.Right.ResolvedType = right.Type;
 
         return OperandRValue(left.Type);
     }
