@@ -6,8 +6,21 @@ target triple = "x86_64-pc-linux-gnu"
 %struct._IO_FILE = type { i32, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, %struct._IO_marker*, %struct._IO_FILE*, i32, i32, i64, i16, i8, [1 x i8], i8*, i64, i8*, i8*, i8*, i8*, i64, i32, [20 x i8] }
 %struct._IO_marker = type { %struct._IO_marker*, %struct._IO_FILE*, i32 }
 
-@.str = private unnamed_addr constant [9 x i8] c"test.txt\00", align 1
-@.str.1 = private unnamed_addr constant [3 x i8] c"rt\00", align 1
+@.str = private unnamed_addr constant [9 x i8] c"Wooh.txt\00", align 1
+@.str.1 = private unnamed_addr constant [3 x i8] c"wt\00", align 1
+@.str.2 = private unnamed_addr constant [18 x i8] c"Test Wooh Content\00", align 1
+
+; Function Attrs: noinline nounwind optnone uwtable
+define i8* @test(i8*) #0 {
+  %2 = alloca i8*, align 8
+  %3 = alloca i8*, align 8
+  store i8* %0, i8** %2, align 8
+  %4 = load i8*, i8** %2, align 8
+  store i8* %4, i8** %3, align 8
+  %5 = load i8*, i8** %3, align 8
+  %6 = getelementptr inbounds i8, i8* %5, i64 4
+  ret i8* %6
+}
 
 ; Function Attrs: noinline nounwind optnone uwtable
 define i32 @main(i32, i8**) #0 {
@@ -21,11 +34,15 @@ define i32 @main(i32, i8**) #0 {
   %7 = call %struct._IO_FILE* @fopen(i8* getelementptr inbounds ([9 x i8], [9 x i8]* @.str, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.1, i32 0, i32 0))
   store %struct._IO_FILE* %7, %struct._IO_FILE** %6, align 8
   %8 = load %struct._IO_FILE*, %struct._IO_FILE** %6, align 8
-  %9 = call i32 @fclose(%struct._IO_FILE* %8)
+  %9 = call i64 @fwrite(i8* getelementptr inbounds ([18 x i8], [18 x i8]* @.str.2, i32 0, i32 0), i64 8, i64 1, %struct._IO_FILE* %8)
+  %10 = load %struct._IO_FILE*, %struct._IO_FILE** %6, align 8
+  %11 = call i32 @fclose(%struct._IO_FILE* %10)
   ret i32 0
 }
 
 declare %struct._IO_FILE* @fopen(i8*, i8*) #1
+
+declare i64 @fwrite(i8*, i64, i64, %struct._IO_FILE*) #1
 
 declare i32 @fclose(%struct._IO_FILE*) #1
 

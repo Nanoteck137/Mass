@@ -326,7 +326,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
                 arguments[i] = GenLoadedExpr(builder, callExpr.Arguments[i]);
             }
 
-            builder.BuildCall(func, arguments);
+            return builder.BuildCall(func, arguments);
         }
         else if (expr is SpecialFunctionCallExpr sfCallExpr)
         {
@@ -352,8 +352,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
         }
         else if (expr is IndexExpr indexExpr)
         {
-            LLVMValueRef ptr = null;
-            ptr = GenExpr(builder, indexExpr.Expr);
+            LLVMValueRef ptr = GenExpr(builder, indexExpr.Expr);
 
             LLVMValueRef index = GenLoadedExpr(builder, indexExpr.Index);
             LLVMValueRef elementPtr;
@@ -687,9 +686,10 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
     public void DebugPrint()
     {
-        module.Verify(LLVMVerifierFailureAction.LLVMPrintMessageAction);
         string str = module.PrintToString();
         Console.WriteLine(str);
+
+        module.Verify(LLVMVerifierFailureAction.LLVMPrintMessageAction);
     }
 
     public void WriteToFile(string fileName)

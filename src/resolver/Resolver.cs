@@ -69,6 +69,8 @@ class Resolver
         AddGlobalType("f32", Type.F32);
         AddGlobalType("f64", Type.F64);
 
+        AddGlobalType("void", Type.Void);
+
         typeRank = new Dictionary<Type, int>()
         {
             { Type.U8, 1 },
@@ -865,15 +867,17 @@ class Resolver
             {
                 Type paramType = type.Parameters[i].Type;
                 Operand argument = ResolveExpr(expr.Arguments[i]);
-                if (argument.Type != paramType)
+                /*if (argument.Type != paramType)
                 {
                     Log.Fatal($"Function argument type mismatch with argument '{i + 1}'", null);
-                }
+                }*/
 
                 if (!ConvertOperand(argument, paramType))
                 {
                     Log.Fatal($"Invalid type in function call argument '{i + 1}'", null);
                 }
+
+                expr.Arguments[i].ResolvedType = argument.Type;
             }
 
             for (int i = type.Parameters.Count; i < expr.Arguments.Count; i++)
