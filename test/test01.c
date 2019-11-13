@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
-void test(float x)
+void test(char *str, ...)
 {
-	x += 2.2;
 }
 
 int main(int argc, char **argv)
@@ -13,7 +12,7 @@ int main(int argc, char **argv)
 	float z = x + y;
 
 	printf("%f\n", z);
-	test(z);
+	test("", z);
 
 	return 0;
 }

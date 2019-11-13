@@ -1095,13 +1095,6 @@ class Resolver
 
     private Operand ResolveExpectedExpr(Expr expr, Type expectedType)
     {
-        /*
-        BinaryOpExpr
-        IndexExpr
-        CompoundExpr
-        FieldExpr
-         */
-
         Operand result = null;
         if (expr is IntegerExpr integerExpr)
         {

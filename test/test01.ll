@@ -4,16 +4,12 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-linux-gnu"
 
 @.str = private unnamed_addr constant [4 x i8] c"%f\0A\00", align 1
+@.str.1 = private unnamed_addr constant [1 x i8] zeroinitializer, align 1
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define void @test(float) #0 {
-  %2 = alloca float, align 4
-  store float %0, float* %2, align 4
-  %3 = load float, float* %2, align 4
-  %4 = fpext float %3 to double
-  %5 = fadd double %4, 2.200000e+00
-  %6 = fptrunc double %5 to float
-  store float %6, float* %2, align 4
+define void @test(i8*, ...) #0 {
+  %2 = alloca i8*, align 8
+  store i8* %0, i8** %2, align 8
   ret void
 }
 
@@ -39,7 +35,8 @@ define i32 @main(i32, i8**) #0 {
   %14 = fpext float %13 to double
   %15 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), double %14)
   %16 = load float, float* %8, align 4
-  call void @test(float %16)
+  %17 = fpext float %16 to double
+  call void (i8*, ...) @test(i8* getelementptr inbounds ([1 x i8], [1 x i8]* @.str.1, i32 0, i32 0), double %17)
   ret i32 0
 }
 

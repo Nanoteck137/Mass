@@ -253,17 +253,6 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
     private LLVMValueRef GenExpr(LLVMBuilderRef builder, Expr expr, bool load = false)
     {
-        /*
-        FloatExpr
-        IdentifierExpr
-        StringExpr
-        BinaryOpExpr
-        CallExpr
-        IndexExpr
-        CompoundExpr
-        FieldExpr
-         */
-
         if (expr is IntegerExpr integerExpr)
         {
             LLVMTypeRef type = GetType(integerExpr.ResolvedType);
@@ -356,6 +345,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
                 {
                     if (floatType.IsFloatingPoint)
                     {
+                        // TODO(patrik): We need to convert float to double if the argument is part of the varargs
                         arguments[i] = builder.BuildFPExt(arguments[i], LLVMTypeRef.Double);
                     }
                 }
@@ -423,7 +413,6 @@ class LLVMGenerator : CodeGenerator, IDisposable
                 int index = 0;
                 for (int i = 0; i < compoundExpr.Fields.Count; i++)
                 {
-                    //TODO(patrik): CompoundFields
                     CompoundField field = compoundExpr.Fields[i];
                     if (field is NameCompoundField name)
                     {
