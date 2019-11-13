@@ -1,16 +1,10 @@
 #include <stdio.h>
-
-void *test(void *ptr)
-{
-	char *p = (char *)ptr;
-
-	return p + 4;
-}
+#include <stdint.h>
 
 int main(int argc, char **argv)
 {
-	FILE *file = fopen("Wooh.txt", "wt");
-	fwrite("Test Wooh Content", 8, 1, file);
-	fclose(file);
+	uint32_t a = 123;
+	uint8_t* b = (uint8_t*)&a;
+
 	return 0;
 }

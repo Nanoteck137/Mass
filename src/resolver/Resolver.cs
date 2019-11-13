@@ -753,7 +753,7 @@ class Resolver
         }
         else if (left.Type == Type.F32)
         {
-            ConvertOperand(left, Type.F32);
+            ConvertOperand(right, Type.F32);
         }
         else if (right.Type == Type.F32)
         {
@@ -835,13 +835,15 @@ class Resolver
         Operand right = ResolveExpr(expr.Right);
 
         UnifyArithmeticOperands(left, right);
-
         // TODO(patrik): More type checking here and maybe const folding
 
         if (left.Type != right.Type)
         {
             Log.Fatal("left and right operand of + must have same type", null);
         }
+
+        expr.Left.ResolvedType = left.Type;
+        expr.Right.ResolvedType = right.Type;
 
         return OperandRValue(left.Type);
     }

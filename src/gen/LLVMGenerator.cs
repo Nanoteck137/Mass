@@ -146,9 +146,11 @@ class LLVMGenerator : CodeGenerator, IDisposable
         }
         else if (expr is FloatExpr floatExpr)
         {
+            Debug.Assert(false);
         }
         else if (expr is StringExpr)
         {
+            Debug.Assert(false);
         }
         else if (expr is IdentifierExpr identExpr)
         {
@@ -163,9 +165,11 @@ class LLVMGenerator : CodeGenerator, IDisposable
         }
         else if (expr is CallExpr callExpr)
         {
+            Debug.Assert(false);
         }
         else if (expr is IndexExpr indexExpr)
         {
+            Debug.Assert(false);
         }
         else if (expr is CompoundExpr compoundExpr)
         {
@@ -236,6 +240,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
         }
         else if (expr is FieldExpr fieldExpr)
         {
+            Debug.Assert(false);
         }
         else
         {
@@ -266,7 +271,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
         }
         else if (expr is FloatExpr floatExpr)
         {
-            Debug.Assert(false);
+            return LLVMValueRef.CreateConstReal(GetType(floatExpr.ResolvedType), floatExpr.Value);
         }
         else if (expr is StringExpr strExpr)
         {

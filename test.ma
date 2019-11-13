@@ -18,18 +18,9 @@ func strlen(str: u8*) -> u64;
 
 func main(argc: s32, argv: u8**) -> s32 
 {
-	var file: FILE* = fopen("test.txt", "wt");
-	printf("File Ptr: %p\n", file);
-
-	var content: u8* = "Test Str Content";
-	fwrite(content, strlen(content), 1, file);
-
-	fclose(file);
-
-	var ta: s32 = 3 + 4 * 2;
-	var ptr: s32* = addr(ta);
-	printf("ta Value: %d Address: %p Deref: %d\n", ta, ptr, deref(ptr));
-	printf("Test: %s\n", deref(argv));
+	var x: f32 = 3.14f;
+	var y: u32 = 3;
+	var z: f32 = x + y;
 
 	ret 0;
 }
