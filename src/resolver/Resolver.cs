@@ -66,6 +66,8 @@ class Resolver
         AddGlobalType("s32", Type.S32);
         AddGlobalType("s64", Type.S64);
 
+        AddGlobalType("bool", Type.Bool);
+
         AddGlobalType("f32", Type.F32);
         AddGlobalType("f64", Type.F64);
 

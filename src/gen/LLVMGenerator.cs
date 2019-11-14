@@ -56,6 +56,10 @@ class LLVMGenerator : CodeGenerator, IDisposable
                     break;
             }
         }
+        else if (type is BoolType boolType)
+        {
+            return LLVMTypeRef.Int1;
+        }
         else if (type is FloatType floatType)
         {
             switch (floatType.Kind)
@@ -325,6 +329,12 @@ class LLVMGenerator : CodeGenerator, IDisposable
                 case TokenType.MODULO:
                     result = builder.BuildSRem(left, right);
                     break;
+                case TokenType.EQUAL2:
+                    result = builder.BuildICmp(LLVMIntPredicate.LLVMIntEQ, left, right);
+                    break;
+                case TokenType.NOT_EQUAL:
+                    result = builder.BuildICmp(LLVMIntPredicate.LLVMIntNE, left, right);
+                    break;
                 default:
                     Debug.Assert(false);
                     break;
@@ -348,6 +358,10 @@ class LLVMGenerator : CodeGenerator, IDisposable
                         // TODO(patrik): We need to convert float to double if the argument is part of the varargs
                         arguments[i] = builder.BuildFPExt(arguments[i], LLVMTypeRef.Double);
                     }
+                }
+                else if (callExpr.Arguments[i].ResolvedType is BoolType)
+                {
+                    arguments[i] = builder.BuildZExt(arguments[i], LLVMTypeRef.Int32);
                 }
             }
 

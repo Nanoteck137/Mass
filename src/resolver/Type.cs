@@ -15,6 +15,8 @@ abstract class Type
     public static Type S32 { get; } = new IntType(IntKind.S32);
     public static Type S64 { get; } = new IntType(IntKind.S64);
 
+    public static Type Bool { get; } = new BoolType();
+
     public static Type F32 { get; } = new FloatType(FloatKind.F32);
     public static Type F64 { get; } = new FloatType(FloatKind.F64);
 
@@ -220,6 +222,26 @@ class IntType : Type
     public override int GetHashCode()
     {
         return HashCode.Combine(base.GetHashCode(), this.Kind);
+    }
+}
+
+class BoolType : Type
+{
+    public override int Size => 1;
+
+    public override bool Equals(object obj)
+    {
+        if (GetType() == obj.GetType())
+        {
+            return true;
+        }
+
+        return base.Equals(obj);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(base.GetHashCode(), this.Size);
     }
 }
 

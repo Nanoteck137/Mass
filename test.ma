@@ -18,11 +18,10 @@ func strlen(str: u8*) -> u64;
 
 func main(argc: s32, argv: u8**) -> s32 
 {
-	var x: f32 = 3.14f;
-	var y: u32 = 3;
-	var z: f32 = x + y;
+	var x: u32 = 3;
+	var y: bool = x != 2;
 
-	printf("Value: %f\n", z);
+	printf("Value: %d\n", y);
 
 	ret 0;
 }
