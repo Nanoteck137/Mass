@@ -844,6 +844,22 @@ class Resolver
             Log.Fatal("left and right operand of + must have same type", null);
         }
 
+        /*
+            EQUAL2,
+            NOT_EQUAL,
+            GREATER_THEN,
+            LESS_THEN,
+            GREATER_EQUALS,
+            LESS_EQUALS,
+        */
+
+        switch (expr.Op)
+        {
+            case TokenType.EQUAL2:
+            case TokenType.GREATER_THEN:
+                return OperandRValue(Type.Bool);
+        }
+
         // expr.Left.ResolvedType = left.Type;
         // expr.Right.ResolvedType = right.Type;
 
@@ -1361,10 +1377,17 @@ class Resolver
         // TODO(patrik): Finalize Symbols here??
     }
 
-    private void ResolveIfStmt(IfStmt stmt)
+    private void ResolveIfStmt(IfStmt stmt, Type returnType)
     {
         Debug.Assert(stmt != null);
-        Debug.Assert(false);
+
+        Operand cond = ResolveExpr(stmt.Cond);
+        if (cond.Type != Type.Bool)
+        {
+            Log.Fatal("If stmt condition needs to be a boolean", null);
+        }
+
+        ResolveStmtBlock(stmt.ThenBlock, returnType);
     }
 
     private void ResolveForStmt(ForStmt stmt)
@@ -1475,7 +1498,7 @@ class Resolver
         }
         else if (stmt is IfStmt ifStmt)
         {
-            ResolveIfStmt(ifStmt);
+            ResolveIfStmt(ifStmt, returnType);
         }
         else if (stmt is ForStmt forStmt)
         {

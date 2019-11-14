@@ -16,6 +16,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
     // private Symbol currentSymbol;
     private LLVMValueRef currentValuePtr;
+    private LLVMBasicBlockRef currentEntryBlock;
 
     private Type prevType;
 
@@ -526,7 +527,24 @@ class LLVMGenerator : CodeGenerator, IDisposable
         }
         else if (stmt is IfStmt ifStmt)
         {
-            Debug.Assert(false);
+            LLVMValueRef cond = GenExpr(builder, ifStmt.Cond);
+
+            LLVMBasicBlockRef then = currentEntryBlock.InsertBasicBlock("then");
+            then.MoveAfter(currentEntryBlock);
+
+            LLVMBasicBlockRef endif = currentEntryBlock.InsertBasicBlock("endif");
+            endif.MoveAfter(then);
+
+            builder.BuildCondBr(cond, then, endif);
+
+            builder.PositionAtEnd(then);
+
+            GenStmtBlock(builder, ifStmt.ThenBlock);
+            builder.BuildBr(endif);
+
+            builder.PositionAtEnd(endif);
+
+            currentEntryBlock = endif;
         }
         else if (stmt is ForStmt forStmt)
         {
@@ -642,9 +660,13 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
         if (decl.Body != null)
         {
-            LLVMBasicBlockRef entry = func.AppendBasicBlock("");
+            LLVMBasicBlockRef entry = func.AppendBasicBlock("entry");
+            currentEntryBlock = entry;
+
             LLVMBuilderRef builder = module.Context.CreateBuilder();
             builder.PositionAtEnd(entry);
+
+            currentValuePtr = func;
 
             FunctionType type = (FunctionType)funcType;
             for (int i = 0; i < type.Parameters.Count; i++)
@@ -664,6 +686,8 @@ class LLVMGenerator : CodeGenerator, IDisposable
             }
 
             locals.Clear();
+            currentValuePtr = null;
+            currentEntryBlock = null;
         }
 
         return func;

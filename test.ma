@@ -19,9 +19,22 @@ func strlen(str: u8*) -> u64;
 func main(argc: s32, argv: u8**) -> s32 
 {
 	var x: u32 = 3;
-	var y: bool = x != 2;
+	var y: u32 = 4;
 
-	printf("Value: %d\n", y);
+	if(x == 3) {
+		if(y == 4) {
+			printf("Y is equal to 4\n");
+		}
+		printf("X is equal to 3\n");
+
+		x = x - 1;
+	}
+
+	if(x == 2) {
+		printf("x is equal to 2\n");
+	}
+
+	// printf("Value: %d\n", y);
 
 	ret 0;
 }
