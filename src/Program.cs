@@ -11,12 +11,12 @@ namespace Mass
     {
         static void Main(string[] args)
         {
-            /*Lexer.Test();
+            // Lexer.Test();
             Parser.Test();
-            Printer.Test();
-            Type.Test();
-            Resolver.Test();
-            LLVMGenerator.Test();*/
+            // Printer.Test();
+            // Type.Test();
+            // Resolver.Test();
+            // LLVMGenerator.Test();
 
             string fileContent = File.ReadAllText("test.ma");
 

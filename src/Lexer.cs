@@ -57,6 +57,18 @@ enum TokenType
     EQUAL,
     EQUAL2,
 
+    NOT_EQUAL,
+    GREATER_THEN,
+    LESS_THEN,
+    GREATER_EQUALS,
+    LESS_EQUALS,
+
+    AND,
+    AND2,
+    OR,
+    OR2,
+    NOT,
+
     ARROW,
 
     DOT,
@@ -454,7 +466,23 @@ class Lexer
                 break;
 
             case '=':
-                Case2('>', TokenType.EQUAL2, TokenType.EQUAL);
+                Case2('=', TokenType.EQUAL2, TokenType.EQUAL);
+                break;
+
+            case '!':
+                Case2('=', TokenType.NOT_EQUAL, TokenType.NOT);
+                break;
+            case '>':
+                Case2('=', TokenType.GREATER_EQUALS, TokenType.GREATER_THEN);
+                break;
+            case '<':
+                Case2('=', TokenType.LESS_EQUALS, TokenType.LESS_THEN);
+                break;
+            case '&':
+                Case2('&', TokenType.AND2, TokenType.AND);
+                break;
+            case '|':
+                Case2('|', TokenType.OR2, TokenType.OR);
                 break;
 
             case '.':
@@ -625,6 +653,14 @@ class Lexer
 
         lexer.Reset("hello \"hellostr\" 123 0xff00cd 0b11001111 # + += - -= * *= / /= :; = == -> . .. ... , ()[]{}");
 
+        while (lexer.CurrentToken != TokenType.EOF)
+        {
+            lexer.NextToken();
+
+            Console.WriteLine("{0} {1}", lexer.CurrentToken.ToString(), lexer.currentTokenSpan.ToString());
+        }
+
+        lexer.Reset("! != > < >= <= & && | ||");
         while (lexer.CurrentToken != TokenType.EOF)
         {
             lexer.NextToken();

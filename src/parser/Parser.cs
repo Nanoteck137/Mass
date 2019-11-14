@@ -355,9 +355,56 @@ class Parser
         return left;
     }
 
+    private Expr ParseCompare()
+    {
+        Expr expr = ParseAdd();
+
+        while (lexer.MatchToken(TokenType.EQUAL2) ||
+                lexer.MatchToken(TokenType.NOT_EQUAL) ||
+                lexer.MatchToken(TokenType.GREATER_THEN) ||
+                lexer.MatchToken(TokenType.LESS_THEN) ||
+                lexer.MatchToken(TokenType.GREATER_EQUALS) ||
+                lexer.MatchToken(TokenType.LESS_EQUALS))
+        {
+            TokenType op = lexer.CurrentToken;
+            lexer.NextToken();
+
+            Expr right = ParseAdd();
+            expr = new BinaryOpExpr(expr, right, op);
+        }
+
+        return expr;
+    }
+
+    private Expr ParseAnd()
+    {
+        Expr expr = ParseCompare();
+        while (lexer.MatchToken(TokenType.AND2))
+        {
+            lexer.NextToken();
+            Expr right = ParseCompare();
+            expr = new BinaryOpExpr(expr, right, TokenType.AND2);
+        }
+
+        return expr;
+    }
+
+    private Expr ParseOr()
+    {
+        Expr expr = ParseAnd();
+        while (lexer.MatchToken(TokenType.OR2))
+        {
+            lexer.NextToken();
+            Expr right = ParseAnd();
+            expr = new BinaryOpExpr(expr, right, TokenType.AND2);
+        }
+
+        return expr;
+    }
+
     private Expr ParseExpr()
     {
-        return ParseAdd();
+        return ParseOr();
     }
     #endregion
 
@@ -986,6 +1033,11 @@ class Parser
         lexer.NextToken();
         Expr expr7 = parser.ParseExpr();
         Debug.Assert(expr7 is FieldExpr);
+
+        lexer.Reset("123 >= 21 && 21 < 3");
+        lexer.NextToken();
+        Expr expr8 = parser.ParseExpr();
+        Debug.Assert(expr8 is BinaryOpExpr);
 
         #endregion
 
