@@ -1413,10 +1413,17 @@ class Resolver
         ResolveStmtBlock(stmt.Block, returnType);
     }
 
-    private void ResolveDoWhileStmt(DoWhileStmt stmt)
+    private void ResolveDoWhileStmt(DoWhileStmt stmt, Type returnType)
     {
         Debug.Assert(stmt != null);
-        Debug.Assert(false);
+
+        Operand cond = ResolveExpectedExpr(stmt.Cond, Type.Bool);
+        if (cond.Type != Type.Bool)
+        {
+            Log.Fatal("While stmt condition needs to be a boolean", null);
+        }
+
+        ResolveStmtBlock(stmt.Block, returnType);
     }
 
     private void ResolveReturnStmt(ReturnStmt stmt, Type returnType)
@@ -1543,7 +1550,7 @@ class Resolver
         }
         else if (stmt is DoWhileStmt doWhileStmt)
         {
-            ResolveDoWhileStmt(doWhileStmt);
+            ResolveDoWhileStmt(doWhileStmt, returnType);
         }
         else if (stmt is ReturnStmt returnStmt)
         {

@@ -23,21 +23,21 @@ entry:
   store i8** %argv, i8*** %argv2
   %x = alloca i32
   store i32 4, i32* %x
-  br label %while
+  br label %then
 
-while:                                            ; preds = %then, %entry
+then:                                             ; preds = %dowhile, %entry
   %0 = load i32, i32* %x
-  %1 = icmp ugt i32 %0, 0
-  br i1 %1, label %then, label %endwhile
-
-then:                                             ; preds = %while
+  %1 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str, i32 0, i32 0), i32 %0)
   %2 = load i32, i32* %x
-  %3 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str, i32 0, i32 0), i32 %2)
-  %4 = load i32, i32* %x
-  %5 = sub i32 %4, 1
-  store i32 %5, i32* %x
-  br label %while
+  %3 = sub i32 %2, 1
+  store i32 %3, i32* %x
+  br label %dowhile
 
-endwhile:                                         ; preds = %while
+enddowhile:                                       ; preds = %dowhile
   ret i32 0
+
+dowhile:                                          ; preds = %then
+  %4 = load i32, i32* %x
+  %5 = icmp ugt i32 %4, 0
+  br i1 %5, label %then, label %enddowhile
 }

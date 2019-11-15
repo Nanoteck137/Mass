@@ -17,20 +17,20 @@ define i32 @main(i32, i8**) #0 {
   store i32 4, i32* %6, align 4
   br label %7
 
-; <label>:7:                                      ; preds = %10, %2
+; <label>:7:                                      ; preds = %12, %2
   %8 = load i32, i32* %6, align 4
-  %9 = icmp ugt i32 %8, 0
-  br i1 %9, label %10, label %15
+  %9 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str, i32 0, i32 0), i32 %8)
+  %10 = load i32, i32* %6, align 4
+  %11 = add i32 %10, -1
+  store i32 %11, i32* %6, align 4
+  br label %12
 
-; <label>:10:                                     ; preds = %7
-  %11 = load i32, i32* %6, align 4
-  %12 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str, i32 0, i32 0), i32 %11)
+; <label>:12:                                     ; preds = %7
   %13 = load i32, i32* %6, align 4
-  %14 = add i32 %13, -1
-  store i32 %14, i32* %6, align 4
-  br label %7
+  %14 = icmp ugt i32 %13, 0
+  br i1 %14, label %7, label %15
 
-; <label>:15:                                     ; preds = %7
+; <label>:15:                                     ; preds = %12
   ret i32 0
 }
 

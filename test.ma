@@ -20,10 +20,10 @@ func main(argc: s32, argv: u8**) -> s32
 {
 	var x: u32 = 4;
 
-	while(x > 0) {
+	do {
 		printf("X: %u\n", x);
 		x -= 1;
-	}
+	} while(x > 0);
 
 	ret 0;
 }
