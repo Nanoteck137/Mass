@@ -284,10 +284,52 @@ class LLVMGenerator : CodeGenerator, IDisposable
                 return builder.BuildICmp(LLVMIntPredicate.LLVMIntUGE, left, right);
             case TokenType.LESS_EQUALS:
                 return builder.BuildICmp(LLVMIntPredicate.LLVMIntULE, left, right);
+
+            case TokenType.EQUAL:
+                builder.BuildStore(right, left);
+                break;
+            case TokenType.PLUS_EQUALS:
+            {
+                LLVMValueRef varValue = builder.BuildLoad(left);
+                right = builder.BuildAdd(varValue, right);
+                builder.BuildStore(right, left);
+                break;
+            }
+            case TokenType.MINUS_EQUALS:
+            {
+                LLVMValueRef varValue = builder.BuildLoad(left);
+                right = builder.BuildSub(varValue, right);
+                builder.BuildStore(right, left);
+                break;
+            }
+            case TokenType.MULTIPLY_EQUALS:
+            {
+                LLVMValueRef varValue = builder.BuildLoad(left);
+                right = builder.BuildMul(varValue, right);
+                builder.BuildStore(right, left);
+                break;
+            }
+            case TokenType.DIVIDE_EQUALS:
+            {
+                LLVMValueRef varValue = builder.BuildLoad(left);
+                right = builder.BuildUDiv(varValue, right);
+                builder.BuildStore(right, left);
+                break;
+            }
+            case TokenType.MODULO_EQUALS:
+            {
+                LLVMValueRef varValue = builder.BuildLoad(left);
+                right = builder.BuildURem(varValue, right);
+                builder.BuildStore(right, left);
+                break;
+            }
+
             default:
                 Debug.Assert(false);
-                return null;
+                break;
         }
+
+        return null;
     }
 
     private LLVMValueRef GenFloatingPointOperators(LLVMBuilderRef builder, LLVMValueRef left, LLVMValueRef right, TokenType op)
@@ -316,10 +358,51 @@ class LLVMGenerator : CodeGenerator, IDisposable
                 return builder.BuildFCmp(LLVMRealPredicate.LLVMRealOGE, left, right);
             case TokenType.LESS_EQUALS:
                 return builder.BuildFCmp(LLVMRealPredicate.LLVMRealOLE, left, right);
+
+            case TokenType.EQUAL:
+                builder.BuildStore(right, left);
+                break;
+            case TokenType.PLUS_EQUALS:
+            {
+                LLVMValueRef varValue = builder.BuildLoad(left);
+                right = builder.BuildFAdd(varValue, right);
+                builder.BuildStore(right, left);
+                break;
+            }
+            case TokenType.MINUS_EQUALS:
+            {
+                LLVMValueRef varValue = builder.BuildLoad(left);
+                right = builder.BuildFSub(varValue, right);
+                builder.BuildStore(right, left);
+                break;
+            }
+            case TokenType.MULTIPLY_EQUALS:
+            {
+                LLVMValueRef varValue = builder.BuildLoad(left);
+                right = builder.BuildFMul(varValue, right);
+                builder.BuildStore(right, left);
+                break;
+            }
+            case TokenType.DIVIDE_EQUALS:
+            {
+                LLVMValueRef varValue = builder.BuildLoad(left);
+                right = builder.BuildFDiv(varValue, right);
+                builder.BuildStore(right, left);
+                break;
+            }
+            case TokenType.MODULO_EQUALS:
+            {
+                LLVMValueRef varValue = builder.BuildLoad(left);
+                right = builder.BuildFRem(varValue, right);
+                builder.BuildStore(right, left);
+                break;
+            }
             default:
                 Debug.Assert(false);
-                return null;
+                break;
         }
+
+        return null;
     }
 
     private LLVMValueRef GenExpr(LLVMBuilderRef builder, Expr expr, bool load = false)
@@ -614,13 +697,25 @@ class LLVMGenerator : CodeGenerator, IDisposable
         }
         else if (stmt is AssignStmt assignStmt)
         {
-            LLVMValueRef ptr = GenExpr(builder, assignStmt.Left);
-            LLVMValueRef value = GenLoadedExpr(builder, assignStmt.Right);
+            LLVMValueRef left = GenExpr(builder, assignStmt.Left);
+            LLVMValueRef right = GenLoadedExpr(builder, assignStmt.Right);
 
-            if (assignStmt.Op == TokenType.EQUAL)
+            bool isFloatingPoint = false;
+            if (assignStmt.Left.ResolvedType is FloatType leftType && assignStmt.Right.ResolvedType is IntType)
             {
-                builder.BuildStore(value, ptr);
+                isFloatingPoint = true;
+                right = builder.BuildUIToFP(right, GetType(leftType));
             }
+
+            if (isFloatingPoint)
+            {
+                GenFloatingPointOperators(builder, left, right, assignStmt.Op);
+            }
+            else
+            {
+                GenIntegerOperators(builder, left, right, assignStmt.Op, (IntType)assignStmt.Left.ResolvedType);
+            }
+
         }
         else if (stmt is ExprStmt exprStmt)
         {

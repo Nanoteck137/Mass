@@ -37,10 +37,10 @@ enum TokenType
     HASHTAG,
 
     PLUS,
-    PLUS_EQUAL,
+    PLUS_EQUALS,
 
     MINUS,
-    MINUS_EQUAL,
+    MINUS_EQUALS,
 
     MULTIPLY,
     MULTIPLY_EQUALS,
@@ -439,10 +439,10 @@ class Lexer
                 break;
 
             case '+':
-                Case2('=', TokenType.PLUS_EQUAL, TokenType.PLUS);
+                Case2('=', TokenType.PLUS_EQUALS, TokenType.PLUS);
                 break;
             case '-':
-                if (!Case2('=', TokenType.MINUS_EQUAL, TokenType.MINUS))
+                if (!Case2('=', TokenType.MINUS_EQUALS, TokenType.MINUS))
                 {
                     Case2('>', TokenType.ARROW, TokenType.MINUS);
                 }
@@ -640,10 +640,10 @@ class Lexer
         lexer.ExpectToken(TokenType.DOT2);
         lexer.ExpectToken(TokenType.DOT3);
         lexer.ExpectToken(TokenType.PLUS);
-        lexer.ExpectToken(TokenType.PLUS_EQUAL);
+        lexer.ExpectToken(TokenType.PLUS_EQUALS);
         lexer.ExpectToken(TokenType.MINUS);
         lexer.ExpectToken(TokenType.ARROW);
-        lexer.ExpectToken(TokenType.MINUS_EQUAL);
+        lexer.ExpectToken(TokenType.MINUS_EQUALS);
         lexer.ExpectToken(TokenType.MULTIPLY);
         lexer.ExpectToken(TokenType.MULTIPLY_EQUALS);
         lexer.ExpectToken(TokenType.DIVIDE);

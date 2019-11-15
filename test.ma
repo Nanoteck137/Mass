@@ -18,22 +18,11 @@ func strlen(str: u8*) -> u64;
 
 func main(argc: s32, argv: u8**) -> s32 
 {
-	var x: u32 = 3;
-	var y: u32 = 5;
+	var x: f32 = 3.14f;
 
-	if(x >= 3) {
-		if(y > 4) {
-			printf("Y greater then 4\n");
-		}
-
-		printf("X greater equal to 3\n");
-	}
-
-	if(x == 2) {
-		printf("x is equal to 2\n");
-	}
-
-	// printf("Value: %d\n", y);
+	printf("X: %f\n", x);
+	x += 10;
+	printf("X: %f\n", x);
 
 	ret 0;
 }

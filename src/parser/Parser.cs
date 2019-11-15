@@ -598,10 +598,21 @@ class Parser
 
     private Stmt ParseSimpleStmt()
     {
+        // Format 1: expr = expr
+        //        2: expr += expr
+        //        3: expr -= expr
+        //        4: expr *= expr
+        //        5: expr /= expr
+        //        6: expr %= expr
         Stmt result;
 
         Expr expr = ParseExpr();
-        if (lexer.MatchToken(TokenType.EQUAL))
+        if (lexer.MatchToken(TokenType.EQUAL) ||
+            lexer.MatchToken(TokenType.PLUS_EQUALS) ||
+            lexer.MatchToken(TokenType.MINUS_EQUALS) ||
+            lexer.MatchToken(TokenType.MULTIPLY_EQUALS) ||
+            lexer.MatchToken(TokenType.DIVIDE_EQUALS) ||
+            lexer.MatchToken(TokenType.MODULO_EQUALS))
         {
             TokenType op = lexer.CurrentToken;
             lexer.NextToken();

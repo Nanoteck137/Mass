@@ -1435,9 +1435,31 @@ class Resolver
 
         Operand right = ResolveExpr(stmt.Right);
         Operand result = null;
-        if (stmt.Op == TokenType.EQUAL)
+
+        /*
+            EQUAL
+            PLUS_EQUAL
+            MINUS_EQUAL
+            MULTIPLY_EQUALS
+            DIVIDE_EQUALS
+            MODULO_EQUALS
+         */
+
+        switch (stmt.Op)
         {
-            result = right;
+            case TokenType.EQUAL:
+                result = right;
+                break;
+            case TokenType.PLUS_EQUALS:
+            case TokenType.MINUS_EQUALS:
+            case TokenType.MULTIPLY_EQUALS:
+            case TokenType.DIVIDE_EQUALS:
+            case TokenType.MODULO_EQUALS:
+                result = OperandLValue(right.Type);
+                break;
+            default:
+                Debug.Assert(false);
+                break;
         }
 
         if (!ConvertOperand(result, left.Type))
