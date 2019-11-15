@@ -870,6 +870,23 @@ class Resolver
         return OperandRValue(left.Type);
     }
 
+    private Operand ResolveModifyExpr(ModifyExpr expr)
+    {
+        Operand operand = ResolveExpr(expr.Expr);
+
+        if (!operand.IsLValue)
+        {
+            Log.Fatal("Cannot modify non-lvalue", null);
+        }
+
+        if (!(operand.Type is IntType))
+        {
+            Log.Fatal($"'{expr.Op}' is only valid for integer types", null);
+        }
+
+        return OperandRValue(operand.Type);
+    }
+
     private Operand ResolveCallExpr(CallExpr expr)
     {
         Debug.Assert(expr != null);
@@ -1142,6 +1159,10 @@ class Resolver
         else if (expr is BinaryOpExpr binaryOpExpr)
         {
             result = ResolveBinaryOpExpr(binaryOpExpr);
+        }
+        else if (expr is ModifyExpr modifyExpr)
+        {
+            result = ResolveModifyExpr(modifyExpr);
         }
         else if (expr is CallExpr callExpr)
         {
@@ -1488,11 +1509,15 @@ class Resolver
 
         if (stmt.Expr is CallExpr)
         {
-            _ = ResolveExpr(stmt.Expr);
+            ResolveExpr(stmt.Expr);
+        }
+        else if (stmt.Expr is ModifyExpr)
+        {
+            ResolveExpr(stmt.Expr);
         }
         else
         {
-            Log.Fatal("Only call expressions can be used a statement", null);
+            Log.Fatal("Only call, inc and dec expressions can be used a statement", null);
         }
     }
 

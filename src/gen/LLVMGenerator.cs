@@ -468,6 +468,37 @@ class LLVMGenerator : CodeGenerator, IDisposable
             Debug.Assert(result != null);
             return result;
         }
+        else if (expr is ModifyExpr modifyExpr)
+        {
+            LLVMValueRef ptr = GenExpr(builder, modifyExpr.Expr);
+            LLVMValueRef val = builder.BuildLoad(ptr);
+            LLVMValueRef result = val;
+
+            switch (modifyExpr.Op)
+            {
+                case TokenType.INC:
+                    val = builder.BuildAdd(val, LLVMValueRef.CreateConstInt(GetType(modifyExpr.ResolvedType), 1));
+                    if (!modifyExpr.Post)
+                    {
+                        result = val;
+                    }
+                    builder.BuildStore(val, ptr);
+                    break;
+                case TokenType.DEC:
+                    val = builder.BuildSub(val, LLVMValueRef.CreateConstInt(GetType(modifyExpr.ResolvedType), 1));
+                    if (!modifyExpr.Post)
+                    {
+                        result = val;
+                    }
+                    builder.BuildStore(val, ptr);
+                    break;
+                default:
+                    Debug.Assert(false);
+                    break;
+            }
+
+            return result;
+        }
         else if (expr is CallExpr callExpr)
         {
             LLVMValueRef func = GenExpr(builder, callExpr.Expr);

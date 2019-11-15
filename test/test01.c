@@ -5,11 +5,10 @@
 int main(int argc, char **argv)
 {
 	uint32_t a = 4;
+	uint32_t b = a++;
 	
-	do {
-		printf("A: %d\n", a);
-		a--;
-	} while(a > 0);
-	
+	printf("A: %d\n", a);
+	printf("B: %d\n", b);
+
 	return 0;
 }

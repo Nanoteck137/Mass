@@ -37,9 +37,11 @@ enum TokenType
     HASHTAG,
 
     PLUS,
+    INC,
     PLUS_EQUALS,
 
     MINUS,
+    DEC,
     MINUS_EQUALS,
 
     MULTIPLY,
@@ -439,12 +441,19 @@ class Lexer
                 break;
 
             case '+':
-                Case2('=', TokenType.PLUS_EQUALS, TokenType.PLUS);
+                if (!Case2('+', TokenType.INC, TokenType.PLUS))
+                {
+                    Case2('=', TokenType.PLUS_EQUALS, TokenType.PLUS);
+                }
+
                 break;
             case '-':
-                if (!Case2('=', TokenType.MINUS_EQUALS, TokenType.MINUS))
+                if (!Case2('-', TokenType.DEC, TokenType.MINUS))
                 {
-                    Case2('>', TokenType.ARROW, TokenType.MINUS);
+                    if (!Case2('=', TokenType.MINUS_EQUALS, TokenType.MINUS))
+                    {
+                        Case2('>', TokenType.ARROW, TokenType.MINUS);
+                    }
                 }
                 break;
             case '*':

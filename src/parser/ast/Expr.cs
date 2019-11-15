@@ -64,6 +64,20 @@ class BinaryOpExpr : Expr
     }
 }
 
+class ModifyExpr : Expr
+{
+    public TokenType Op { get; private set; }
+    public bool Post { get; private set; }
+    public Expr Expr { get; private set; }
+
+    public ModifyExpr(TokenType op, bool post, Expr expr)
+    {
+        this.Op = op;
+        this.Post = post;
+        this.Expr = expr;
+    }
+}
+
 class CallExpr : Expr
 {
     public Expr Expr { get; private set; }

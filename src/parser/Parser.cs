@@ -206,8 +206,10 @@ class Parser
         Expr expr = ParseOperand();
 
         while (lexer.MatchToken(TokenType.OPEN_PAREN) ||
-                lexer.MatchToken(TokenType.OPEN_BRACKET) ||
-                lexer.MatchToken(TokenType.DOT))
+               lexer.MatchToken(TokenType.OPEN_BRACKET) ||
+               lexer.MatchToken(TokenType.DOT) ||
+               lexer.MatchToken(TokenType.INC) ||
+               lexer.MatchToken(TokenType.DEC))
         {
             if (lexer.MatchToken(TokenType.OPEN_PAREN))
             {
@@ -301,16 +303,37 @@ class Parser
             }
             else
             {
-                Debug.Assert(false);
+                Debug.Assert(lexer.MatchToken(TokenType.INC) || lexer.MatchToken(TokenType.DEC));
+
+                TokenType op = lexer.CurrentToken;
+                lexer.NextToken();
+
+                expr = new ModifyExpr(op, true, expr);
             }
         }
 
         return expr;
     }
 
+    private Expr ParseUnary()
+    {
+        if (lexer.MatchToken(TokenType.INC) ||
+            lexer.MatchToken(TokenType.DEC))
+        {
+            TokenType op = lexer.CurrentToken;
+            lexer.NextToken();
+
+            return new ModifyExpr(op, false, ParseBase());
+        }
+        else
+        {
+            return ParseBase();
+        }
+    }
+
     private Expr ParseMul()
     {
-        Expr left = ParseBase();
+        Expr left = ParseUnary();
 
         while (lexer.MatchToken(TokenType.MULTIPLY) ||
                 lexer.MatchToken(TokenType.DIVIDE) ||
@@ -320,7 +343,7 @@ class Parser
 
             lexer.NextToken();
 
-            Expr right = ParseBase();
+            Expr right = ParseUnary();
 
             SourceSpan leftSpan = left.Span;
             left = new BinaryOpExpr(left, right, op)
