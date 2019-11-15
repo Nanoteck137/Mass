@@ -1400,10 +1400,17 @@ class Resolver
         Debug.Assert(false);
     }
 
-    private void ResolveWhileStmt(WhileStmt stmt)
+    private void ResolveWhileStmt(WhileStmt stmt, Type returnType)
     {
         Debug.Assert(stmt != null);
-        Debug.Assert(false);
+
+        Operand cond = ResolveExpectedExpr(stmt.Cond, Type.Bool);
+        if (cond.Type != Type.Bool)
+        {
+            Log.Fatal("While stmt condition needs to be a boolean", null);
+        }
+
+        ResolveStmtBlock(stmt.Block, returnType);
     }
 
     private void ResolveDoWhileStmt(DoWhileStmt stmt)
@@ -1532,7 +1539,7 @@ class Resolver
         }
         else if (stmt is WhileStmt whileStmt)
         {
-            ResolveWhileStmt(whileStmt);
+            ResolveWhileStmt(whileStmt, returnType);
         }
         else if (stmt is DoWhileStmt doWhileStmt)
         {

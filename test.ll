@@ -3,8 +3,7 @@ source_filename = "NO NAME"
 
 %struct.FILE = type opaque
 
-@str = private unnamed_addr constant [7 x i8] c"X: %f\0A\00", align 1
-@str.1 = private unnamed_addr constant [7 x i8] c"X: %f\0A\00", align 1
+@str = private unnamed_addr constant [7 x i8] c"X: %u\0A\00", align 1
 
 declare i32 @printf(i8*, ...)
 
@@ -22,16 +21,23 @@ entry:
   store i32 %argc, i32* %argc1
   %argv2 = alloca i8**
   store i8** %argv, i8*** %argv2
-  %x = alloca float
-  store float 0x40091EB860000000, float* %x
-  %0 = load float, float* %x
-  %1 = fpext float %0 to double
-  %2 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str, i32 0, i32 0), double %1)
-  %3 = load float, float* %x
-  %4 = fadd float %3, 1.000000e+01
-  store float %4, float* %x
-  %5 = load float, float* %x
-  %6 = fpext float %5 to double
-  %7 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str.1, i32 0, i32 0), double %6)
+  %x = alloca i32
+  store i32 4, i32* %x
+  br label %while
+
+while:                                            ; preds = %then, %entry
+  %0 = load i32, i32* %x
+  %1 = icmp ugt i32 %0, 0
+  br i1 %1, label %then, label %endwhile
+
+then:                                             ; preds = %while
+  %2 = load i32, i32* %x
+  %3 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str, i32 0, i32 0), i32 %2)
+  %4 = load i32, i32* %x
+  %5 = sub i32 %4, 1
+  store i32 %5, i32* %x
+  br label %while
+
+endwhile:                                         ; preds = %while
   ret i32 0
 }

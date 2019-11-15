@@ -676,7 +676,29 @@ class LLVMGenerator : CodeGenerator, IDisposable
         }
         else if (stmt is WhileStmt whileStmt)
         {
-            Debug.Assert(false);
+            LLVMBasicBlockRef whileBlock = currentEntryBlock.InsertBasicBlock("while");
+            whileBlock.MoveAfter(currentEntryBlock);
+
+            LLVMBasicBlockRef then = currentEntryBlock.InsertBasicBlock("then");
+            then.MoveAfter(whileBlock);
+
+            LLVMBasicBlockRef endWhile = currentEntryBlock.InsertBasicBlock("endwhile");
+            endWhile.MoveAfter(then);
+
+            builder.BuildBr(whileBlock);
+
+            builder.PositionAtEnd(whileBlock);
+            LLVMValueRef cond = GenExpr(builder, whileStmt.Cond);
+            builder.BuildCondBr(cond, then, endWhile);
+
+            builder.PositionAtEnd(then);
+
+            GenStmtBlock(builder, whileStmt.Block);
+            builder.BuildBr(whileBlock);
+
+            builder.PositionAtEnd(endWhile);
+
+            currentEntryBlock = endWhile;
         }
         else if (stmt is DoWhileStmt doWhileStmt)
         {

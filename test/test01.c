@@ -5,7 +5,11 @@
 int main(int argc, char **argv)
 {
 	uint32_t a = 4;
-	a += 1.2f;
+	
+	while(a > 0) {
+		printf("A: %d\n", a);
+		a--;
+	}
 	
 	return 0;
 }
