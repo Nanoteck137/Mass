@@ -551,7 +551,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
             LLVMValueRef index = GenLoadedExpr(builder, indexExpr.Index);
             LLVMValueRef elementPtr;
-            if (indexExpr.ResolvedType is ArrayType)
+            if (indexExpr.Expr.ResolvedType is ArrayType)
                 elementPtr = builder.BuildGEP(ptr, new LLVMValueRef[] { LLVMValueRef.CreateConstInt(LLVMTypeRef.Int32, 0), index });
             else if (indexExpr.ResolvedType is PtrType || prevType is PtrType)
             {

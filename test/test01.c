@@ -4,11 +4,9 @@
 
 int main(int argc, char **argv)
 {
-	uint32_t a = 4;
-	uint32_t b = a++;
-	
-	printf("A: %d\n", a);
-	printf("B: %d\n", b);
+	int a[4] = {1, 2, 3, 4};
+	int *ptr = a;
 
+	printf("Value: %d\n", *(ptr + 1));
 	return 0;
 }
