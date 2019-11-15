@@ -255,6 +255,72 @@ class LLVMGenerator : CodeGenerator, IDisposable
         return null;
     }
 
+    private LLVMValueRef GenIntegerOperators(LLVMBuilderRef builder, LLVMValueRef left, LLVMValueRef right, TokenType op, IntType type)
+    {
+        // TODO(patrik): Handle signed and unsigned types
+        Debug.Assert(!Type.IsTypeSigned(type));
+
+        switch (op)
+        {
+            case TokenType.PLUS:
+                return builder.BuildAdd(left, right);
+            case TokenType.MINUS:
+                return builder.BuildSub(left, right);
+            case TokenType.MULTIPLY:
+                return builder.BuildMul(left, right);
+            case TokenType.DIVIDE:
+                return builder.BuildUDiv(left, right);
+            case TokenType.MODULO:
+                return builder.BuildURem(left, right);
+            case TokenType.EQUAL2:
+                return builder.BuildICmp(LLVMIntPredicate.LLVMIntEQ, left, right);
+            case TokenType.NOT_EQUAL:
+                return builder.BuildICmp(LLVMIntPredicate.LLVMIntNE, left, right);
+            case TokenType.GREATER_THEN:
+                return builder.BuildICmp(LLVMIntPredicate.LLVMIntUGT, left, right);
+            case TokenType.LESS_THEN:
+                return builder.BuildICmp(LLVMIntPredicate.LLVMIntULT, left, right);
+            case TokenType.GREATER_EQUALS:
+                return builder.BuildICmp(LLVMIntPredicate.LLVMIntUGE, left, right);
+            case TokenType.LESS_EQUALS:
+                return builder.BuildICmp(LLVMIntPredicate.LLVMIntULE, left, right);
+            default:
+                Debug.Assert(false);
+                return null;
+        }
+    }
+
+    private LLVMValueRef GenFloatingPointOperators(LLVMBuilderRef builder, LLVMValueRef left, LLVMValueRef right, TokenType op)
+    {
+        switch (op)
+        {
+            case TokenType.PLUS:
+                return builder.BuildFAdd(left, right);
+            case TokenType.MINUS:
+                return builder.BuildFSub(left, right);
+            case TokenType.MULTIPLY:
+                return builder.BuildFMul(left, right);
+            case TokenType.DIVIDE:
+                return builder.BuildFDiv(left, right);
+            case TokenType.MODULO:
+                return builder.BuildFRem(left, right);
+            case TokenType.EQUAL2:
+                return builder.BuildFCmp(LLVMRealPredicate.LLVMRealOEQ, left, right);
+            case TokenType.NOT_EQUAL:
+                return builder.BuildFCmp(LLVMRealPredicate.LLVMRealONE, left, right);
+            case TokenType.GREATER_THEN:
+                return builder.BuildFCmp(LLVMRealPredicate.LLVMRealOGT, left, right);
+            case TokenType.LESS_THEN:
+                return builder.BuildFCmp(LLVMRealPredicate.LLVMRealOLT, left, right);
+            case TokenType.GREATER_EQUALS:
+                return builder.BuildFCmp(LLVMRealPredicate.LLVMRealOGE, left, right);
+            case TokenType.LESS_EQUALS:
+                return builder.BuildFCmp(LLVMRealPredicate.LLVMRealOLE, left, right);
+            default:
+                Debug.Assert(false);
+                return null;
+        }
+    }
 
     private LLVMValueRef GenExpr(LLVMBuilderRef builder, Expr expr, bool load = false)
     {
@@ -305,40 +371,15 @@ class LLVMGenerator : CodeGenerator, IDisposable
                 isFloatingPoint = true;
             }
 
-            LLVMValueRef result = null;
-            switch (binaryOpExpr.Op)
+            LLVMValueRef result;
+            if (isFloatingPoint)
             {
-                case TokenType.PLUS:
-                    if (isFloatingPoint)
-                    {
-                        result = builder.BuildFAdd(left, right);
-                    }
-                    else
-                    {
-                        result = builder.BuildAdd(left, right);
-                    }
-                    break;
-                case TokenType.MINUS:
-                    result = builder.BuildSub(left, right);
-                    break;
-                case TokenType.MULTIPLY:
-                    result = builder.BuildMul(left, right);
-                    break;
-                case TokenType.DIVIDE:
-                    result = builder.BuildSDiv(left, right);
-                    break;
-                case TokenType.MODULO:
-                    result = builder.BuildSRem(left, right);
-                    break;
-                case TokenType.EQUAL2:
-                    result = builder.BuildICmp(LLVMIntPredicate.LLVMIntEQ, left, right);
-                    break;
-                case TokenType.NOT_EQUAL:
-                    result = builder.BuildICmp(LLVMIntPredicate.LLVMIntNE, left, right);
-                    break;
-                default:
-                    Debug.Assert(false);
-                    break;
+                result = GenFloatingPointOperators(builder, left, right, binaryOpExpr.Op);
+            }
+            else
+            {
+                Debug.Assert(leftType is IntType);
+                result = GenIntegerOperators(builder, left, right, binaryOpExpr.Op, (IntType)leftType);
             }
 
             Debug.Assert(result != null);

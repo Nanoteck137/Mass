@@ -19,15 +19,14 @@ func strlen(str: u8*) -> u64;
 func main(argc: s32, argv: u8**) -> s32 
 {
 	var x: u32 = 3;
-	var y: u32 = 4;
+	var y: u32 = 5;
 
-	if(x == 3) {
-		if(y == 4) {
-			printf("Y is equal to 4\n");
+	if(x >= 3) {
+		if(y > 4) {
+			printf("Y greater then 4\n");
 		}
-		printf("X is equal to 3\n");
 
-		x = x - 1;
+		printf("X greater equal to 3\n");
 	}
 
 	if(x == 2) {

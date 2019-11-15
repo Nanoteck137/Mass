@@ -856,7 +856,11 @@ class Resolver
         switch (expr.Op)
         {
             case TokenType.EQUAL2:
+            case TokenType.NOT_EQUAL:
             case TokenType.GREATER_THEN:
+            case TokenType.LESS_THEN:
+            case TokenType.GREATER_EQUALS:
+            case TokenType.LESS_EQUALS:
                 return OperandRValue(Type.Bool);
         }
 
