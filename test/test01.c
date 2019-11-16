@@ -4,14 +4,11 @@
 
 int main(int argc, char **argv)
 {
-	uint32_t a = 4;
+	int a = 123;
+	int b = -123;
+	int c = b - a;
 
-	while(a > 0) {
-		if(a == 2) {
-			break;
-		}
-		a--;
-	}
+	printf("C: %d\n", c);
 
 	return 0;
 }

@@ -90,6 +90,18 @@ class ModifyExpr : Expr
     }
 }
 
+class UnaryExpr : Expr
+{
+    public TokenType Op { get; private set; }
+    public Expr Expr { get; private set; }
+
+    public UnaryExpr(TokenType op, Expr expr)
+    {
+        this.Op = op;
+        this.Expr = expr;
+    }
+}
+
 class CallExpr : Expr
 {
     public Expr Expr { get; private set; }

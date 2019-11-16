@@ -26,8 +26,6 @@ abstract class Type
 
     public abstract int Size { get; }
 
-    public virtual bool IsInteger { get { return false; } }
-    public virtual bool IsFloatingPoint { get { return false; } }
     public virtual bool IsArithmetic { get { return false; } }
 
     public static bool IsTypeSigned(Type type)
@@ -199,7 +197,6 @@ class IntType : Type
         }
     }
 
-    public override bool IsInteger => true;
     public override bool IsArithmetic => true;
 
     public IntType(IntKind kind)
@@ -271,7 +268,6 @@ class FloatType : Type
         }
     }
 
-    public override bool IsFloatingPoint => true;
     public override bool IsArithmetic => true;
 
     public FloatType(FloatKind kind)

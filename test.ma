@@ -18,20 +18,11 @@ func strlen(str: u8*) -> u64;
 
 func main(argc: s32, argv: u8**) -> s32 
 {
-	var a: u32 = 4;
+	var a: f32 = -3.14f;
+	var b: s32 = 3;
+	var c: f32 = a + b;
 
-	while(a > 0) 
-	{
-		if(a == 2) 
-		{
-			printf("Hello World\n");
-			a--;
-			continue;
-		}
-
-		printf("A: %u\n", a);
-		a--;
-	}
+	printf("C: %f\n", c);
 
 	ret 0;
 }

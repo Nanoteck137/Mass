@@ -266,33 +266,59 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
     private LLVMValueRef GenIntegerOperators(LLVMBuilderRef builder, LLVMValueRef left, LLVMValueRef right, TokenType op, IntType type)
     {
-        // TODO(patrik): Handle signed and unsigned types
-        Debug.Assert(!Type.IsTypeSigned(type));
+        bool isSigned = Type.IsTypeSigned(type);
 
         switch (op)
         {
             case TokenType.PLUS:
-                return builder.BuildAdd(left, right);
+                if (isSigned)
+                    return builder.BuildNSWAdd(left, right);
+                else
+                    return builder.BuildAdd(left, right);
             case TokenType.MINUS:
-                return builder.BuildSub(left, right);
+                if (isSigned)
+                    return builder.BuildNSWSub(left, right);
+                else
+                    return builder.BuildSub(left, right);
             case TokenType.MULTIPLY:
-                return builder.BuildMul(left, right);
+                if (isSigned)
+                    return builder.BuildNSWMul(left, right);
+                else
+                    return builder.BuildMul(left, right);
             case TokenType.DIVIDE:
-                return builder.BuildUDiv(left, right);
+                if (isSigned)
+                    return builder.BuildSDiv(left, right);
+                else
+                    return builder.BuildUDiv(left, right);
             case TokenType.MODULO:
-                return builder.BuildURem(left, right);
+                if (isSigned)
+                    return builder.BuildSRem(left, right);
+                else
+                    return builder.BuildURem(left, right);
             case TokenType.EQUAL2:
                 return builder.BuildICmp(LLVMIntPredicate.LLVMIntEQ, left, right);
             case TokenType.NOT_EQUAL:
                 return builder.BuildICmp(LLVMIntPredicate.LLVMIntNE, left, right);
             case TokenType.GREATER_THEN:
-                return builder.BuildICmp(LLVMIntPredicate.LLVMIntUGT, left, right);
+                if (isSigned)
+                    return builder.BuildICmp(LLVMIntPredicate.LLVMIntSGT, left, right);
+                else
+                    return builder.BuildICmp(LLVMIntPredicate.LLVMIntUGT, left, right);
             case TokenType.LESS_THEN:
-                return builder.BuildICmp(LLVMIntPredicate.LLVMIntULT, left, right);
+                if (isSigned)
+                    return builder.BuildICmp(LLVMIntPredicate.LLVMIntSLT, left, right);
+                else
+                    return builder.BuildICmp(LLVMIntPredicate.LLVMIntULT, left, right);
             case TokenType.GREATER_EQUALS:
-                return builder.BuildICmp(LLVMIntPredicate.LLVMIntUGE, left, right);
+                if (isSigned)
+                    return builder.BuildICmp(LLVMIntPredicate.LLVMIntSGE, left, right);
+                else
+                    return builder.BuildICmp(LLVMIntPredicate.LLVMIntUGE, left, right);
             case TokenType.LESS_EQUALS:
-                return builder.BuildICmp(LLVMIntPredicate.LLVMIntULE, left, right);
+                if (isSigned)
+                    return builder.BuildICmp(LLVMIntPredicate.LLVMIntSLE, left, right);
+                else
+                    return builder.BuildICmp(LLVMIntPredicate.LLVMIntULE, left, right);
 
             case TokenType.EQUAL:
                 builder.BuildStore(right, left);
@@ -300,35 +326,50 @@ class LLVMGenerator : CodeGenerator, IDisposable
             case TokenType.PLUS_EQUALS:
             {
                 LLVMValueRef varValue = builder.BuildLoad(left);
-                right = builder.BuildAdd(varValue, right);
+                if (isSigned)
+                    right = builder.BuildNSWAdd(left, right);
+                else
+                    right = builder.BuildAdd(left, right);
                 builder.BuildStore(right, left);
                 break;
             }
             case TokenType.MINUS_EQUALS:
             {
                 LLVMValueRef varValue = builder.BuildLoad(left);
-                right = builder.BuildSub(varValue, right);
+                if (isSigned)
+                    right = builder.BuildNSWSub(left, right);
+                else
+                    right = builder.BuildSub(varValue, right);
                 builder.BuildStore(right, left);
                 break;
             }
             case TokenType.MULTIPLY_EQUALS:
             {
                 LLVMValueRef varValue = builder.BuildLoad(left);
-                right = builder.BuildMul(varValue, right);
+                if (isSigned)
+                    right = builder.BuildNSWMul(left, right);
+                else
+                    right = builder.BuildMul(varValue, right);
                 builder.BuildStore(right, left);
                 break;
             }
             case TokenType.DIVIDE_EQUALS:
             {
                 LLVMValueRef varValue = builder.BuildLoad(left);
-                right = builder.BuildUDiv(varValue, right);
+                if (isSigned)
+                    right = builder.BuildSDiv(left, right);
+                else
+                    right = builder.BuildUDiv(varValue, right);
                 builder.BuildStore(right, left);
                 break;
             }
             case TokenType.MODULO_EQUALS:
             {
                 LLVMValueRef varValue = builder.BuildLoad(left);
-                right = builder.BuildURem(varValue, right);
+                if (isSigned)
+                    right = builder.BuildSRem(left, right);
+                else
+                    right = builder.BuildURem(varValue, right);
                 builder.BuildStore(right, left);
                 break;
             }
@@ -352,7 +393,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
                 break;
             case TokenType.MINUS:
                 // NOTE(patrik): Negate the value +val -> -val
-                value = LLVMValueRef.CreateConstMul(value, LLVMValueRef.CreateConstInt(LLVMTypeRef.Int64, 0xffffffffffffffff));
+                value = LLVMValueRef.CreateConstSub(LLVMValueRef.CreateConstInt(LLVMTypeRef.Int64, 0), value);
                 break;
             default:
                 Debug.Assert(false);
@@ -480,15 +521,23 @@ class LLVMGenerator : CodeGenerator, IDisposable
             }
             else if (srcType is FloatType && destType is IntType)
             {
-                //TODO(patrik): Integer signed or unsigned
+                bool isSigned = Type.IsTypeSigned(destType);
+
                 LLVMValueRef value = GenLoadedExpr(builder, castExpr.Expr);
-                result = builder.BuildFPToUI(value, GetType(destType));
+                if (isSigned)
+                    result = builder.BuildFPToSI(value, GetType(destType));
+                else
+                    result = builder.BuildFPToUI(value, GetType(destType));
             }
             else if (srcType is IntType && destType is FloatType)
             {
-                //TODO(patrik): Integer signed or unsigned
+                bool isSigned = Type.IsTypeSigned(srcType);
+
                 LLVMValueRef value = GenLoadedExpr(builder, castExpr.Expr);
-                result = builder.BuildUIToFP(value, GetType(destType));
+                if (isSigned)
+                    result = builder.BuildSIToFP(value, GetType(destType));
+                else
+                    result = builder.BuildUIToFP(value, GetType(destType));
             }
             else
             {
@@ -507,14 +556,23 @@ class LLVMGenerator : CodeGenerator, IDisposable
             Type leftType = binaryOpExpr.Left.ResolvedType;
             Type rightType = binaryOpExpr.Right.ResolvedType;
 
-            if (leftType is FloatType && !(rightType is FloatType))
+            if (leftType is FloatType && rightType is IntType)
             {
-                right = builder.BuildUIToFP(right, GetType(leftType));
+                bool isSigned = Type.IsTypeSigned(rightType);
+                if (isSigned)
+                    right = builder.BuildSIToFP(right, GetType(leftType));
+                else
+                    right = builder.BuildUIToFP(right, GetType(leftType));
                 isFloatingPoint = true;
             }
-            else if (rightType is FloatType && !(leftType is FloatType))
+            else if (rightType is FloatType && leftType is IntType)
             {
-                left = builder.BuildUIToFP(left, GetType(rightType));
+                bool isSigned = Type.IsTypeSigned(leftType);
+                if (isSigned)
+                    left = builder.BuildSIToFP(left, GetType(rightType));
+                else
+                    left = builder.BuildUIToFP(left, GetType(rightType));
+
                 isFloatingPoint = true;
             }
             else if (leftType is FloatType && rightType is FloatType)
@@ -577,6 +635,36 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
             return result;
         }
+        else if (expr is UnaryExpr unaryExpr)
+        {
+            Type type = unaryExpr.ResolvedType;
+
+            LLVMValueRef value = GenLoadedExpr(builder, unaryExpr.Expr);
+
+            switch (unaryExpr.Op)
+            {
+                case TokenType.MINUS:
+                    if (type is IntType)
+                    {
+                        //TODO(patrik): Integer Signed and unsigned
+                        return builder.BuildSub(LLVMValueRef.CreateConstInt(GetType(type), 0), value);
+                    }
+                    else if (type is FloatType)
+                    {
+                        return builder.BuildFSub(LLVMValueRef.CreateConstReal(GetType(type), -0.0), value);
+                    }
+                    else
+                    {
+                        Debug.Assert(false);
+                        return null;
+                    }
+                default:
+                    Debug.Assert(false);
+                    break;
+            }
+
+            return null;
+        }
         else if (expr is CallExpr callExpr)
         {
             LLVMValueRef func = GenExpr(builder, callExpr.Expr);
@@ -587,7 +675,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
                 arguments[i] = GenLoadedExpr(builder, callExpr.Arguments[i]);
                 if (callExpr.Arguments[i].ResolvedType is FloatType floatType)
                 {
-                    if (floatType.IsFloatingPoint)
+                    if (floatType.Kind == FloatKind.F32)
                     {
                         // TODO(patrik): We need to convert float to double if the argument is part of the varargs
                         arguments[i] = builder.BuildFPExt(arguments[i], LLVMTypeRef.Double);
@@ -813,7 +901,9 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
             GenStmtBlockInfo blockInfo;
             GenStmtBlock(builder, whileStmt.Block, out blockInfo);
-            builder.BuildBr(whileBlock);
+
+            if (!blockInfo.HasBreakStmt && !blockInfo.HasContinueStmt)
+                builder.BuildBr(whileBlock);
 
             builder.PositionAtEnd(endWhile);
 
@@ -839,7 +929,8 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
             GenStmtBlockInfo blockInfo;
             GenStmtBlock(builder, doWhileStmt.Block, out blockInfo);
-            builder.BuildBr(whileBlock);
+            if (!blockInfo.HasBreakStmt && !blockInfo.HasContinueStmt)
+                builder.BuildBr(whileBlock);
 
             builder.PositionAtEnd(whileBlock);
             LLVMValueRef cond = GenExpr(builder, doWhileStmt.Cond);

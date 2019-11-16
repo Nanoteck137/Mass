@@ -956,6 +956,29 @@ class Resolver
         return OperandRValue(operand.Type);
     }
 
+    private Operand ResolveUnaryExpr(UnaryExpr expr)
+    {
+        Operand operand = ResolveExprRValue(expr.Expr);
+
+        Type type = operand.Type;
+
+        switch (expr.Op)
+        {
+            case TokenType.MINUS:
+                if (!type.IsArithmetic)
+                {
+                    Log.Fatal("Can only use unary '-' with arithmetic types", null);
+                }
+
+                return OperandRValue(type);
+            default:
+                Debug.Assert(false);
+                break;
+        }
+
+        return null;
+    }
+
     private Operand ResolveCallExpr(CallExpr expr)
     {
         Debug.Assert(expr != null);
@@ -1077,7 +1100,7 @@ class Resolver
         }
 
         Operand index = ResolveExprRValue(expr.Index);
-        if (!index.Type.IsInteger)
+        if (!(index.Type is IntType))
         {
             Log.Fatal("Index must be an integer", null);
         }
@@ -1237,6 +1260,10 @@ class Resolver
         {
             result = ResolveModifyExpr(modifyExpr);
         }
+        else if (expr is UnaryExpr unaryExpr)
+        {
+            result = ResolveUnaryExpr(unaryExpr);
+        }
         else if (expr is CallExpr callExpr)
         {
             result = ResolveCallExpr(callExpr);
@@ -1311,7 +1338,7 @@ class Resolver
             {
                 Operand operand = ResolveConstExpr(arrayTypespec.Size);
 
-                if (!operand.Type.IsInteger)
+                if (!(operand.Type is IntType))
                 {
                     Log.Fatal("Array size must be a integer", null);
                 }

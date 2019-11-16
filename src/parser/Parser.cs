@@ -326,12 +326,16 @@ class Parser
     private Expr ParseUnary()
     {
         if (lexer.MatchToken(TokenType.INC) ||
-            lexer.MatchToken(TokenType.DEC))
+            lexer.MatchToken(TokenType.DEC) ||
+            lexer.MatchToken(TokenType.MINUS))
         {
             TokenType op = lexer.CurrentToken;
             lexer.NextToken();
 
-            return new ModifyExpr(op, false, ParseBase());
+            if (op == TokenType.INC || op == TokenType.DEC)
+                return new ModifyExpr(op, false, ParseBase());
+            else
+                return new UnaryExpr(op, ParseBase());
         }
         else
         {
