@@ -26,25 +26,14 @@ entry:
   %b = alloca i32
   store i32 5, i32* %b
   %0 = load i32, i32* %a
-  %1 = icmp eq i32 %0, 4
-  %2 = load i32, i32* %b
-  %3 = icmp eq i32 %2, 4
-  br label %lor
+  %1 = icmp eq i32 %0, 3
+  %2 = xor i1 %1, true
+  br i1 %2, label %then, label %endif
 
-lor:                                              ; preds = %entry
-  br i1 %1, label %endor, label %ror
-
-ror:                                              ; preds = %lor
-  br label %endor
-
-endor:                                            ; preds = %ror, %lor
-  %4 = phi i1 [ true, %lor ], [ %3, %ror ]
-  br i1 %4, label %then, label %endif
-
-then:                                             ; preds = %endor
-  %5 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str, i32 0, i32 0))
+then:                                             ; preds = %entry
+  %3 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str, i32 0, i32 0))
   br label %endif
 
-endif:                                            ; preds = %then, %endor
+endif:                                            ; preds = %then, %entry
   ret i32 0
 }

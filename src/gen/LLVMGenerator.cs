@@ -722,6 +722,10 @@ class LLVMGenerator : CodeGenerator, IDisposable
                         Debug.Assert(false);
                         return null;
                     }
+                case TokenType.NOT:
+                    Debug.Assert(type is BoolType);
+
+                    return builder.BuildXor(value, LLVMValueRef.CreateConstInt(LLVMTypeRef.Int1, 1));
                 default:
                     Debug.Assert(false);
                     break;

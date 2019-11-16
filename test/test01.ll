@@ -10,25 +10,15 @@ define i32 @main(i32, i8**) #0 {
   %5 = alloca i8**, align 8
   %6 = alloca i32, align 4
   %7 = alloca i32, align 4
-  %8 = alloca i32, align 4
   store i32 0, i32* %3, align 4
   store i32 %0, i32* %4, align 4
   store i8** %1, i8*** %5, align 8
-  store i32 5, i32* %6, align 4
-  store i32 4, i32* %7, align 4
-  %9 = load i32, i32* %6, align 4
-  %10 = icmp eq i32 %9, 5
-  br i1 %10, label %14, label %11
-
-; <label>:11:                                     ; preds = %2
-  %12 = load i32, i32* %7, align 4
-  %13 = icmp eq i32 %12, 4
-  br label %14
-
-; <label>:14:                                     ; preds = %11, %2
-  %15 = phi i1 [ true, %2 ], [ %13, %11 ]
-  %16 = zext i1 %15 to i32
-  store i32 %16, i32* %8, align 4
+  store i32 1, i32* %6, align 4
+  %8 = load i32, i32* %6, align 4
+  %9 = icmp ne i32 %8, 0
+  %10 = xor i1 %9, true
+  %11 = zext i1 %10 to i32
+  store i32 %11, i32* %7, align 4
   ret i32 0
 }
 

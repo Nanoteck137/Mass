@@ -328,7 +328,8 @@ class Parser
     {
         if (lexer.MatchToken(TokenType.INC) ||
             lexer.MatchToken(TokenType.DEC) ||
-            lexer.MatchToken(TokenType.MINUS))
+            lexer.MatchToken(TokenType.MINUS) ||
+            lexer.MatchToken(TokenType.NOT))
         {
             TokenType op = lexer.CurrentToken;
             lexer.NextToken();

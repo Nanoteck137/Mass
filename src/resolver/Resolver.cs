@@ -983,6 +983,13 @@ class Resolver
                 }
 
                 return OperandRValue(type);
+            case TokenType.NOT:
+                if (!(type is BoolType))
+                {
+                    Log.Fatal("Can only use unary '!' with boolean types", null);
+                }
+
+                return OperandRValue(Type.Bool);
             default:
                 Debug.Assert(false);
                 break;

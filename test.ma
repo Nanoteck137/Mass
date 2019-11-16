@@ -21,7 +21,7 @@ func main(argc: s32, argv: u8**) -> s32
 	var a: s32 = 4;
 	var b: s32 = 5;
 
-	if(a == 4 || b == 4) {
+	if(!(a == 3)) {
 		printf("Equal\n");
 	}
 
