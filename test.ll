@@ -3,8 +3,8 @@ source_filename = "NO NAME"
 
 %struct.FILE = type opaque
 
-@str = private unnamed_addr constant [7 x i8] c"B: %u\0A\00", align 1
-@str.1 = private unnamed_addr constant [7 x i8] c"C: %f\0A\00", align 1
+@str = private unnamed_addr constant [13 x i8] c"Hello World\0A\00", align 1
+@str.1 = private unnamed_addr constant [7 x i8] c"A: %u\0A\00", align 1
 
 declare i32 @printf(i8*, ...)
 
@@ -22,21 +22,32 @@ entry:
   store i32 %argc, i32* %argc1
   %argv2 = alloca i8**
   store i8** %argv, i8*** %argv2
-  %a = alloca float
-  store float 0x40091EB860000000, float* %a
-  %b = alloca i32
-  %0 = load float, float* %a
-  %1 = fadd float %0, 0x40091EB860000000
-  %2 = fptoui float %1 to i32
-  store i32 %2, i32* %b
-  %c = alloca float
-  %3 = load i32, i32* %b
-  %4 = uitofp i32 %3 to float
-  store float %4, float* %c
-  %5 = load i32, i32* %b
-  %6 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str, i32 0, i32 0), i32 %5)
-  %7 = load float, float* %c
-  %8 = fpext float %7 to double
-  %9 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str.1, i32 0, i32 0), double %8)
+  %a = alloca i32
+  store i32 4, i32* %a
+  br label %while
+
+then3:                                            ; preds = %then
+  %0 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([13 x i8], [13 x i8]* @str, i32 0, i32 0))
+  br label %endwhile
+
+endif:                                            ; preds = %then
+  %1 = load i32, i32* %a
+  %2 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str.1, i32 0, i32 0), i32 %1)
+  %3 = load i32, i32* %a
+  %4 = sub i32 %3, 1
+  store i32 %4, i32* %a
+  br label %while
+
+while:                                            ; preds = %endif, %entry
+  %5 = load i32, i32* %a
+  %6 = icmp ugt i32 %5, 0
+  br i1 %6, label %then, label %endwhile
+
+then:                                             ; preds = %while
+  %7 = load i32, i32* %a
+  %8 = icmp eq i32 %7, 2
+  br i1 %8, label %then3, label %endif
+
+endwhile:                                         ; preds = %then3, %while
   ret i32 0
 }

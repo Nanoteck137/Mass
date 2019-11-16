@@ -4,11 +4,14 @@
 
 int main(int argc, char **argv)
 {
-	float a = 3.14f;
-	uint32_t b = (float)(a + 3.14f);
-	float c = b;
+	uint32_t a = 4;
 
-	printf("B: %u\n", b);
-	printf("C: %f\n", c);
+	while(a > 0) {
+		if(a == 2) {
+			break;
+		}
+		a--;
+	}
+
 	return 0;
 }

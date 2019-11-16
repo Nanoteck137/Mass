@@ -6,6 +6,11 @@ using System.Text;
 
 using LLVMSharp;
 
+class GenStmtBlockInfo
+{
+    public bool HasBreakStmt { get; set; }
+}
+
 class LLVMGenerator : CodeGenerator, IDisposable
 {
     private LLVMModuleRef module;
@@ -17,6 +22,9 @@ class LLVMGenerator : CodeGenerator, IDisposable
     // private Symbol currentSymbol;
     private LLVMValueRef currentValuePtr;
     private LLVMBasicBlockRef currentEntryBlock;
+
+    private LLVMBasicBlockRef currentLoopStart;
+    private LLVMBasicBlockRef currentLoopEnd;
 
     private Type prevType;
 
@@ -741,13 +749,14 @@ class LLVMGenerator : CodeGenerator, IDisposable
         return GenExpr(builder, expr, true);
     }
 
-    private void GenStmt(LLVMBuilderRef builder, Stmt stmt)
+    private void GenStmt(LLVMBuilderRef builder, Stmt stmt, ref GenStmtBlockInfo info)
     {
         Debug.Assert(stmt != null);
 
         if (stmt is StmtBlock stmtBlock)
         {
-            GenStmtBlock(builder, stmtBlock);
+            GenStmtBlockInfo blockInfo;
+            GenStmtBlock(builder, stmtBlock, out blockInfo);
         }
         else if (stmt is IfStmt ifStmt)
         {
@@ -763,8 +772,11 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
             builder.PositionAtEnd(then);
 
-            GenStmtBlock(builder, ifStmt.ThenBlock);
-            builder.BuildBr(endif);
+
+            GenStmtBlockInfo blockInfo;
+            GenStmtBlock(builder, ifStmt.ThenBlock, out blockInfo);
+            if (!blockInfo.HasBreakStmt)
+                builder.BuildBr(endif);
 
             builder.PositionAtEnd(endif);
 
@@ -776,14 +788,19 @@ class LLVMGenerator : CodeGenerator, IDisposable
         }
         else if (stmt is WhileStmt whileStmt)
         {
+            LLVMBasicBlockRef oldStart = currentLoopStart;
+            LLVMBasicBlockRef oldEnd = currentLoopEnd;
+
             LLVMBasicBlockRef whileBlock = currentEntryBlock.InsertBasicBlock("while");
             whileBlock.MoveAfter(currentEntryBlock);
+            currentLoopStart = whileBlock;
 
             LLVMBasicBlockRef then = currentEntryBlock.InsertBasicBlock("then");
             then.MoveAfter(whileBlock);
 
             LLVMBasicBlockRef endWhile = currentEntryBlock.InsertBasicBlock("endwhile");
             endWhile.MoveAfter(then);
+            currentLoopEnd = endWhile;
 
             builder.BuildBr(whileBlock);
 
@@ -793,12 +810,16 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
             builder.PositionAtEnd(then);
 
-            GenStmtBlock(builder, whileStmt.Block);
+            GenStmtBlockInfo blockInfo;
+            GenStmtBlock(builder, whileStmt.Block, out blockInfo);
             builder.BuildBr(whileBlock);
 
             builder.PositionAtEnd(endWhile);
 
             currentEntryBlock = endWhile;
+
+            currentLoopStart = oldStart;
+            currentLoopEnd = oldEnd;
         }
         else if (stmt is DoWhileStmt doWhileStmt)
         {
@@ -815,7 +836,8 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
             builder.PositionAtEnd(then);
 
-            GenStmtBlock(builder, doWhileStmt.Block);
+            GenStmtBlockInfo blockInfo;
+            GenStmtBlock(builder, doWhileStmt.Block, out blockInfo);
             builder.BuildBr(whileBlock);
 
             builder.PositionAtEnd(whileBlock);
@@ -833,11 +855,16 @@ class LLVMGenerator : CodeGenerator, IDisposable
         }
         else if (stmt is ContinueStmt)
         {
-            Debug.Assert(false);
+            Debug.Assert(currentLoopStart != null);
+
+            builder.BuildBr(currentLoopStart);
         }
         else if (stmt is BreakStmt)
         {
-            Debug.Assert(false);
+            Debug.Assert(currentLoopEnd != null);
+
+            info.HasBreakStmt = true;
+            builder.BuildBr(currentLoopEnd);
         }
         else if (stmt is AssignStmt assignStmt)
         {
@@ -890,13 +917,15 @@ class LLVMGenerator : CodeGenerator, IDisposable
         }
     }
 
-    private void GenStmtBlock(LLVMBuilderRef builder, StmtBlock block)
+    private void GenStmtBlock(LLVMBuilderRef builder, StmtBlock block, out GenStmtBlockInfo info)
     {
         Debug.Assert(block != null);
 
+        info = new GenStmtBlockInfo();
+
         foreach (Stmt stmt in block.Stmts)
         {
-            GenStmt(builder, stmt);
+            GenStmt(builder, stmt, ref info);
         }
     }
 
@@ -958,7 +987,8 @@ class LLVMGenerator : CodeGenerator, IDisposable
                 locals.Add(param.Name, ptr);
             }
 
-            GenStmtBlock(builder, decl.Body);
+            GenStmtBlockInfo blockInfo;
+            GenStmtBlock(builder, decl.Body, out blockInfo);
 
             if (type.ReturnType == Type.Void)
             {
