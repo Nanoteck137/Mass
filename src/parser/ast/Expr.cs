@@ -50,6 +50,18 @@ class StringExpr : Expr
     }
 }
 
+class CastExpr : Expr
+{
+    public Expr Expr { get; private set; }
+    public Typespec Type { get; private set; }
+
+    public CastExpr(Expr expr, Typespec type)
+    {
+        this.Expr = expr;
+        this.Type = type;
+    }
+}
+
 class BinaryOpExpr : Expr
 {
     public Expr Left { get; private set; }

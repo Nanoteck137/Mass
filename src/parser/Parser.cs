@@ -208,6 +208,7 @@ class Parser
         while (lexer.MatchToken(TokenType.OPEN_PAREN) ||
                lexer.MatchToken(TokenType.OPEN_BRACKET) ||
                lexer.MatchToken(TokenType.DOT) ||
+               lexer.MatchToken(TokenType.KEYWORD_AS) ||
                lexer.MatchToken(TokenType.INC) ||
                lexer.MatchToken(TokenType.DEC))
         {
@@ -300,6 +301,13 @@ class Parser
                 {
                     Span = SourceSpan.FromTo(firstSpan, name.Span)
                 };
+            }
+            else if (lexer.MatchToken(TokenType.KEYWORD_AS))
+            {
+                lexer.NextToken();
+
+                Typespec type = ParseTypespec();
+                expr = new CastExpr(expr, type);
             }
             else
             {

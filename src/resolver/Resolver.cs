@@ -229,6 +229,13 @@ class Resolver
                 return true;
             }
         }
+        else if (src is PtrType srcPtr && dest is ArrayType destArray)
+        {
+            if (srcPtr.Base == destArray.Base)
+            {
+                return true;
+            }
+        }
 
         return false;
     }
@@ -829,6 +836,19 @@ class Resolver
         return null;
     }
 
+    private Operand ResolveCastExpr(CastExpr expr)
+    {
+        Type type = ResolveTypespec(expr.Type);
+        Operand operand = ResolveExpectedExpr(expr.Expr, type);
+
+        if (!ConvertOperand(operand, type))
+        {
+            Log.Fatal("Invalid cast", null);
+        }
+
+        return operand;
+    }
+
     private Operand ResolveBinaryOpExpr(BinaryOpExpr expr)
     {
         Debug.Assert(expr != null);
@@ -1155,6 +1175,10 @@ class Resolver
         else if (expr is IdentifierExpr identExpr)
         {
             result = ResolveIdentifierExpr(identExpr);
+        }
+        else if (expr is CastExpr castExpr)
+        {
+            result = ResolveCastExpr(castExpr);
         }
         else if (expr is BinaryOpExpr binaryOpExpr)
         {

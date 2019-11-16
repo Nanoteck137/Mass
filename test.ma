@@ -19,7 +19,8 @@ func strlen(str: u8*) -> u64;
 func main(argc: s32, argv: u8**) -> s32 
 {
 	var a: u32[4] = { 1, 2, 3, 4 };
+	var ptr: u32* = a as u32*;
 
-	printf("Value: %u\n", a[1]);
+	printf("Value: %u\n", a[0]);
 	ret 0;
 }

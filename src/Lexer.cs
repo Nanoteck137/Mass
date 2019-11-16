@@ -28,6 +28,7 @@ enum TokenType
     KEYWORD_BREAK,
 
     KEYWORD_ELSE,
+    KEYWORD_AS,
 
     IDENTIFIER,
     STRING,
@@ -145,6 +146,7 @@ class Lexer
             { "break", TokenType.KEYWORD_BREAK },
 
             { "else", TokenType.KEYWORD_ELSE },
+            { "as", TokenType.KEYWORD_AS },
         };
 
         hexCharMap = new Dictionary<char, int>()

@@ -433,6 +433,13 @@ class LLVMGenerator : CodeGenerator, IDisposable
             else
                 return ptr;
         }
+        else if (expr is CastExpr castExpr)
+        {
+            Type srcType = castExpr.Expr.ResolvedType;
+            Type destType = castExpr.ResolvedType;
+
+            Debug.Assert(false);
+        }
         else if (expr is BinaryOpExpr binaryOpExpr)
         {
             LLVMValueRef left = GenLoadedExpr(builder, binaryOpExpr.Left);
@@ -976,7 +983,9 @@ class LLVMGenerator : CodeGenerator, IDisposable
         LLVMExecutionEngineRef engine = module.CreateExecutionEngine();
 
         LLVMValueRef t = engine.FindFunction("main");
-        engine.RunFunctionAsMain(t, 1, new string[] { "test.ma" }, new string[] { });
+
+        string[] args = new string[] { "test.ma", "testarg" };
+        engine.RunFunctionAsMain(t, (uint)args.Length, args, new string[] { });
     }
 
     private static bool initialized = false;

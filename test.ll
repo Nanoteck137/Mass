@@ -26,7 +26,7 @@ entry:
   %0 = bitcast [4 x i32]* %a to i8*
   %1 = bitcast [4 x i32]* @test to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* %1, i64 16, i1 false)
-  %2 = getelementptr [4 x i32], [4 x i32]* %a, i32 0, i32 1
+  %2 = getelementptr [4 x i32], [4 x i32]* %a, i32 0, i32 0
   %3 = load i32, i32* %2
   %4 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @str, i32 0, i32 0), i32 %3)
   ret i32 0
