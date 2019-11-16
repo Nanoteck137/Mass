@@ -22,10 +22,10 @@ func main(argc: s32, argv: u8**) -> s32
 	var b: s32 = 3;
 	var c: f32 = a + b;
 
-	// for(i: s32 = 0; i < 10; i++) 
-	//{
+	for(var i: s32 = 0; i < 10; i++) 
+	{
 		//printf("i: %d\n", i);
-	//}
+	}
 
 	printf("C: %f\n", c);
 

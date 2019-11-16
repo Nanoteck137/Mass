@@ -1535,10 +1535,34 @@ class Resolver
         PushVar(stmt.Name.Value, type);
     }
 
-    private void ResolveForStmt(ForStmt stmt)
+    private void ResolveForStmt(ForStmt stmt, Type returnType)
     {
         Debug.Assert(stmt != null);
-        Debug.Assert(false);
+
+        int scope = EnterScope();
+
+        if (stmt.Init != null)
+        {
+            ResolveStmt(stmt.Init, returnType);
+        }
+
+        if (stmt.Cond != null)
+        {
+            Operand operand = ResolveExprRValue(stmt.Cond);
+            if (!(operand.Type is BoolType))
+            {
+                Log.Fatal("Condition on for loop needs to be evaluated to a boolean type", null);
+            }
+        }
+
+        if (stmt.Next != null)
+        {
+            ResolveStmt(stmt.Next, returnType);
+        }
+
+        ResolveStmtBlock(stmt.Block, returnType);
+
+        LeaveScope(scope);
     }
 
     private void ResolveWhileStmt(WhileStmt stmt, Type returnType)
@@ -1693,7 +1717,7 @@ class Resolver
         }
         else if (stmt is ForStmt forStmt)
         {
-            ResolveForStmt(forStmt);
+            ResolveForStmt(forStmt, returnType);
         }
         else if (stmt is WhileStmt whileStmt)
         {
