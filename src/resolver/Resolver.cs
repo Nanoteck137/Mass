@@ -1515,6 +1515,26 @@ class Resolver
         ResolveStmtBlock(stmt.ThenBlock, returnType);
     }
 
+    private void ResolveInitStmt(InitStmt stmt)
+    {
+        Debug.Assert(stmt != null);
+
+        Type type = ResolveTypespec(stmt.Type);
+
+        if (stmt.Value != null)
+        {
+            Operand expr = ResolveExpectedExpr(stmt.Value, type);
+            if (!ConvertOperand(expr, type))
+            {
+                Log.Fatal("Invalid type in variable initializer", null);
+            }
+
+            stmt.Value.ResolvedType = expr.Type;
+        }
+
+        PushVar(stmt.Name.Value, type);
+    }
+
     private void ResolveForStmt(ForStmt stmt)
     {
         Debug.Assert(stmt != null);
@@ -1621,7 +1641,7 @@ class Resolver
         }
     }
 
-    private void ResolveDeclStmt(DeclStmt stmt)
+    /*private void ResolveDeclStmt(DeclStmt stmt)
     {
         Debug.Assert(stmt != null);
 
@@ -1646,7 +1666,7 @@ class Resolver
         {
             Log.Fatal("Var decls is the only supported decl in stmts", null);
         }
-    }
+    }*/
 
     private void ResolveStmt(Stmt stmt, Type returnType)
     {
@@ -1666,6 +1686,10 @@ class Resolver
         else if (stmt is IfStmt ifStmt)
         {
             ResolveIfStmt(ifStmt, returnType);
+        }
+        else if (stmt is InitStmt initStmt)
+        {
+            ResolveInitStmt(initStmt);
         }
         else if (stmt is ForStmt forStmt)
         {
@@ -1693,10 +1717,10 @@ class Resolver
         {
             ResolveExprStmt(exprStmt);
         }
-        else if (stmt is DeclStmt declStmt)
+        /*else if (stmt is DeclStmt declStmt)
         {
             ResolveDeclStmt(declStmt);
-        }
+        }*/
         else
         {
             Debug.Assert(false);

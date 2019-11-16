@@ -12,7 +12,7 @@ namespace Mass
         static void Main(string[] args)
         {
             // Lexer.Test();
-            // Parser.Test();
+            Parser.Test();
             // Printer.Test();
             // Type.Test();
             // Resolver.Test();

@@ -871,6 +871,22 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
             currentEntryBlock = endif;
         }
+        else if (stmt is InitStmt initStmt)
+        {
+            LLVMTypeRef type = GetType(resolver.ResolveTypespec(initStmt.Type));
+            LLVMValueRef ptr = builder.BuildAlloca(type, initStmt.Name.Value);
+            currentValuePtr = ptr;
+
+            if (initStmt.Value != null)
+            {
+                LLVMValueRef value = GenLoadedExpr(builder, initStmt.Value);
+                if (value != null)
+                    builder.BuildStore(value, ptr);
+            }
+
+            currentValuePtr = null;
+            locals[initStmt.Name.Value] = ptr;
+        }
         else if (stmt is ForStmt forStmt)
         {
             Debug.Assert(false);
@@ -985,7 +1001,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
         {
             GenExpr(builder, exprStmt.Expr);
         }
-        else if (stmt is DeclStmt declStmt)
+        /*else if (stmt is DeclStmt declStmt)
         {
             Debug.Assert(declStmt.Decl is VarDecl);
             VarDecl decl = (VarDecl)declStmt.Decl;
@@ -1003,7 +1019,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
             currentValuePtr = null;
             locals[decl.Name] = ptr;
-        }
+        }*/
         else
         {
             Debug.Assert(false);

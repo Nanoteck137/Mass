@@ -527,6 +527,35 @@ class Parser
         return result;
     }
 
+    private Stmt ParseInitStmt()
+    {
+        // Format 1: var i: s32 = 0
+        //        2: var i: s32
+
+        if (lexer.MatchToken(TokenType.KEYWORD_VAR))
+        {
+            lexer.NextToken();
+
+            IdentifierExpr identifier = new IdentifierExpr(lexer.CurrentIdentifier);
+            lexer.ExpectToken(TokenType.IDENTIFIER);
+            lexer.ExpectToken(TokenType.COLON);
+
+            Typespec type = ParseTypespec();
+
+            Expr value = null;
+            if (lexer.MatchToken(TokenType.EQUAL))
+            {
+                lexer.NextToken();
+
+                value = ParseExpr();
+            }
+
+            return new InitStmt(identifier, type, value);
+        }
+
+        return null;
+    }
+
     private Stmt ParseForStmt()
     {
         return null;
@@ -633,34 +662,38 @@ class Parser
 
     private Stmt ParseSimpleStmt()
     {
-        // Format 1: expr = expr
-        //        2: expr += expr
-        //        3: expr -= expr
-        //        4: expr *= expr
-        //        5: expr /= expr
-        //        6: expr %= expr
-        Stmt result;
+        // Format 1: init
+        //        2: expr = expr
+        //        3: expr += expr
+        //        4: expr -= expr
+        //        5: expr *= expr
+        //        6: expr /= expr
+        //        7: expr %= expr
+        Stmt stmt = ParseInitStmt();
 
-        Expr expr = ParseExpr();
-        if (lexer.MatchToken(TokenType.EQUAL) ||
-            lexer.MatchToken(TokenType.PLUS_EQUALS) ||
-            lexer.MatchToken(TokenType.MINUS_EQUALS) ||
-            lexer.MatchToken(TokenType.MULTIPLY_EQUALS) ||
-            lexer.MatchToken(TokenType.DIVIDE_EQUALS) ||
-            lexer.MatchToken(TokenType.MODULO_EQUALS))
+        if (stmt == null)
         {
-            TokenType op = lexer.CurrentToken;
-            lexer.NextToken();
+            Expr expr = ParseExpr();
+            if (lexer.MatchToken(TokenType.EQUAL) ||
+                lexer.MatchToken(TokenType.PLUS_EQUALS) ||
+                lexer.MatchToken(TokenType.MINUS_EQUALS) ||
+                lexer.MatchToken(TokenType.MULTIPLY_EQUALS) ||
+                lexer.MatchToken(TokenType.DIVIDE_EQUALS) ||
+                lexer.MatchToken(TokenType.MODULO_EQUALS))
+            {
+                TokenType op = lexer.CurrentToken;
+                lexer.NextToken();
 
-            Expr right = ParseExpr();
-            result = new AssignStmt(expr, right, op);
-        }
-        else
-        {
-            result = new ExprStmt(expr);
+                Expr right = ParseExpr();
+                stmt = new AssignStmt(expr, right, op);
+            }
+            else
+            {
+                stmt = new ExprStmt(expr);
+            }
         }
 
-        return result;
+        return stmt;
     }
 
     private Stmt ParseStmt()
@@ -695,7 +728,7 @@ class Parser
         }
         else
         {
-            Decl decl = ParseDecl();
+            /*Decl decl = ParseDecl();
             if (decl == null)
             {
                 SourceSpan firstSpan = lexer.CurrentTokenSpan;
@@ -716,7 +749,11 @@ class Parser
                 // TODO: Better message
                 Log.Fatal("Var decls is only supported decls in decls", null);
                 return null;
-            }
+            }*/
+
+            Stmt result = ParseSimpleStmt();
+            lexer.ExpectToken(TokenType.SEMICOLON);
+            return result;
         }
     }
     #endregion
@@ -1121,6 +1158,11 @@ class Parser
         lexer.NextToken();
         Stmt stmt6 = parser.ParseStmt();
         Debug.Assert(stmt6 is AssignStmt);
+
+        lexer.Reset("var a: s32 = 123;");
+        lexer.NextToken();
+        Stmt stmt7 = parser.ParseStmt();
+        Debug.Assert(stmt7 is InitStmt);
         #endregion
 
         #region Typespec Testing

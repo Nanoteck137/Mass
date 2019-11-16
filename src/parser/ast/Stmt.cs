@@ -45,6 +45,21 @@ class IfStmt : Stmt
     }
 }
 
+
+class InitStmt : Stmt
+{
+    public IdentifierExpr Name { get; private set; }
+    public Typespec Type { get; private set; }
+    public Expr Value { get; private set; }
+
+    public InitStmt(IdentifierExpr name, Typespec type, Expr value)
+    {
+        this.Name = name;
+        this.Type = type;
+        this.Value = value;
+    }
+}
+
 class ForStmt : Stmt
 {
     public Stmt Init { get; private set; }
@@ -120,15 +135,5 @@ class ExprStmt : Stmt
     public ExprStmt(Expr expr)
     {
         this.Expr = expr;
-    }
-}
-
-class DeclStmt : Stmt
-{
-    public Decl Decl { get; private set; }
-
-    public DeclStmt(Decl decl)
-    {
-        this.Decl = decl;
     }
 }

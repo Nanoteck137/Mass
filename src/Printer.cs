@@ -224,10 +224,10 @@ class Printer
         {
             PrintExpr(exprStmt.Expr);
         }
-        else if (stmt is DeclStmt declStmt)
+        /*else if (stmt is DeclStmt declStmt)
         {
             PrintDecl(declStmt.Decl);
-        }
+        }*/
         else
         {
             Debug.Assert(false);
@@ -431,7 +431,7 @@ class Printer
                     new ContinueStmt()
                 }))*/
 
-            new DeclStmt(new VarDecl("a", new IdentifierTypespec(new IdentifierExpr("s32")), new IntegerExpr(321)))
+            //new DeclStmt(new VarDecl("a", new IdentifierTypespec(new IdentifierExpr("s32")), new IntegerExpr(321)))
         };
 
         foreach (Stmt stmt in stmts)
@@ -468,7 +468,7 @@ class Printer
                 type,
                 false,
                 new StmtBlock(new List<Stmt>() {
-                    new DeclStmt(new VarDecl("a", new IdentifierTypespec(new IdentifierExpr("s32")), new IntegerExpr(321)))
+                    //new DeclStmt(new VarDecl("a", new IdentifierTypespec(new IdentifierExpr("s32")), new IntegerExpr(321)))
                 })),
 
             new StructDecl("vec2", new List<StructItem>()
