@@ -18,12 +18,12 @@ func strlen(str: u8*) -> u64;
 
 func main(argc: s32, argv: u8**) -> s32 
 {
-	var a: u32[4] = { 1, 2, 3, 4 };
-	var ptr: u32* = a as u32*;
-	var offset: u64 = 3;
+	var a: f32 = 3.14f;
+	var b: u32 = (a + 3.14f) as u32;
+	var c: f32 = b as f32;
 
-	var testPtr: u32* = ptr + offset;
+	printf("B: %u\n", b);
+	printf("C: %f\n", c);
 
-	printf("Value: %u\n", deref(testPtr - 2));
 	ret 0;
 }

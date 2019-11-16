@@ -469,6 +469,18 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
                 builder.BuildStore(elementPtr, currentValuePtr);
             }
+            else if (srcType is FloatType && destType is IntType)
+            {
+                //TODO(patrik): Integer signed or unsigned
+                LLVMValueRef value = GenLoadedExpr(builder, castExpr.Expr);
+                result = builder.BuildFPToUI(value, GetType(destType));
+            }
+            else if (srcType is IntType && destType is FloatType)
+            {
+                //TODO(patrik): Integer signed or unsigned
+                LLVMValueRef value = GenLoadedExpr(builder, castExpr.Expr);
+                result = builder.BuildUIToFP(value, GetType(destType));
+            }
             else
             {
                 Debug.Assert(false);
@@ -494,6 +506,10 @@ class LLVMGenerator : CodeGenerator, IDisposable
             else if (rightType is FloatType && !(leftType is FloatType))
             {
                 left = builder.BuildUIToFP(left, GetType(rightType));
+                isFloatingPoint = true;
+            }
+            else if (leftType is FloatType && rightType is FloatType)
+            {
                 isFloatingPoint = true;
             }
 

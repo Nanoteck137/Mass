@@ -4,12 +4,11 @@
 
 int main(int argc, char **argv)
 {
-	int a[4] = {1, 2, 3, 4};
-	int *ptr = a;
-	int index = 2;
+	float a = 3.14f;
+	uint32_t b = (float)(a + 3.14f);
+	float c = b;
 
-	int* testPtr = ptr + index;
-
-	printf("Value: %d\n", *(testPtr - 2));
+	printf("B: %u\n", b);
+	printf("C: %f\n", c);
 	return 0;
 }

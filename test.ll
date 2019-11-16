@@ -3,8 +3,8 @@ source_filename = "NO NAME"
 
 %struct.FILE = type opaque
 
-@test = private constant [4 x i32] [i32 1, i32 2, i32 3, i32 4]
-@str = private unnamed_addr constant [11 x i8] c"Value: %u\0A\00", align 1
+@str = private unnamed_addr constant [7 x i8] c"B: %u\0A\00", align 1
+@str.1 = private unnamed_addr constant [7 x i8] c"C: %f\0A\00", align 1
 
 declare i32 @printf(i8*, ...)
 
@@ -22,28 +22,21 @@ entry:
   store i32 %argc, i32* %argc1
   %argv2 = alloca i8**
   store i8** %argv, i8*** %argv2
-  %a = alloca [4 x i32]
-  %0 = bitcast [4 x i32]* %a to i8*
-  %1 = bitcast [4 x i32]* @test to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* %1, i64 16, i1 false)
-  %ptr = alloca i32*
-  %2 = getelementptr [4 x i32], [4 x i32]* %a, i32 0, i32 0
-  store i32* %2, i32** %ptr
-  %offset = alloca i64
-  store i64 3, i64* %offset
-  %testPtr = alloca i32*
-  %3 = load i32*, i32** %ptr
-  %4 = load i64, i64* %offset
-  %5 = getelementptr inbounds i32, i32* %3, i64 %4
-  store i32* %5, i32** %testPtr
-  %6 = load i32*, i32** %testPtr
-  %7 = getelementptr inbounds i32, i32* %6, i64 -2
-  %8 = load i32, i32* %7
-  %9 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @str, i32 0, i32 0), i32 %8)
+  %a = alloca float
+  store float 0x40091EB860000000, float* %a
+  %b = alloca i32
+  %0 = load float, float* %a
+  %1 = fadd float %0, 0x40091EB860000000
+  %2 = fptoui float %1 to i32
+  store i32 %2, i32* %b
+  %c = alloca float
+  %3 = load i32, i32* %b
+  %4 = uitofp i32 %3 to float
+  store float %4, float* %c
+  %5 = load i32, i32* %b
+  %6 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str, i32 0, i32 0), i32 %5)
+  %7 = load float, float* %c
+  %8 = fpext float %7 to double
+  %9 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str.1, i32 0, i32 0), double %8)
   ret i32 0
 }
-
-; Function Attrs: argmemonly nounwind
-declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture writeonly, i8* nocapture readonly, i64, i1) #0
-
-attributes #0 = { argmemonly nounwind }
