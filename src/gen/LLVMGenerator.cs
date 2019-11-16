@@ -539,6 +539,24 @@ class LLVMGenerator : CodeGenerator, IDisposable
                 else
                     result = builder.BuildUIToFP(value, GetType(destType));
             }
+            else if (srcType is IntType srcIntType && destType is IntType destIntType)
+            {
+                LLVMValueRef value = GenLoadedExpr(builder, castExpr.Expr);
+                bool isSigned = Type.IsTypeSigned(destIntType);
+                if ((int)destIntType.Kind > (int)srcIntType.Kind)
+                {
+                    result = builder.BuildZExt(value, GetType(destType));
+                }
+                else
+                {
+                    result = builder.BuildTrunc(value, GetType(destType));
+                }
+            }
+            else if (srcType is PtrType && destType is PtrType)
+            {
+                LLVMValueRef ptr = GenExpr(builder, castExpr.Expr);
+                result = builder.BuildBitCast(ptr, GetType(destType));
+            }
             else
             {
                 Debug.Assert(false);

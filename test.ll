@@ -3,7 +3,7 @@ source_filename = "NO NAME"
 
 %struct.FILE = type opaque
 
-@str = private unnamed_addr constant [7 x i8] c"Equal\0A\00", align 1
+@str = private unnamed_addr constant [9 x i8] c"Val: %d\0A\00", align 1
 
 declare i32 @printf(i8*, ...)
 
@@ -22,18 +22,14 @@ entry:
   %argv2 = alloca i8**
   store i8** %argv, i8*** %argv2
   %a = alloca i32
-  store i32 4, i32* %a
-  %b = alloca i32
-  store i32 5, i32* %b
-  %0 = load i32, i32* %a
-  %1 = icmp eq i32 %0, 3
-  %2 = xor i1 %1, true
-  br i1 %2, label %then, label %endif
-
-then:                                             ; preds = %entry
-  %3 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str, i32 0, i32 0))
-  br label %endif
-
-endif:                                            ; preds = %then, %entry
+  store i32 4095, i32* %a
+  %b = alloca i8*
+  %0 = bitcast i32* %a to i8*
+  store i8* %0, i8** %b
+  %1 = load i8*, i8** %b
+  %2 = getelementptr inbounds i8, i8* %1, i64 1
+  %3 = load i8, i8* %2
+  %4 = zext i8 %3 to i32
+  %5 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([9 x i8], [9 x i8]* @str, i32 0, i32 0), i32 %4)
   ret i32 0
 }

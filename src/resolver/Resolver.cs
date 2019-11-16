@@ -219,6 +219,10 @@ class Resolver
         {
             return true;
         }
+        else if (src is PtrType && dest is PtrType)
+        {
+            return true;
+        }
         else if (src is ArrayType && dest is PtrType)
         {
             ArrayType srcArray = (ArrayType)src;
