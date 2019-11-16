@@ -11,16 +11,13 @@ define i32 @main(i32, i8**) #0 {
   %4 = alloca i32, align 4
   %5 = alloca i8**, align 8
   %6 = alloca i8, align 1
-  %7 = alloca i32, align 4
   store i32 0, i32* %3, align 4
   store i32 %0, i32* %4, align 4
   store i8** %1, i8*** %5, align 8
   store i8 -1, i8* %6, align 1
-  %8 = load i8, i8* %6, align 1
-  %9 = sext i8 %8 to i32
-  store i32 %9, i32* %7, align 4
-  %10 = load i32, i32* %7, align 4
-  %11 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([9 x i8], [9 x i8]* @.str, i32 0, i32 0), i32 %10)
+  %7 = load i8, i8* %6, align 1
+  %8 = zext i8 %7 to i32
+  %9 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([9 x i8], [9 x i8]* @.str, i32 0, i32 0), i32 %8)
   ret i32 0
 }
 

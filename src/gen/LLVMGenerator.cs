@@ -20,7 +20,6 @@ class LLVMGenerator : CodeGenerator, IDisposable
     private Dictionary<string, LLVMValueRef> locals;
     private Dictionary<string, LLVMTypeRef> structTypes;
 
-    // private Symbol currentSymbol;
     private LLVMValueRef currentValuePtr;
     private LLVMBasicBlockRef currentEntryBlock;
 
@@ -198,7 +197,6 @@ class LLVMGenerator : CodeGenerator, IDisposable
                 int index = 0;
                 for (int i = 0; i < compoundExpr.Fields.Count; i++)
                 {
-                    //TODO(patrik): CompoundFields
                     CompoundField field = compoundExpr.Fields[i];
                     if (field is NameCompoundField name)
                     {
@@ -231,8 +229,6 @@ class LLVMGenerator : CodeGenerator, IDisposable
                     CompoundField field = compoundExpr.Fields[i];
                     if (field is IndexCompoundField indexField)
                     {
-                        //index = structType.GetItemIndex(name.Name.Value);
-                        //index = index.Index;
                         IntegerExpr intExpr = (IntegerExpr)indexField.Index;
                         index = (int)intExpr.Value;
                         values[index] = GenConstExpr(field.Init);
@@ -729,10 +725,12 @@ class LLVMGenerator : CodeGenerator, IDisposable
             switch (unaryExpr.Op)
             {
                 case TokenType.MINUS:
-                    if (type is IntType)
+                    if (type is IntType intType)
                     {
-                        //TODO(patrik): Integer Signed and unsigned
-                        return builder.BuildSub(LLVMValueRef.CreateConstInt(GetType(type), 0), value);
+                        if (Type.IsTypeSigned(intType))
+                            return builder.BuildNSWSub(LLVMValueRef.CreateConstInt(GetType(type), 0), value);
+                        else
+                            return builder.BuildSub(LLVMValueRef.CreateConstInt(GetType(type), 0), value);
                     }
                     else if (type is FloatType)
                     {

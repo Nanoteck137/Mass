@@ -4,10 +4,9 @@
 
 int main(int argc, char **argv)
 {
-	int8_t a = 255;
-	uint32_t b = (uint32_t)a;
+	uint8_t a = -1;
 
-	printf("Val: %d\n", b);
+	printf("Val: %d\n", a);
 
 	return 0;
 }
