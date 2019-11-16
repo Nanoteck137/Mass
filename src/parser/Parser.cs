@@ -558,7 +558,38 @@ class Parser
 
     private Stmt ParseForStmt()
     {
-        return null;
+        // Format 1: for(init; cond; next) stmt_block
+
+        lexer.ExpectToken(TokenType.KEYWORD_FOR);
+
+        Stmt init = null;
+        Expr cond = null;
+        Stmt next = null;
+
+        lexer.ExpectToken(TokenType.OPEN_PAREN);
+
+        if (!lexer.MatchToken(TokenType.SEMICOLON))
+        {
+            init = ParseSimpleStmt();
+            lexer.ExpectToken(TokenType.SEMICOLON);
+        }
+
+        if (!lexer.MatchToken(TokenType.SEMICOLON))
+        {
+            cond = ParseExpr();
+            lexer.ExpectToken(TokenType.SEMICOLON);
+        }
+
+        if (!lexer.MatchToken(TokenType.CLOSE_PAREN))
+        {
+            next = ParseSimpleStmt();
+        }
+
+        lexer.ExpectToken(TokenType.CLOSE_PAREN);
+
+        StmtBlock block = ParseStmtBlock();
+
+        return new ForStmt(init, cond, next, block);
     }
 
     private Stmt ParseWhileStmt()
@@ -1163,6 +1194,11 @@ class Parser
         lexer.NextToken();
         Stmt stmt7 = parser.ParseStmt();
         Debug.Assert(stmt7 is InitStmt);
+
+        lexer.Reset("for(var i: s32 = 0; i < 10; i++) { printf(\"Hello World\\n\"); }");
+        lexer.NextToken();
+        Stmt stmt8 = parser.ParseStmt();
+        Debug.Assert(stmt8 is ForStmt);
         #endregion
 
         #region Typespec Testing
