@@ -334,17 +334,23 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
     private LLVMValueRef GenPointerOperators(LLVMBuilderRef builder, LLVMValueRef ptr, LLVMValueRef value, TokenType op)
     {
+        // TODO(patrik): Change this to platform ptr size
+        value = builder.BuildZExt(value, LLVMTypeRef.Int64);
+
         switch (op)
         {
             case TokenType.PLUS:
-                // TODO(patrik): Change this to platform ptr size
-                value = builder.BuildZExt(value, LLVMTypeRef.Int64);
-                return builder.BuildInBoundsGEP(ptr, new LLVMValueRef[] { value });
+                break;
+            case TokenType.MINUS:
+                // NOTE(patrik): Negate the value +val -> -val
+                value = LLVMValueRef.CreateConstMul(value, LLVMValueRef.CreateConstInt(LLVMTypeRef.Int64, 0xffffffffffffffff));
+                break;
             default:
                 Debug.Assert(false);
                 break;
         }
-        return null;
+
+        return builder.BuildInBoundsGEP(ptr, new LLVMValueRef[] { value });
     }
 
     private LLVMValueRef GenFloatingPointOperators(LLVMBuilderRef builder, LLVMValueRef left, LLVMValueRef right, TokenType op)

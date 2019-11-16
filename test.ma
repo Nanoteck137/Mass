@@ -22,6 +22,8 @@ func main(argc: s32, argv: u8**) -> s32
 	var ptr: u32* = a as u32*;
 	var offset: u64 = 3;
 
-	printf("Value: %u\n", deref(ptr + offset));
+	var testPtr: u32* = ptr + offset;
+
+	printf("Value: %u\n", deref(testPtr - 2));
 	ret 0;
 }

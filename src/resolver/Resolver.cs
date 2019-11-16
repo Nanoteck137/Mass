@@ -857,21 +857,6 @@ class Resolver
         Operand right = ResolveExprRValue(expr.Right);
 
         Operand result = null;
-
-        /*
-        PLUS,
-        MINUS,
-        MULTIPLY,
-        DIVIDE,
-        MODULO,
-
-        EQUAL2,
-        NOT_EQUAL,
-        GREATER_THEN,
-        LESS_THEN,
-        GREATER_EQUALS,
-        LESS_EQUALS,
-         */
         switch (expr.Op)
         {
             case TokenType.PLUS:
@@ -883,12 +868,17 @@ class Resolver
                 else if (left.Type is PtrType && right.Type is IntType)
                 {
                     //TODO(patrik): Add more check here for base size == 0 and void ptrs
+
+                    // TODO(patrik): Remove this because i dont want implicit convertion
                     ConvertOperand(right, Type.U64);
                     result = OperandRValue(left.Type);
                 }
                 else if (right.Type is PtrType && left.Type is IntType)
                 {
                     //TODO(patrik): Add more check here for base size == 0 and void ptrs
+
+                    // TODO(patrik): Remove this because i dont want implicit convertion
+                    ConvertOperand(right, Type.U64);
                     result = OperandRValue(right.Type);
                 }
                 else
@@ -896,13 +886,45 @@ class Resolver
                     Log.Fatal("Operands of + must both have arithmetic type, or pointer and integer type", null);
                 }
                 break;
-        }
 
+            case TokenType.MINUS:
+                if (left.Type.IsArithmetic && right.Type.IsArithmetic)
+                {
+                    UnifyArithmeticOperands(left, right);
+                    result = OperandRValue(left.Type);
+                }
+                else if (left.Type is PtrType && right.Type is IntType)
+                {
+                    //TODO(patrik): Add more check here for base size == 0 and void ptrs
 
-        // TODO(patrik): More type checking here and maybe const folding
+                    // TODO(patrik): Remove this because i dont want implicit convertion
+                    ConvertOperand(right, Type.U64);
+                    result = OperandRValue(left.Type);
+                }
+                else if (right.Type is PtrType && left.Type is IntType)
+                {
+                    //TODO(patrik): Add more check here for base size == 0 and void ptrs
 
-        /*switch (expr.Op)
-        {
+                    // TODO(patrik): Remove this because i dont want implicit convertion
+                    ConvertOperand(right, Type.U64);
+                    result = OperandRValue(right.Type);
+                }
+                else
+                {
+                    Log.Fatal("Operands of - must both have arithmetic type, or pointer and integer type", null);
+                }
+                break;
+
+            case TokenType.MULTIPLY:
+            case TokenType.DIVIDE:
+            case TokenType.MODULO:
+                if (!left.Type.IsArithmetic)
+                    Log.Fatal($"Left of operand '{expr.Op}' must have arithmetic type", null);
+                if (!right.Type.IsArithmetic)
+                    Log.Fatal($"Right of operand '{expr.Op}' must have arithmetic type", null);
+
+                return OperandRValue(left.Type);
+
             case TokenType.EQUAL2:
             case TokenType.NOT_EQUAL:
             case TokenType.GREATER_THEN:
@@ -910,7 +932,9 @@ class Resolver
             case TokenType.GREATER_EQUALS:
             case TokenType.LESS_EQUALS:
                 return OperandRValue(Type.Bool);
-        }*/
+        }
+
+        // TODO(patrik): More type checking here and maybe const folding
 
         return result;
     }

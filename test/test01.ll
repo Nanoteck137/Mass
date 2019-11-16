@@ -14,20 +14,24 @@ define i32 @main(i32, i8**) #0 {
   %6 = alloca [4 x i32], align 16
   %7 = alloca i32*, align 8
   %8 = alloca i32, align 4
+  %9 = alloca i32*, align 8
   store i32 0, i32* %3, align 4
   store i32 %0, i32* %4, align 4
   store i8** %1, i8*** %5, align 8
-  %9 = bitcast [4 x i32]* %6 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %9, i8* bitcast ([4 x i32]* @main.a to i8*), i64 16, i32 16, i1 false)
-  %10 = getelementptr inbounds [4 x i32], [4 x i32]* %6, i32 0, i32 0
-  store i32* %10, i32** %7, align 8
+  %10 = bitcast [4 x i32]* %6 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %10, i8* bitcast ([4 x i32]* @main.a to i8*), i64 16, i32 16, i1 false)
+  %11 = getelementptr inbounds [4 x i32], [4 x i32]* %6, i32 0, i32 0
+  store i32* %11, i32** %7, align 8
   store i32 2, i32* %8, align 4
-  %11 = load i32*, i32** %7, align 8
-  %12 = load i32, i32* %8, align 4
-  %13 = sext i32 %12 to i64
-  %14 = getelementptr inbounds i32, i32* %11, i64 %13
-  %15 = load i32, i32* %14, align 4
-  %16 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str, i32 0, i32 0), i32 %15)
+  %12 = load i32*, i32** %7, align 8
+  %13 = load i32, i32* %8, align 4
+  %14 = sext i32 %13 to i64
+  %15 = getelementptr inbounds i32, i32* %12, i64 %14
+  store i32* %15, i32** %9, align 8
+  %16 = load i32*, i32** %9, align 8
+  %17 = getelementptr inbounds i32, i32* %16, i64 -2
+  %18 = load i32, i32* %17, align 4
+  %19 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str, i32 0, i32 0), i32 %18)
   ret i32 0
 }
 

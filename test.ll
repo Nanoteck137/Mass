@@ -31,11 +31,15 @@ entry:
   store i32* %2, i32** %ptr
   %offset = alloca i64
   store i64 3, i64* %offset
+  %testPtr = alloca i32*
   %3 = load i32*, i32** %ptr
   %4 = load i64, i64* %offset
   %5 = getelementptr inbounds i32, i32* %3, i64 %4
-  %6 = load i32, i32* %5
-  %7 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @str, i32 0, i32 0), i32 %6)
+  store i32* %5, i32** %testPtr
+  %6 = load i32*, i32** %testPtr
+  %7 = getelementptr inbounds i32, i32* %6, i64 -2
+  %8 = load i32, i32* %7
+  %9 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @str, i32 0, i32 0), i32 %8)
   ret i32 0
 }
 

@@ -8,6 +8,8 @@ int main(int argc, char **argv)
 	int *ptr = a;
 	int index = 2;
 
-	printf("Value: %d\n", *(ptr + index));
+	int* testPtr = ptr + index;
+
+	printf("Value: %d\n", *(testPtr - 2));
 	return 0;
 }
