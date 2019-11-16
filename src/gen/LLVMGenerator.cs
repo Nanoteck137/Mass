@@ -542,10 +542,13 @@ class LLVMGenerator : CodeGenerator, IDisposable
             else if (srcType is IntType srcIntType && destType is IntType destIntType)
             {
                 LLVMValueRef value = GenLoadedExpr(builder, castExpr.Expr);
-                bool isSigned = Type.IsTypeSigned(destIntType);
+                bool isSigned = Type.IsTypeSigned(srcIntType);
                 if ((int)destIntType.Kind > (int)srcIntType.Kind)
                 {
-                    result = builder.BuildZExt(value, GetType(destType));
+                    if (isSigned)
+                        result = builder.BuildSExt(value, GetType(destType));
+                    else
+                        result = builder.BuildZExt(value, GetType(destType));
                 }
                 else
                 {

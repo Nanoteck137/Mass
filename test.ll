@@ -21,15 +21,13 @@ entry:
   store i32 %argc, i32* %argc1
   %argv2 = alloca i8**
   store i8** %argv, i8*** %argv2
-  %a = alloca i32
-  store i32 4095, i32* %a
-  %b = alloca i8*
-  %0 = bitcast i32* %a to i8*
-  store i8* %0, i8** %b
-  %1 = load i8*, i8** %b
-  %2 = getelementptr inbounds i8, i8* %1, i64 1
-  %3 = load i8, i8* %2
-  %4 = zext i8 %3 to i32
-  %5 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([9 x i8], [9 x i8]* @str, i32 0, i32 0), i32 %4)
+  %a = alloca i8
+  store i8 127, i8* %a
+  %b = alloca i32
+  %0 = load i8, i8* %a
+  %1 = zext i8 %0 to i32
+  store i32 %1, i32* %b
+  %2 = load i32, i32* %b
+  %3 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([9 x i8], [9 x i8]* @str, i32 0, i32 0), i32 %2)
   ret i32 0
 }

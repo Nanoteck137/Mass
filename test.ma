@@ -18,10 +18,11 @@ func strlen(str: u8*) -> u64;
 
 func main(argc: s32, argv: u8**) -> s32 
 {
-	var a: u32 = 4095;
-	var b: u8* = addr(a) as u8*;
+	var a: u8 = 127;
+	var b: s32 = a as s32;
+	//var b: u8* = addr(a) as u8*;
 
-	printf("Val: %d\n", deref(b + 1) as u32);
+	printf("Val: %d\n", b);
 
 	ret 0;
 }
