@@ -18,7 +18,7 @@ define i32 @main(i32, i8**) #0 {
   store i32 4, i32* %7, align 4
   %9 = load i32, i32* %6, align 4
   %10 = icmp eq i32 %9, 5
-  br i1 %10, label %11, label %14
+  br i1 %10, label %14, label %11
 
 ; <label>:11:                                     ; preds = %2
   %12 = load i32, i32* %7, align 4
@@ -26,7 +26,7 @@ define i32 @main(i32, i8**) #0 {
   br label %14
 
 ; <label>:14:                                     ; preds = %11, %2
-  %15 = phi i1 [ false, %2 ], [ %13, %11 ]
+  %15 = phi i1 [ true, %2 ], [ %13, %11 ]
   %16 = zext i1 %15 to i32
   store i32 %16, i32* %8, align 4
   ret i32 0

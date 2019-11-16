@@ -431,7 +431,7 @@ class Parser
         {
             lexer.NextToken();
             Expr right = ParseAnd();
-            expr = new BinaryOpExpr(expr, right, TokenType.AND2);
+            expr = new BinaryOpExpr(expr, right, TokenType.OR2);
         }
 
         return expr;

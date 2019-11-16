@@ -600,6 +600,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
                     switch (binaryOpExpr.Op)
                     {
                         case TokenType.AND2:
+                        {
                             LLVMBasicBlockRef leftBlock = currentEntryBlock.InsertBasicBlock("land");
                             LLVMBasicBlockRef rightBlock = currentEntryBlock.InsertBasicBlock("rand");
                             LLVMBasicBlockRef endBlock = currentEntryBlock.InsertBasicBlock("endand");
@@ -623,9 +624,36 @@ class LLVMGenerator : CodeGenerator, IDisposable
                             currentEntryBlock = endBlock;
 
                             result = phi;
-                            break;
+                        }
+                        break;
+
                         case TokenType.OR2:
-                            break;
+                        {
+                            LLVMBasicBlockRef leftBlock = currentEntryBlock.InsertBasicBlock("lor");
+                            LLVMBasicBlockRef rightBlock = currentEntryBlock.InsertBasicBlock("ror");
+                            LLVMBasicBlockRef endBlock = currentEntryBlock.InsertBasicBlock("endor");
+                            leftBlock.MoveAfter(currentEntryBlock);
+                            rightBlock.MoveAfter(leftBlock);
+                            endBlock.MoveAfter(rightBlock);
+
+                            builder.BuildBr(leftBlock);
+
+                            builder.PositionAtEnd(leftBlock);
+                            builder.BuildCondBr(left, endBlock, rightBlock);
+
+                            builder.PositionAtEnd(rightBlock);
+                            builder.BuildBr(endBlock);
+
+                            builder.PositionAtEnd(endBlock);
+                            LLVMTypeRef type = GetType(leftType);
+                            LLVMValueRef phi = builder.BuildPhi(type);
+                            phi.AddIncoming(new LLVMValueRef[] { LLVMValueRef.CreateConstInt(type, 1), right }, new LLVMBasicBlockRef[] { leftBlock, rightBlock }, 2);
+
+                            currentEntryBlock = endBlock;
+
+                            result = phi;
+                        }
+                        break;
                         default:
                             Debug.Assert(false);
                             break;
