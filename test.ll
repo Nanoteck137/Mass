@@ -3,7 +3,8 @@ source_filename = "NO NAME"
 
 %struct.FILE = type opaque
 
-@str = private unnamed_addr constant [7 x i8] c"C: %f\0A\00", align 1
+@str = private unnamed_addr constant [7 x i8] c"I: %d\0A\00", align 1
+@str.1 = private unnamed_addr constant [7 x i8] c"C: %f\0A\00", align 1
 
 declare i32 @printf(i8*, ...)
 
@@ -31,8 +32,37 @@ entry:
   %2 = sitofp i32 %1 to float
   %3 = fadd float %0, %2
   store float %3, float* %c
-  %4 = load float, float* %c
-  %5 = fpext float %4 to double
-  %6 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str, i32 0, i32 0), double %5)
+  %i = alloca i32
+  store i32 0, i32* %i
+  br label %for
+
+then3:                                            ; preds = %then
+  br label %endfor
+
+endif:                                            ; preds = %then
+  %4 = load i32, i32* %i
+  %5 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str, i32 0, i32 0), i32 %4)
+  br label %next
+
+for:                                              ; preds = %next, %entry
+  %6 = load i32, i32* %i
+  %7 = icmp slt i32 %6, 10
+  br i1 %7, label %then, label %endfor
+
+then:                                             ; preds = %for
+  %8 = load i32, i32* %i
+  %9 = icmp eq i32 %8, 2
+  br i1 %9, label %then3, label %endif
+
+next:                                             ; preds = %endif
+  %10 = load i32, i32* %i
+  %11 = add i32 %10, 1
+  store i32 %11, i32* %i
+  br label %for
+
+endfor:                                           ; preds = %then3, %for
+  %12 = load float, float* %c
+  %13 = fpext float %12 to double
+  %14 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str.1, i32 0, i32 0), double %13)
   ret i32 0
 }

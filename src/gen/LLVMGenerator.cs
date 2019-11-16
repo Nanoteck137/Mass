@@ -889,7 +889,45 @@ class LLVMGenerator : CodeGenerator, IDisposable
         }
         else if (stmt is ForStmt forStmt)
         {
-            Debug.Assert(false);
+            LLVMBasicBlockRef oldStart = currentLoopStart;
+            LLVMBasicBlockRef oldEnd = currentLoopEnd;
+
+            LLVMBasicBlockRef condBlock = currentEntryBlock.InsertBasicBlock("for");
+            LLVMBasicBlockRef thenBlock = currentEntryBlock.InsertBasicBlock("then");
+            LLVMBasicBlockRef nextBlock = currentEntryBlock.InsertBasicBlock("next");
+            LLVMBasicBlockRef endBlock = currentEntryBlock.InsertBasicBlock("endfor");
+
+            condBlock.MoveAfter(currentEntryBlock);
+            thenBlock.MoveAfter(condBlock);
+            nextBlock.MoveAfter(thenBlock);
+            endBlock.MoveAfter(nextBlock);
+
+            currentLoopStart = nextBlock;
+            currentLoopEnd = endBlock;
+
+            GenStmtBlockInfo initStmtInfo = new GenStmtBlockInfo();
+            GenStmt(builder, forStmt.Init, ref initStmtInfo);
+            builder.BuildBr(condBlock);
+
+            builder.PositionAtEnd(condBlock);
+            LLVMValueRef cond = GenLoadedExpr(builder, forStmt.Cond);
+            builder.BuildCondBr(cond, thenBlock, endBlock);
+
+            builder.PositionAtEnd(thenBlock);
+            GenStmtBlockInfo blockInfo;
+            GenStmtBlock(builder, forStmt.Block, out blockInfo);
+            builder.BuildBr(nextBlock);
+
+            builder.PositionAtEnd(nextBlock);
+            GenStmtBlockInfo nextStmtInfo = new GenStmtBlockInfo();
+            GenStmt(builder, forStmt.Next, ref nextStmtInfo);
+            builder.BuildBr(condBlock);
+
+            builder.PositionAtEnd(endBlock);
+            currentEntryBlock = endBlock;
+
+            currentLoopStart = oldStart;
+            currentLoopEnd = oldEnd;
         }
         else if (stmt is WhileStmt whileStmt)
         {

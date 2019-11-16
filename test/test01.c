@@ -4,11 +4,10 @@
 
 int main(int argc, char **argv)
 {
-	int a = 123;
-	int b = -123;
-	int c = b - a;
-
-	printf("C: %d\n", c);
-
+	for(int i = 0; i < 10; i++) {
+		if(i == 2)
+			continue;
+		printf("I: %d\n", i);
+	}
 	return 0;
 }
