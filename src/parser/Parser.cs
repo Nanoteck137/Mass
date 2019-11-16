@@ -5,6 +5,7 @@ using System.Text;
 
 /* TODO(patrik):
  *  Fix SourceSpan for binary operator parsing
+ *  Fix SourceSpan for some of the stmts
  */
 
 class Parser
@@ -735,7 +736,7 @@ class Parser
         }
         else if (lexer.MatchToken(TokenType.KEYWORD_FOR))
         {
-            return ParseForStmt(); // TODO
+            return ParseForStmt();
         }
         else if (lexer.MatchToken(TokenType.KEYWORD_WHILE))
         {
@@ -759,29 +760,6 @@ class Parser
         }
         else
         {
-            /*Decl decl = ParseDecl();
-            if (decl == null)
-            {
-                SourceSpan firstSpan = lexer.CurrentTokenSpan;
-                Stmt stmt = ParseSimpleStmt();
-                SourceSpan lastSpan = lexer.CurrentTokenSpan;
-                lexer.ExpectToken(TokenType.SEMICOLON);
-
-                stmt.Span = SourceSpan.FromTo(firstSpan, lastSpan);
-                return stmt;
-            }
-
-            if (decl is VarDecl)
-            {
-                return new DeclStmt(decl);
-            }
-            else
-            {
-                // TODO: Better message
-                Log.Fatal("Var decls is only supported decls in decls", null);
-                return null;
-            }*/
-
             Stmt result = ParseSimpleStmt();
             lexer.ExpectToken(TokenType.SEMICOLON);
             return result;
