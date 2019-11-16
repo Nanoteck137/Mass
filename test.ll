@@ -3,8 +3,7 @@ source_filename = "NO NAME"
 
 %struct.FILE = type opaque
 
-@str = private unnamed_addr constant [7 x i8] c"I: %d\0A\00", align 1
-@str.1 = private unnamed_addr constant [7 x i8] c"C: %f\0A\00", align 1
+@str = private unnamed_addr constant [7 x i8] c"Equal\0A\00", align 1
 
 declare i32 @printf(i8*, ...)
 
@@ -22,47 +21,30 @@ entry:
   store i32 %argc, i32* %argc1
   %argv2 = alloca i8**
   store i8** %argv, i8*** %argv2
-  %a = alloca float
-  store float 0xC0091EB860000000, float* %a
+  %a = alloca i32
+  store i32 4, i32* %a
   %b = alloca i32
-  store i32 3, i32* %b
-  %c = alloca float
-  %0 = load float, float* %a
-  %1 = load i32, i32* %b
-  %2 = sitofp i32 %1 to float
-  %3 = fadd float %0, %2
-  store float %3, float* %c
-  %i = alloca i32
-  store i32 0, i32* %i
-  br label %for
+  store i32 5, i32* %b
+  %0 = load i32, i32* %a
+  %1 = icmp eq i32 %0, 5
+  %2 = load i32, i32* %b
+  %3 = icmp eq i32 %2, 5
+  br label %land
 
-then3:                                            ; preds = %then
-  br label %endfor
+land:                                             ; preds = %entry
+  br i1 %1, label %rand, label %endand
 
-endif:                                            ; preds = %then
-  %4 = load i32, i32* %i
-  %5 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str, i32 0, i32 0), i32 %4)
-  br label %next
+rand:                                             ; preds = %land
+  br label %endand
 
-for:                                              ; preds = %next, %entry
-  %6 = load i32, i32* %i
-  %7 = icmp slt i32 %6, 10
-  br i1 %7, label %then, label %endfor
+endand:                                           ; preds = %rand, %land
+  %4 = phi i1 [ false, %land ], [ %3, %rand ]
+  br i1 %4, label %then, label %endif
 
-then:                                             ; preds = %for
-  %8 = load i32, i32* %i
-  %9 = icmp eq i32 %8, 2
-  br i1 %9, label %then3, label %endif
+then:                                             ; preds = %endand
+  %5 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str, i32 0, i32 0))
+  br label %endif
 
-next:                                             ; preds = %endif
-  %10 = load i32, i32* %i
-  %11 = add i32 %10, 1
-  store i32 %11, i32* %i
-  br label %for
-
-endfor:                                           ; preds = %then3, %for
-  %12 = load float, float* %c
-  %13 = fpext float %12 to double
-  %14 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str.1, i32 0, i32 0), double %13)
+endif:                                            ; preds = %then, %endand
   ret i32 0
 }

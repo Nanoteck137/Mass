@@ -4,10 +4,8 @@
 
 int main(int argc, char **argv)
 {
-	for(int i = 0; i < 10; i++) {
-		if(i == 2)
-			continue;
-		printf("I: %d\n", i);
-	}
+	int a = 5;
+	int b = 4;
+	int c = a == 5 && b == 4;
 	return 0;
 }

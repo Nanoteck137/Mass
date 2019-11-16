@@ -932,6 +932,18 @@ class Resolver
             case TokenType.GREATER_EQUALS:
             case TokenType.LESS_EQUALS:
                 return OperandRValue(Type.Bool);
+
+            case TokenType.AND2:
+            case TokenType.OR2:
+                if (left.Type is BoolType && right.Type is BoolType)
+                {
+                    return OperandRValue(Type.Bool);
+                }
+                else
+                {
+                    Log.Fatal($"Operands of '{expr.Op}' needs to be of type boolean", null);
+                    return null;
+                }
         }
 
         // TODO(patrik): More type checking here and maybe const folding

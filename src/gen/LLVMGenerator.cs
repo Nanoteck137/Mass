@@ -580,7 +580,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
                 isFloatingPoint = true;
             }
 
-            LLVMValueRef result;
+            LLVMValueRef result = null;
             if (isFloatingPoint)
             {
                 result = GenFloatingPointOperators(builder, left, right, binaryOpExpr.Op);
@@ -594,6 +594,42 @@ class LLVMGenerator : CodeGenerator, IDisposable
                 else if (rightType is PtrType)
                 {
                     result = GenPointerOperators(builder, right, left, binaryOpExpr.Op);
+                }
+                else if (leftType is BoolType && rightType is BoolType)
+                {
+                    switch (binaryOpExpr.Op)
+                    {
+                        case TokenType.AND2:
+                            LLVMBasicBlockRef leftBlock = currentEntryBlock.InsertBasicBlock("land");
+                            LLVMBasicBlockRef rightBlock = currentEntryBlock.InsertBasicBlock("rand");
+                            LLVMBasicBlockRef endBlock = currentEntryBlock.InsertBasicBlock("endand");
+                            leftBlock.MoveAfter(currentEntryBlock);
+                            rightBlock.MoveAfter(leftBlock);
+                            endBlock.MoveAfter(rightBlock);
+
+                            builder.BuildBr(leftBlock);
+
+                            builder.PositionAtEnd(leftBlock);
+                            builder.BuildCondBr(left, rightBlock, endBlock);
+
+                            builder.PositionAtEnd(rightBlock);
+                            builder.BuildBr(endBlock);
+
+                            builder.PositionAtEnd(endBlock);
+                            LLVMTypeRef type = GetType(leftType);
+                            LLVMValueRef phi = builder.BuildPhi(type);
+                            phi.AddIncoming(new LLVMValueRef[] { LLVMValueRef.CreateConstInt(type, 0), right }, new LLVMBasicBlockRef[] { leftBlock, rightBlock }, 2);
+
+                            currentEntryBlock = endBlock;
+
+                            result = phi;
+                            break;
+                        case TokenType.OR2:
+                            break;
+                        default:
+                            Debug.Assert(false);
+                            break;
+                    }
                 }
                 else
                 {

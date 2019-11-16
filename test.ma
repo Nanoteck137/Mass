@@ -18,16 +18,12 @@ func strlen(str: u8*) -> u64;
 
 func main(argc: s32, argv: u8**) -> s32 
 {
-	var a: f32 = -3.14f;
-	var b: s32 = 3;
-	var c: f32 = a + b;
+	var a: s32 = 4;
+	var b: s32 = 5;
 
-	for(var i: s32 = 0; i < 10; i++) 
-	{
-		printf("I: %d\n", i);
+	if(a == 5 && b == 5) {
+		printf("Equal\n");
 	}
-
-	printf("C: %f\n", c);
 
 	ret 0;
 }
