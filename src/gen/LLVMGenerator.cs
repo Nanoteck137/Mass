@@ -9,6 +9,7 @@ using LLVMSharp;
 class GenStmtBlockInfo
 {
     public bool HasBreakStmt { get; set; }
+    public bool HasContinueStmt { get; set; }
 }
 
 class LLVMGenerator : CodeGenerator, IDisposable
@@ -775,7 +776,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
             GenStmtBlockInfo blockInfo;
             GenStmtBlock(builder, ifStmt.ThenBlock, out blockInfo);
-            if (!blockInfo.HasBreakStmt)
+            if (!blockInfo.HasBreakStmt && !blockInfo.HasContinueStmt)
                 builder.BuildBr(endif);
 
             builder.PositionAtEnd(endif);
@@ -857,6 +858,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
         {
             Debug.Assert(currentLoopStart != null);
 
+            info.HasContinueStmt = true;
             builder.BuildBr(currentLoopStart);
         }
         else if (stmt is BreakStmt)

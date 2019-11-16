@@ -25,7 +25,8 @@ func main(argc: s32, argv: u8**) -> s32
 		if(a == 2) 
 		{
 			printf("Hello World\n");
-			break;
+			a--;
+			continue;
 		}
 
 		printf("A: %u\n", a);
