@@ -853,27 +853,55 @@ class Resolver
     {
         Debug.Assert(expr != null);
 
-        Operand left = ResolveExpr(expr.Left);
-        Operand right = ResolveExpr(expr.Right);
+        Operand left = ResolveExprRValue(expr.Left);
+        Operand right = ResolveExprRValue(expr.Right);
 
-        UnifyArithmeticOperands(left, right);
-        // TODO(patrik): More type checking here and maybe const folding
-
-        if (left.Type != right.Type)
-        {
-            Log.Fatal("left and right operand of + must have same type", null);
-        }
+        Operand result = null;
 
         /*
-            EQUAL2,
-            NOT_EQUAL,
-            GREATER_THEN,
-            LESS_THEN,
-            GREATER_EQUALS,
-            LESS_EQUALS,
-        */
+        PLUS,
+        MINUS,
+        MULTIPLY,
+        DIVIDE,
+        MODULO,
 
+        EQUAL2,
+        NOT_EQUAL,
+        GREATER_THEN,
+        LESS_THEN,
+        GREATER_EQUALS,
+        LESS_EQUALS,
+         */
         switch (expr.Op)
+        {
+            case TokenType.PLUS:
+                if (left.Type.IsArithmetic && right.Type.IsArithmetic)
+                {
+                    UnifyArithmeticOperands(left, right);
+                    result = OperandRValue(left.Type);
+                }
+                else if (left.Type is PtrType && right.Type is IntType)
+                {
+                    //TODO(patrik): Add more check here for base size == 0 and void ptrs
+                    ConvertOperand(right, Type.U64);
+                    result = OperandRValue(left.Type);
+                }
+                else if (right.Type is PtrType && left.Type is IntType)
+                {
+                    //TODO(patrik): Add more check here for base size == 0 and void ptrs
+                    result = OperandRValue(right.Type);
+                }
+                else
+                {
+                    Log.Fatal("Operands of + must both have arithmetic type, or pointer and integer type", null);
+                }
+                break;
+        }
+
+
+        // TODO(patrik): More type checking here and maybe const folding
+
+        /*switch (expr.Op)
         {
             case TokenType.EQUAL2:
             case TokenType.NOT_EQUAL:
@@ -882,12 +910,9 @@ class Resolver
             case TokenType.GREATER_EQUALS:
             case TokenType.LESS_EQUALS:
                 return OperandRValue(Type.Bool);
-        }
+        }*/
 
-        // expr.Left.ResolvedType = left.Type;
-        // expr.Right.ResolvedType = right.Type;
-
-        return OperandRValue(left.Type);
+        return result;
     }
 
     private Operand ResolveModifyExpr(ModifyExpr expr)
@@ -1556,10 +1581,12 @@ class Resolver
             if (varDecl.Value != null)
             {
                 Operand expr = ResolveExpectedExpr(varDecl.Value, type);
-                if (expr.Type != expr.Type)
+                if (!ConvertOperand(expr, type))
                 {
-                    Log.Error("'Var decl stmt' value type mismatch", null);
+                    Log.Fatal("Invalid type in variable initializer", null);
                 }
+
+                varDecl.Value.ResolvedType = expr.Type;
             }
 
             PushVar(varDecl.Name, type);

@@ -20,7 +20,8 @@ func main(argc: s32, argv: u8**) -> s32
 {
 	var a: u32[4] = { 1, 2, 3, 4 };
 	var ptr: u32* = a as u32*;
+	var offset: u64 = 3;
 
-	printf("Value: %u\n", a[0]);
+	printf("Value: %u\n", deref(ptr + offset));
 	ret 0;
 }

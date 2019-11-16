@@ -332,6 +332,21 @@ class LLVMGenerator : CodeGenerator, IDisposable
         return null;
     }
 
+    private LLVMValueRef GenPointerOperators(LLVMBuilderRef builder, LLVMValueRef ptr, LLVMValueRef value, TokenType op)
+    {
+        switch (op)
+        {
+            case TokenType.PLUS:
+                // TODO(patrik): Change this to platform ptr size
+                value = builder.BuildZExt(value, LLVMTypeRef.Int64);
+                return builder.BuildInBoundsGEP(ptr, new LLVMValueRef[] { value });
+            default:
+                Debug.Assert(false);
+                break;
+        }
+        return null;
+    }
+
     private LLVMValueRef GenFloatingPointOperators(LLVMBuilderRef builder, LLVMValueRef left, LLVMValueRef right, TokenType op)
     {
         switch (op)
@@ -438,7 +453,22 @@ class LLVMGenerator : CodeGenerator, IDisposable
             Type srcType = castExpr.Expr.ResolvedType;
             Type destType = castExpr.ResolvedType;
 
-            Debug.Assert(false);
+            LLVMValueRef result = null;
+
+            if (srcType is ArrayType arrayType && destType is PtrType ptrType)
+            {
+                LLVMValueRef ptr = GenExpr(builder, castExpr.Expr);
+                LLVMValueRef zero = LLVMValueRef.CreateConstInt(LLVMTypeRef.Int32, 0);
+                LLVMValueRef elementPtr = builder.BuildGEP(ptr, new LLVMValueRef[] { zero, zero });
+
+                builder.BuildStore(elementPtr, currentValuePtr);
+            }
+            else
+            {
+                Debug.Assert(false);
+            }
+
+            return result;
         }
         else if (expr is BinaryOpExpr binaryOpExpr)
         {
@@ -468,8 +498,18 @@ class LLVMGenerator : CodeGenerator, IDisposable
             }
             else
             {
-                Debug.Assert(leftType is IntType);
-                result = GenIntegerOperators(builder, left, right, binaryOpExpr.Op, (IntType)leftType);
+                if (leftType is PtrType)
+                {
+                    result = GenPointerOperators(builder, left, right, binaryOpExpr.Op);
+                }
+                else if (rightType is PtrType)
+                {
+                    result = GenPointerOperators(builder, right, left, binaryOpExpr.Op);
+                }
+                else
+                {
+                    result = GenIntegerOperators(builder, left, right, binaryOpExpr.Op, (IntType)leftType);
+                }
             }
 
             Debug.Assert(result != null);
