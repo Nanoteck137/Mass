@@ -16,11 +16,22 @@ func fclose(file: FILE*) -> s32;
 #external
 func strlen(str: u8*) -> u64;
 
+#external
+func malloc(size: u64) -> u8*;
+
+#external
+func free(ptr: u8*);
+
 func main(argc: s32, argv: u8**) -> s32 
 {
-	var a: u8 = -1;
+	var ptr: u32* = malloc(8) as u32*;
 
-	printf("Val: %u\n", a as u32);
+	ptr[0] = 123;
+	ptr[1] = 321;
+
+	printf("Val: %u\n", ptr[1]);
+
+	free(ptr as u8*);
 
 	ret 0;
 }

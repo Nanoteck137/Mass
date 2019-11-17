@@ -1,12 +1,14 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 int main(int argc, char **argv)
 {
-	uint8_t a = -1;
+	uint32_t *a = malloc(8);
+	a[0] = 123;
 
-	printf("Val: %d\n", a);
+	free(a);
 
 	return 0;
 }

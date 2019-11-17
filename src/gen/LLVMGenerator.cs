@@ -507,10 +507,11 @@ class LLVMGenerator : CodeGenerator, IDisposable
 
             LLVMValueRef result = null;
 
-            if (srcType is ArrayType arrayType && destType is PtrType ptrType)
+            if (srcType is ArrayType && destType is PtrType)
             {
                 LLVMValueRef ptr = GenExpr(builder, castExpr.Expr);
-                LLVMValueRef zero = LLVMValueRef.CreateConstInt(LLVMTypeRef.Int32, 0);
+                // TODO(patrik): Change int64 to platform size
+                LLVMValueRef zero = LLVMValueRef.CreateConstInt(LLVMTypeRef.Int64, 0);
                 LLVMValueRef elementPtr = builder.BuildGEP(ptr, new LLVMValueRef[] { zero, zero });
 
                 builder.BuildStore(elementPtr, currentValuePtr);
@@ -553,7 +554,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
             }
             else if (srcType is PtrType && destType is PtrType)
             {
-                LLVMValueRef ptr = GenExpr(builder, castExpr.Expr);
+                LLVMValueRef ptr = GenLoadedExpr(builder, castExpr.Expr);
                 result = builder.BuildBitCast(ptr, GetType(destType));
             }
             else
@@ -807,6 +808,11 @@ class LLVMGenerator : CodeGenerator, IDisposable
             if (indexExpr.Expr.ResolvedType is ArrayType)
                 elementPtr = builder.BuildGEP(ptr, new LLVMValueRef[] { LLVMValueRef.CreateConstInt(LLVMTypeRef.Int32, 0), index });
             else if (indexExpr.ResolvedType is PtrType || prevType is PtrType)
+            {
+                ptr = builder.BuildLoad(ptr);
+                elementPtr = builder.BuildGEP(ptr, new LLVMValueRef[] { index });
+            }
+            else if (indexExpr.ResolvedType is IntType)
             {
                 ptr = builder.BuildLoad(ptr);
                 elementPtr = builder.BuildGEP(ptr, new LLVMValueRef[] { index });

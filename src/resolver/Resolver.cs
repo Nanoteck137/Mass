@@ -1088,7 +1088,7 @@ class Resolver
         }
 
         PtrType ptrType = (PtrType)arg.Type;
-        return OperandRValue(ptrType.Base);
+        return OperandLValue(ptrType.Base);
     }
 
     private Operand ResolveSpecialFunctionCall(SpecialFunctionCallExpr expr)
