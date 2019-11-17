@@ -8,7 +8,7 @@ namespace Mass.Compiler.Tests
         private Lexer lexer;
         private Parser parser;
 
-        [SetUp]
+        [OneTimeSetUp]
         public void Setup()
         {
             lexer = new Lexer("Parser Test", "");
