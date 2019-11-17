@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Compiler\Compiler.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <RuntimeIdentifier>win10-x64</RuntimeIdentifier>
+    <Authors>Patrik Millvik Rosenström</Authors>
+    <Company />
+    <RepositoryUrl>https://github.com/Nanoteck137/Mass</RepositoryUrl>
+    <PackageId>Mass</PackageId>
+    <Product>Mass</Product>
+  </PropertyGroup>
+
+</Project>

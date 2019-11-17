@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Compiler", "Compiler\Compil
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CompilerTests", "CompilerTests\CompilerTests.csproj", "{3087F174-A343-4743-86EC-68DB86DA59BC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mass", "Mass\Mass.csproj", "{8417AAF7-258D-46FD-BA46-13F186FD7F64}"
+EndProject
 Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -47,5 +49,17 @@ Global
 		{3087F174-A343-4743-86EC-68DB86DA59BC}.Release|x64.Build.0 = Release|Any CPU
 		{3087F174-A343-4743-86EC-68DB86DA59BC}.Release|x86.ActiveCfg = Release|Any CPU
 		{3087F174-A343-4743-86EC-68DB86DA59BC}.Release|x86.Build.0 = Release|Any CPU
+		{8417AAF7-258D-46FD-BA46-13F186FD7F64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8417AAF7-258D-46FD-BA46-13F186FD7F64}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8417AAF7-258D-46FD-BA46-13F186FD7F64}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8417AAF7-258D-46FD-BA46-13F186FD7F64}.Debug|x64.Build.0 = Debug|Any CPU
+		{8417AAF7-258D-46FD-BA46-13F186FD7F64}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8417AAF7-258D-46FD-BA46-13F186FD7F64}.Debug|x86.Build.0 = Debug|Any CPU
+		{8417AAF7-258D-46FD-BA46-13F186FD7F64}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8417AAF7-258D-46FD-BA46-13F186FD7F64}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8417AAF7-258D-46FD-BA46-13F186FD7F64}.Release|x64.ActiveCfg = Release|Any CPU
+		{8417AAF7-258D-46FD-BA46-13F186FD7F64}.Release|x64.Build.0 = Release|Any CPU
+		{8417AAF7-258D-46FD-BA46-13F186FD7F64}.Release|x86.ActiveCfg = Release|Any CPU
+		{8417AAF7-258D-46FD-BA46-13F186FD7F64}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
