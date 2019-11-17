@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace Mass.Compiler
 {
-    class Printer
+    public class Printer
     {
         private static int indent = 0;
 

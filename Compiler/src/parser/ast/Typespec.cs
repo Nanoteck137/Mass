@@ -4,12 +4,12 @@ using System.Text;
 
 namespace Mass.Compiler
 {
-    abstract class Typespec
+    public abstract class Typespec
     {
         public SourceSpan Span { get; set; }
     }
 
-    class PtrTypespec : Typespec
+    public class PtrTypespec : Typespec
     {
         public Typespec Type { get; private set; }
 
@@ -19,7 +19,7 @@ namespace Mass.Compiler
         }
     }
 
-    class ArrayTypespec : Typespec
+    public class ArrayTypespec : Typespec
     {
         public Typespec Type { get; private set; }
         public Expr Size { get; private set; }
@@ -31,7 +31,7 @@ namespace Mass.Compiler
         }
     }
 
-    class IdentifierTypespec : Typespec
+    public class IdentifierTypespec : Typespec
     {
         public IdentifierExpr Value { get; private set; }
 

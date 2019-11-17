@@ -4,19 +4,19 @@ using System.Text;
 
 namespace Mass.Compiler
 {
-    abstract class DeclAttribute { }
+    public abstract class DeclAttribute { }
 
     // TODO(patrik): Add an alias to the external function if the user wants it
-    class ExternalDeclAttribute : DeclAttribute { }
-    class InlineDeclAttribute : DeclAttribute { }
+    public class ExternalDeclAttribute : DeclAttribute { }
+    public class InlineDeclAttribute : DeclAttribute { }
 
-    abstract class Decl
+    public abstract class Decl
     {
         public string Name { get; protected set; }
         public List<DeclAttribute> Attributes { get; set; }
     }
 
-    class VarDecl : Decl
+    public class VarDecl : Decl
     {
         public Typespec Type { get; private set; }
         public Expr Value { get; private set; }
@@ -29,7 +29,7 @@ namespace Mass.Compiler
         }
     }
 
-    class ConstDecl : Decl
+    public class ConstDecl : Decl
     {
         public Typespec Type { get; private set; }
         public Expr Value { get; private set; }
@@ -42,7 +42,7 @@ namespace Mass.Compiler
         }
     }
 
-    class FunctionParameter
+    public class FunctionParameter
     {
         public string Name { get; private set; }
         public Typespec Type { get; private set; }
@@ -54,7 +54,7 @@ namespace Mass.Compiler
         }
     }
 
-    class FunctionDecl : Decl
+    public class FunctionDecl : Decl
     {
         public List<FunctionParameter> Parameters { get; private set; }
         public Typespec ReturnType { get; private set; }
@@ -71,7 +71,7 @@ namespace Mass.Compiler
         }
     }
 
-    class StructItem
+    public class StructItem
     {
         public string Name { get; private set; }
         public Typespec Type { get; private set; }
@@ -83,7 +83,7 @@ namespace Mass.Compiler
         }
     }
 
-    class StructDecl : Decl
+    public class StructDecl : Decl
     {
         public List<StructItem> Items { get; private set; }
         public bool IsOpaque { get; private set; }

@@ -10,7 +10,7 @@ using System.Text;
 
 namespace Mass.Compiler
 {
-    class Parser
+    public class Parser
     {
         private Lexer lexer;
 

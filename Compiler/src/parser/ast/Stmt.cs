@@ -4,12 +4,12 @@ using System.Text;
 
 namespace Mass.Compiler
 {
-    abstract class Stmt
+    public abstract class Stmt
     {
         public SourceSpan Span { get; set; }
     }
 
-    class StmtBlock : Stmt
+    public class StmtBlock : Stmt
     {
         public List<Stmt> Stmts { get; private set; }
 
@@ -19,7 +19,7 @@ namespace Mass.Compiler
         }
     }
 
-    class ElseIf
+    public class ElseIf
     {
         public Expr Cond { get; private set; }
         public StmtBlock Block { get; private set; }
@@ -31,7 +31,7 @@ namespace Mass.Compiler
         }
     }
 
-    class IfStmt : Stmt
+    public class IfStmt : Stmt
     {
         public Expr Cond { get; private set; }
         public StmtBlock ThenBlock { get; private set; }
@@ -48,7 +48,7 @@ namespace Mass.Compiler
     }
 
 
-    class InitStmt : Stmt
+    public class InitStmt : Stmt
     {
         public IdentifierExpr Name { get; private set; }
         public Typespec Type { get; private set; }
@@ -62,7 +62,7 @@ namespace Mass.Compiler
         }
     }
 
-    class ForStmt : Stmt
+    public class ForStmt : Stmt
     {
         public Stmt Init { get; private set; }
         public Expr Cond { get; private set; }
@@ -78,7 +78,7 @@ namespace Mass.Compiler
         }
     }
 
-    class WhileStmt : Stmt
+    public class WhileStmt : Stmt
     {
         public Expr Cond { get; private set; }
         public StmtBlock Block { get; private set; }
@@ -90,7 +90,7 @@ namespace Mass.Compiler
         }
     }
 
-    class DoWhileStmt : Stmt
+    public class DoWhileStmt : Stmt
     {
         public Expr Cond { get; private set; }
         public StmtBlock Block { get; private set; }
@@ -112,11 +112,11 @@ namespace Mass.Compiler
         }
     }
 
-    class ContinueStmt : Stmt { }
+    public class ContinueStmt : Stmt { }
 
-    class BreakStmt : Stmt { }
+    public class BreakStmt : Stmt { }
 
-    class AssignStmt : Stmt
+    public class AssignStmt : Stmt
     {
         public Expr Left { get; private set; }
         public Expr Right { get; private set; }
@@ -130,7 +130,7 @@ namespace Mass.Compiler
         }
     }
 
-    class ExprStmt : Stmt
+    public class ExprStmt : Stmt
     {
         public Expr Expr { get; private set; }
 

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Mass.Compiler
 {
-    class SourceSpan
+    public class SourceSpan
     {
         public string FileName { get; private set; }
 

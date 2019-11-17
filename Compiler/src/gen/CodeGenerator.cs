@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Mass.Compiler
 {
-    abstract class CodeGenerator
+    public abstract class CodeGenerator
     {
         protected Resolver resolver;
 

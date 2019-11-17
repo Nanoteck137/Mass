@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Mass.Compiler
 {
-    abstract class Type
+    public abstract class Type
     {
         public static Type U8 { get; } = new IntType(IntKind.U8);
         public static Type U16 { get; } = new IntType(IntKind.U16);
@@ -158,7 +158,7 @@ namespace Mass.Compiler
         }
     }
 
-    enum IntKind
+    public enum IntKind
     {
         U8,
         U16,
@@ -171,7 +171,7 @@ namespace Mass.Compiler
         S64,
     };
 
-    class IntType : Type
+    public class IntType : Type
     {
         public IntKind Kind { get; private set; }
 
@@ -224,7 +224,7 @@ namespace Mass.Compiler
         }
     }
 
-    class BoolType : Type
+    public class BoolType : Type
     {
         public override int Size => 1;
 
@@ -244,13 +244,13 @@ namespace Mass.Compiler
         }
     }
 
-    enum FloatKind
+    public enum FloatKind
     {
         F32,
         F64
     }
 
-    class FloatType : Type
+    public class FloatType : Type
     {
         public FloatKind Kind { get; private set; }
 
@@ -295,7 +295,7 @@ namespace Mass.Compiler
         }
     }
 
-    class PtrType : Type
+    public class PtrType : Type
     {
         public Type Base { get; private set; }
 
@@ -325,7 +325,7 @@ namespace Mass.Compiler
         }
     }
 
-    class ArrayType : Type
+    public class ArrayType : Type
     {
         public Type Base { get; private set; }
         public ulong Count { get; private set; }
@@ -356,14 +356,14 @@ namespace Mass.Compiler
         }
     }
 
-    class VoidType : Type
+    public class VoidType : Type
     {
         public override int Size => 0;
 
         public VoidType() { }
     }
 
-    class FunctionParameterType
+    public class FunctionParameterType
     {
         public string Name { get; private set; }
         public Type Type { get; private set; }
@@ -392,7 +392,7 @@ namespace Mass.Compiler
         }
     }
 
-    class FunctionType : Type
+    public class FunctionType : Type
     {
         public List<FunctionParameterType> Parameters { get; private set; }
         public Type ReturnType { get; private set; }
@@ -439,7 +439,7 @@ namespace Mass.Compiler
         }
     }
 
-    class StructItemType
+    public class StructItemType
     {
         public string Name { get; private set; }
         public Type Type { get; private set; }
@@ -468,7 +468,7 @@ namespace Mass.Compiler
         }
     }
 
-    class StructType : Type
+    public class StructType : Type
     {
         public List<StructItemType> Items { get; private set; }
         public bool IsOpaque { get; private set; }

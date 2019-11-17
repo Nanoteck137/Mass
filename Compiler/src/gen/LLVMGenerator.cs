@@ -8,13 +8,13 @@ using LLVMSharp;
 
 namespace Mass.Compiler
 {
-    class GenStmtBlockInfo
+    public class GenStmtBlockInfo
     {
         public bool HasBreakStmt { get; set; }
         public bool HasContinueStmt { get; set; }
     }
 
-    class LLVMGenerator : CodeGenerator, IDisposable
+    public class LLVMGenerator : CodeGenerator, IDisposable
     {
         private LLVMModuleRef module;
 

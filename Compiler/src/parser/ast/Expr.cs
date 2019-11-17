@@ -4,13 +4,13 @@ using System.Text;
 
 namespace Mass.Compiler
 {
-    abstract class Expr
+    public abstract class Expr
     {
         public SourceSpan Span { get; set; }
         public Type ResolvedType { get; set; }
     }
 
-    class IntegerExpr : Expr
+    public class IntegerExpr : Expr
     {
         public ulong Value { get; private set; }
 
@@ -20,7 +20,7 @@ namespace Mass.Compiler
         }
     }
 
-    class FloatExpr : Expr
+    public class FloatExpr : Expr
     {
         public double Value { get; private set; }
         public bool IsFloat { get; private set; }
@@ -32,7 +32,7 @@ namespace Mass.Compiler
         }
     }
 
-    class IdentifierExpr : Expr
+    public class IdentifierExpr : Expr
     {
         public string Value { get; private set; }
 
@@ -42,7 +42,7 @@ namespace Mass.Compiler
         }
     }
 
-    class StringExpr : Expr
+    public class StringExpr : Expr
     {
         public string Value { get; private set; }
 
@@ -52,7 +52,7 @@ namespace Mass.Compiler
         }
     }
 
-    class CastExpr : Expr
+    public class CastExpr : Expr
     {
         public Expr Expr { get; private set; }
         public Typespec Type { get; private set; }
@@ -64,7 +64,7 @@ namespace Mass.Compiler
         }
     }
 
-    class BinaryOpExpr : Expr
+    public class BinaryOpExpr : Expr
     {
         public Expr Left { get; private set; }
         public Expr Right { get; private set; }
@@ -78,7 +78,7 @@ namespace Mass.Compiler
         }
     }
 
-    class ModifyExpr : Expr
+    public class ModifyExpr : Expr
     {
         public TokenType Op { get; private set; }
         public bool Post { get; private set; }
@@ -92,7 +92,7 @@ namespace Mass.Compiler
         }
     }
 
-    class UnaryExpr : Expr
+    public class UnaryExpr : Expr
     {
         public TokenType Op { get; private set; }
         public Expr Expr { get; private set; }
@@ -104,7 +104,7 @@ namespace Mass.Compiler
         }
     }
 
-    class CallExpr : Expr
+    public class CallExpr : Expr
     {
         public Expr Expr { get; private set; }
         public List<Expr> Arguments { get; private set; }
@@ -116,13 +116,13 @@ namespace Mass.Compiler
         }
     }
 
-    enum SpecialFunctionKind
+    public enum SpecialFunctionKind
     {
         Addr,
         Deref,
     };
 
-    class SpecialFunctionCallExpr : Expr
+    public class SpecialFunctionCallExpr : Expr
     {
         public SpecialFunctionKind Kind { get; private set; }
         public List<Expr> Arguments { get; private set; }
@@ -134,7 +134,7 @@ namespace Mass.Compiler
         }
     }
 
-    class IndexExpr : Expr
+    public class IndexExpr : Expr
     {
         public Expr Expr { get; private set; }
         public Expr Index { get; private set; }
@@ -146,7 +146,7 @@ namespace Mass.Compiler
         }
     }
 
-    class CompoundField
+    public class CompoundField
     {
         public Expr Init { get; private set; }
         public SourceSpan Span { get; set; }
@@ -157,7 +157,7 @@ namespace Mass.Compiler
         }
     }
 
-    class NameCompoundField : CompoundField
+    public class NameCompoundField : CompoundField
     {
         public IdentifierExpr Name { get; private set; }
 
@@ -168,7 +168,7 @@ namespace Mass.Compiler
         }
     }
 
-    class IndexCompoundField : CompoundField
+    public class IndexCompoundField : CompoundField
     {
         public Expr Index { get; private set; }
 
@@ -179,7 +179,7 @@ namespace Mass.Compiler
         }
     }
 
-    class CompoundExpr : Expr
+    public class CompoundExpr : Expr
     {
         public Typespec Type { get; private set; }
         public List<CompoundField> Fields { get; private set; }
@@ -191,7 +191,7 @@ namespace Mass.Compiler
         }
     }
 
-    class FieldExpr : Expr
+    public class FieldExpr : Expr
     {
         public Expr Expr { get; private set; }
         public IdentifierExpr Name { get; private set; }

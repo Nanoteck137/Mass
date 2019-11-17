@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Mass.Compiler
 {
-    class Log
+    public class Log
     {
         private Log() { }
 

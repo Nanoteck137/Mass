@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 namespace Mass.Compiler
 {
     [StructLayout(LayoutKind.Explicit)]
-    class Val
+    public class Val
     {
         [FieldOffset(0)] public byte u8;
         [FieldOffset(0)] public ushort u16;
@@ -22,7 +22,7 @@ namespace Mass.Compiler
         [FieldOffset(0)] public double f64;
     }
 
-    class Operand
+    public class Operand
     {
         public Type Type { get; set; }
         public bool IsLValue { get; set; }
@@ -43,7 +43,7 @@ namespace Mass.Compiler
         }
     }
 
-    class Resolver
+    public class Resolver
     {
         private List<Symbol> localSymbols;
         private Dictionary<string, Symbol> globalSymbols;

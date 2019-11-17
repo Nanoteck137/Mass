@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Mass.Compiler
 {
-    enum SymbolKind
+    public enum SymbolKind
     {
         None,
         Var,
@@ -13,14 +13,14 @@ namespace Mass.Compiler
         Type
     }
 
-    enum SymbolState
+    public enum SymbolState
     {
         Unresolved,
         Resolving,
         Resolved
     }
 
-    class Symbol
+    public class Symbol
     {
         public string Name { get; private set; }
         public SymbolKind Kind { get; private set; }
