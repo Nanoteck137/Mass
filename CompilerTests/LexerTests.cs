@@ -157,12 +157,19 @@ namespace Mass.Compiler.Tests
         [Test, Order(1)]
         public void TestIntegerToken()
         {
-            // TODO:
             tokensNeededTesting.Remove(TokenType.INTEGER);
 
             lexer.Reset("123");
             ExpectToken(TokenType.INTEGER);
             ExpectInteger(123);
+
+            lexer.Reset("0x123");
+            ExpectToken(TokenType.INTEGER);
+            ExpectInteger(0x123);
+
+            lexer.Reset("0b110011");
+            ExpectToken(TokenType.INTEGER);
+            ExpectInteger(0b110011);
         }
 
         [Test, Order(1)]
