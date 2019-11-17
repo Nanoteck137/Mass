@@ -940,16 +940,10 @@ namespace Mass.Compiler
 
             if (stmt is StmtBlock stmtBlock)
             {
-                GenStmtBlockInfo blockInfo;
-                GenStmtBlock(builder, stmtBlock, out blockInfo);
+                GenStmtBlock(builder, stmtBlock, out _);
             }
             else if (stmt is IfStmt ifStmt)
             {
-                // Cond
-                // Then
-                // ElseIfs
-                // End
-
                 LLVMBasicBlockRef thenBlock = currentEntryBlock.InsertBasicBlock("then");
                 LLVMBasicBlockRef elseBlock = currentEntryBlock.InsertBasicBlock("else");
                 LLVMBasicBlockRef endBlock = currentEntryBlock.InsertBasicBlock("endif");

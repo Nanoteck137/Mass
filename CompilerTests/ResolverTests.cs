@@ -1,7 +1,7 @@
 using NUnit.Framework;
 using System;
 
-namespace CompilerTests
+namespace Mass.Compiler.Tests
 {
     public class ResolverTests
     {

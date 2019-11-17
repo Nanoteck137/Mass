@@ -258,15 +258,13 @@ namespace Mass.Compiler
         {
             get
             {
-                switch (Kind)
+                return Kind switch
                 {
-                    case FloatKind.F32:
-                        return 4;
-                    case FloatKind.F64:
-                        return 8;
-                }
+                    FloatKind.F32 => 4,
+                    FloatKind.F64 => 8,
 
-                return 0;
+                    _ => 0,
+                };
             }
         }
 
