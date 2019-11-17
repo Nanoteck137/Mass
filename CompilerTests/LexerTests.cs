@@ -37,6 +37,12 @@ namespace Mass.Compiler.Tests
             Assert.AreEqual(number, lexer.CurrentInteger);
         }
 
+        public void ExpectFloat(double value, bool isFloat)
+        {
+            Assert.AreEqual(isFloat, lexer.TokenMod == TokenMod.FLOAT);
+            Assert.AreEqual(value, lexer.CurrentFloat);
+        }
+
         public void TestTokens(string text, TokenType[] expectedTokens)
         {
             lexer.Reset(text);
@@ -175,8 +181,13 @@ namespace Mass.Compiler.Tests
         [Test, Order(1)]
         public void TestFloatToken()
         {
-            // TODO:
             tokensNeededTesting.Remove(TokenType.FLOAT);
+
+            lexer.Reset("3.14");
+            ExpectFloat(3.14, false);
+
+            lexer.Reset("123.0f");
+            ExpectFloat(123.0f, true);
         }
 
         [Test, Order(1)]
