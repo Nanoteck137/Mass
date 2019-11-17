@@ -4,14 +4,17 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-abstract class CodeGenerator
+namespace Mass.Compiler
 {
-    protected Resolver resolver;
-
-    public CodeGenerator(Resolver resolver)
+    abstract class CodeGenerator
     {
-        this.resolver = resolver;
-    }
+        protected Resolver resolver;
 
-    public abstract void Generate();
+        public CodeGenerator(Resolver resolver)
+        {
+            this.resolver = resolver;
+        }
+
+        public abstract void Generate();
+    }
 }

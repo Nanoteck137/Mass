@@ -3,54 +3,57 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-class SourceSpan
+namespace Mass.Compiler
 {
-    public string FileName { get; private set; }
-
-    public int FromLineNumber { get; set; }
-    public int FromColumnNumber { get; set; }
-
-    public int ToLineNumber { get; set; }
-    public int ToColumnNumber { get; set; }
-
-    public SourceSpan(string fileName, int lineNumber, int columnNumber)
+    class SourceSpan
     {
-        this.FileName = fileName;
+        public string FileName { get; private set; }
 
-        this.FromLineNumber = lineNumber;
-        this.FromColumnNumber = columnNumber;
+        public int FromLineNumber { get; set; }
+        public int FromColumnNumber { get; set; }
 
-        this.ToLineNumber = lineNumber;
-        this.ToColumnNumber = columnNumber;
-    }
+        public int ToLineNumber { get; set; }
+        public int ToColumnNumber { get; set; }
 
-    public SourceSpan(string fileName, int fromLineNumber, int fromLineColumn, int toLineNumber, int toColumnNumber)
-    {
-        this.FileName = fileName;
+        public SourceSpan(string fileName, int lineNumber, int columnNumber)
+        {
+            this.FileName = fileName;
 
-        this.FromLineNumber = fromLineNumber;
-        this.FromColumnNumber = fromLineColumn;
+            this.FromLineNumber = lineNumber;
+            this.FromColumnNumber = columnNumber;
 
-        this.ToLineNumber = toLineNumber;
-        this.ToColumnNumber = toColumnNumber;
-    }
+            this.ToLineNumber = lineNumber;
+            this.ToColumnNumber = columnNumber;
+        }
 
-    public SourceSpan Clone()
-    {
-        return new SourceSpan(this.FileName, this.FromLineNumber, this.FromColumnNumber, this.ToLineNumber, this.ToColumnNumber);
-    }
+        public SourceSpan(string fileName, int fromLineNumber, int fromLineColumn, int toLineNumber, int toColumnNumber)
+        {
+            this.FileName = fileName;
 
-    public override string ToString()
-    {
-        return string.Format("({0}:{1}, {2}:{3})", this.FromLineNumber, this.FromColumnNumber, this.ToLineNumber, this.ToColumnNumber);
-    }
+            this.FromLineNumber = fromLineNumber;
+            this.FromColumnNumber = fromLineColumn;
 
-    public static SourceSpan FromTo(SourceSpan from, SourceSpan to)
-    {
-        Debug.Assert(from != null);
-        Debug.Assert(to != null);
-        Debug.Assert(from.FileName == to.FileName);
+            this.ToLineNumber = toLineNumber;
+            this.ToColumnNumber = toColumnNumber;
+        }
 
-        return new SourceSpan(from.FileName, from.FromLineNumber, from.FromColumnNumber, to.ToLineNumber, to.ToColumnNumber);
+        public SourceSpan Clone()
+        {
+            return new SourceSpan(this.FileName, this.FromLineNumber, this.FromColumnNumber, this.ToLineNumber, this.ToColumnNumber);
+        }
+
+        public override string ToString()
+        {
+            return string.Format("({0}:{1}, {2}:{3})", this.FromLineNumber, this.FromColumnNumber, this.ToLineNumber, this.ToColumnNumber);
+        }
+
+        public static SourceSpan FromTo(SourceSpan from, SourceSpan to)
+        {
+            Debug.Assert(from != null);
+            Debug.Assert(to != null);
+            Debug.Assert(from.FileName == to.FileName);
+
+            return new SourceSpan(from.FileName, from.FromLineNumber, from.FromColumnNumber, to.ToLineNumber, to.ToColumnNumber);
+        }
     }
 }

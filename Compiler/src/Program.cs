@@ -5,7 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using LLVMSharp;
 
-namespace Mass
+namespace Mass.Compiler
 {
     class Program
     {

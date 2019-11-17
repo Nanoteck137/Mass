@@ -2,94 +2,97 @@
 using System.Collections.Generic;
 using System.Text;
 
-abstract class DeclAttribute { }
-
-// TODO(patrik): Add an alias to the external function if the user wants it
-class ExternalDeclAttribute : DeclAttribute { }
-class InlineDeclAttribute : DeclAttribute { }
-
-abstract class Decl
+namespace Mass.Compiler
 {
-    public string Name { get; protected set; }
-    public List<DeclAttribute> Attributes { get; set; }
-}
+    abstract class DeclAttribute { }
 
-class VarDecl : Decl
-{
-    public Typespec Type { get; private set; }
-    public Expr Value { get; private set; }
+    // TODO(patrik): Add an alias to the external function if the user wants it
+    class ExternalDeclAttribute : DeclAttribute { }
+    class InlineDeclAttribute : DeclAttribute { }
 
-    public VarDecl(string name, Typespec type, Expr value)
+    abstract class Decl
     {
-        this.Name = name;
-        this.Type = type;
-        this.Value = value;
+        public string Name { get; protected set; }
+        public List<DeclAttribute> Attributes { get; set; }
     }
-}
 
-class ConstDecl : Decl
-{
-    public Typespec Type { get; private set; }
-    public Expr Value { get; private set; }
-
-    public ConstDecl(string name, Typespec type, Expr value)
+    class VarDecl : Decl
     {
-        this.Name = name;
-        this.Type = type;
-        this.Value = value;
+        public Typespec Type { get; private set; }
+        public Expr Value { get; private set; }
+
+        public VarDecl(string name, Typespec type, Expr value)
+        {
+            this.Name = name;
+            this.Type = type;
+            this.Value = value;
+        }
     }
-}
 
-class FunctionParameter
-{
-    public string Name { get; private set; }
-    public Typespec Type { get; private set; }
-
-    public FunctionParameter(string name, Typespec type)
+    class ConstDecl : Decl
     {
-        this.Name = name;
-        this.Type = type;
+        public Typespec Type { get; private set; }
+        public Expr Value { get; private set; }
+
+        public ConstDecl(string name, Typespec type, Expr value)
+        {
+            this.Name = name;
+            this.Type = type;
+            this.Value = value;
+        }
     }
-}
 
-class FunctionDecl : Decl
-{
-    public List<FunctionParameter> Parameters { get; private set; }
-    public Typespec ReturnType { get; private set; }
-    public bool VarArgs { get; private set; }
-    public StmtBlock Body { get; private set; }
-
-    public FunctionDecl(string name, List<FunctionParameter> parameters, Typespec returnType, bool varArgs, StmtBlock body)
+    class FunctionParameter
     {
-        this.Name = name;
-        this.Parameters = parameters;
-        this.ReturnType = returnType;
-        this.VarArgs = varArgs;
-        this.Body = body;
+        public string Name { get; private set; }
+        public Typespec Type { get; private set; }
+
+        public FunctionParameter(string name, Typespec type)
+        {
+            this.Name = name;
+            this.Type = type;
+        }
     }
-}
 
-class StructItem
-{
-    public string Name { get; private set; }
-    public Typespec Type { get; private set; }
-
-    public StructItem(string name, Typespec type)
+    class FunctionDecl : Decl
     {
-        this.Name = name;
-        this.Type = type;
+        public List<FunctionParameter> Parameters { get; private set; }
+        public Typespec ReturnType { get; private set; }
+        public bool VarArgs { get; private set; }
+        public StmtBlock Body { get; private set; }
+
+        public FunctionDecl(string name, List<FunctionParameter> parameters, Typespec returnType, bool varArgs, StmtBlock body)
+        {
+            this.Name = name;
+            this.Parameters = parameters;
+            this.ReturnType = returnType;
+            this.VarArgs = varArgs;
+            this.Body = body;
+        }
     }
-}
 
-class StructDecl : Decl
-{
-    public List<StructItem> Items { get; private set; }
-    public bool IsOpaque { get; private set; }
-
-    public StructDecl(string name, List<StructItem> items, bool isOpaque)
+    class StructItem
     {
-        this.Name = name;
-        this.Items = items;
-        this.IsOpaque = isOpaque;
+        public string Name { get; private set; }
+        public Typespec Type { get; private set; }
+
+        public StructItem(string name, Typespec type)
+        {
+            this.Name = name;
+            this.Type = type;
+        }
+    }
+
+    class StructDecl : Decl
+    {
+        public List<StructItem> Items { get; private set; }
+        public bool IsOpaque { get; private set; }
+
+        public StructDecl(string name, List<StructItem> items, bool isOpaque)
+        {
+            this.Name = name;
+            this.Items = items;
+            this.IsOpaque = isOpaque;
+        }
     }
 }
