@@ -172,6 +172,7 @@ namespace Mass.Compiler
             this.currentTokenSpan = new SourceSpan(this.FileName, 1, 1, 1, 1);
 
             ResetToken();
+            NextToken();
         }
 
         private void ResetToken()
@@ -597,84 +598,6 @@ namespace Mass.Compiler
                         }
                     }
                     break;
-            }
-        }
-
-        public static void Test()
-        {
-            Lexer lexer = new Lexer("test", "");
-            lexer.Reset("struct Hello {}");
-            lexer.NextToken();
-
-            lexer.ExpectToken(TokenType.KEYWORD_STRUCT);
-            lexer.ExpectToken(TokenType.IDENTIFIER);
-            lexer.ExpectToken(TokenType.OPEN_BRACE);
-            lexer.ExpectToken(TokenType.CLOSE_BRACE);
-
-            lexer.Reset("123");
-            lexer.NextToken();
-            Debug.Assert(lexer.CurrentToken == TokenType.INTEGER);
-            Debug.Assert(lexer.CurrentInteger == 123);
-
-            lexer.Reset("0x123af");
-            lexer.NextToken();
-            Debug.Assert(lexer.CurrentToken == TokenType.INTEGER);
-            Debug.Assert(lexer.CurrentInteger == 0x123af);
-
-            lexer.Reset("0b1100112");
-            lexer.NextToken();
-            Debug.Assert(lexer.CurrentToken == TokenType.INTEGER);
-            Debug.Assert(lexer.CurrentInteger == 0b110011);
-
-            lexer.Reset("3.14f");
-            lexer.NextToken();
-            Debug.Assert(lexer.CurrentToken == TokenType.FLOAT);
-            Debug.Assert(lexer.CurrentFloat == 3.14);
-            Debug.Assert(lexer.TokenMod == TokenMod.FLOAT);
-            lexer.NextToken();
-            lexer.ExpectToken(TokenType.EOF);
-
-            lexer.Reset("3.14");
-            lexer.NextToken();
-            Debug.Assert(lexer.CurrentToken == TokenType.FLOAT);
-            Debug.Assert(lexer.CurrentFloat == 3.14);
-            Debug.Assert(lexer.TokenMod != TokenMod.FLOAT);
-            lexer.NextToken();
-            lexer.ExpectToken(TokenType.EOF);
-
-            lexer.Reset(". .. ... + += - -> -= * *= / /= % %=");
-            lexer.NextToken();
-
-            lexer.ExpectToken(TokenType.DOT);
-            lexer.ExpectToken(TokenType.DOT2);
-            lexer.ExpectToken(TokenType.DOT3);
-            lexer.ExpectToken(TokenType.PLUS);
-            lexer.ExpectToken(TokenType.PLUS_EQUALS);
-            lexer.ExpectToken(TokenType.MINUS);
-            lexer.ExpectToken(TokenType.ARROW);
-            lexer.ExpectToken(TokenType.MINUS_EQUALS);
-            lexer.ExpectToken(TokenType.MULTIPLY);
-            lexer.ExpectToken(TokenType.MULTIPLY_EQUALS);
-            lexer.ExpectToken(TokenType.DIVIDE);
-            lexer.ExpectToken(TokenType.DIVIDE_EQUALS);
-            lexer.ExpectToken(TokenType.MODULO);
-            lexer.ExpectToken(TokenType.MODULO_EQUALS);
-
-            lexer.Reset("hello \"hellostr\" 123 0xff00cd 0b11001111 # + += - -= * *= / /= :; = == -> . .. ... , ()[]{}");
-
-            while (lexer.CurrentToken != TokenType.EOF)
-            {
-                lexer.NextToken();
-
-                Console.WriteLine("{0} {1}", lexer.CurrentToken.ToString(), lexer.currentTokenSpan.ToString());
-            }
-
-            lexer.Reset("! != > < >= <= & && | ||");
-            while (lexer.CurrentToken != TokenType.EOF)
-            {
-                lexer.NextToken();
-
-                Console.WriteLine("{0} {1}", lexer.CurrentToken.ToString(), lexer.currentTokenSpan.ToString());
             }
         }
     }

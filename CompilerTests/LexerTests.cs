@@ -6,6 +6,7 @@ using System.Linq;
 
 namespace Mass.Compiler.Tests
 {
+    [TestFixture]
     public class LexerTests
     {
         private Lexer lexer;
@@ -26,18 +27,26 @@ namespace Mass.Compiler.Tests
             }
         }
 
+        public void ExpectToken(TokenType type)
+        {
+            Assert.AreEqual(type, lexer.CurrentToken);
+        }
+
+        public void ExpectInteger(ulong number)
+        {
+            Assert.AreEqual(number, lexer.CurrentInteger);
+        }
+
         public void TestTokens(string text, TokenType[] expectedTokens)
         {
             lexer.Reset(text);
-            lexer.NextToken();
 
             int index = 0;
             while (!lexer.MatchToken(TokenType.EOF))
             {
-                TokenType currentToken = lexer.CurrentToken;
-                Assert.AreEqual(expectedTokens[index], currentToken);
+                ExpectToken(expectedTokens[index]);
 
-                tokensNeededTesting.Remove(currentToken);
+                tokensNeededTesting.Remove(lexer.CurrentToken);
 
                 index++;
                 lexer.NextToken();
@@ -85,12 +94,7 @@ namespace Mass.Compiler.Tests
         [Test, Order(1)]
         public void TestKeywords()
         {
-            /*TokenType.IDENTIFIER,
-                TokenType.STRING,
-                TokenType.INTEGER,
-                TokenType.FLOAT,*/
-
-            string text = "var const func struct if for while do ret continue break else as";
+            string text = "var const func struct if for while do ret continue break else as test";
             TokenType[] expectedTokens = new TokenType[]
             {
                 TokenType.KEYWORD_VAR,
@@ -108,6 +112,7 @@ namespace Mass.Compiler.Tests
 
                 TokenType.KEYWORD_ELSE,
                 TokenType.KEYWORD_AS,
+                TokenType.IDENTIFIER,
             };
 
             TestTokens(text, expectedTokens);
@@ -150,17 +155,14 @@ namespace Mass.Compiler.Tests
         }
 
         [Test, Order(1)]
-        public void TestIdentifierToken()
-        {
-            // TODO:
-            tokensNeededTesting.Remove(TokenType.IDENTIFIER);
-        }
-
-        [Test, Order(1)]
         public void TestIntegerToken()
         {
             // TODO:
             tokensNeededTesting.Remove(TokenType.INTEGER);
+
+            lexer.Reset("123");
+            ExpectToken(TokenType.INTEGER);
+            ExpectInteger(123);
         }
 
         [Test, Order(1)]

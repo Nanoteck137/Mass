@@ -11,8 +11,7 @@ namespace Mass.Compiler
     {
         static void Main(string[] args)
         {
-            // Lexer.Test();
-            Parser.Test();
+            // Parser.Test();
             // Printer.Test();
             // Type.Test();
             // Resolver.Test();
@@ -21,8 +20,6 @@ namespace Mass.Compiler
             string fileContent = File.ReadAllText("test.ma");
 
             Lexer lexer = new Lexer("test.ma", fileContent);
-            lexer.NextToken();
-
             Parser parser = new Parser(lexer);
 
             List<Decl> root = parser.Parse();
