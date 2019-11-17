@@ -193,8 +193,10 @@ namespace Mass.Compiler.Tests
         [Test, Order(1)]
         public void TestStringToken()
         {
-            // TODO:
             tokensNeededTesting.Remove(TokenType.STRING);
+
+            lexer.Reset("\"Hello World\"");
+            Assert.AreEqual("Hello World", lexer.CurrentString);
         }
 
         [Test]
