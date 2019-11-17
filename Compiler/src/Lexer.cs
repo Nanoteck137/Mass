@@ -193,8 +193,8 @@ namespace Mass.Compiler
         {
             if (CurrentToken != type)
             {
-                Log.Error($"Unexpected token '{CurrentToken.ToString()}' expected '{type.ToString()}'", currentTokenSpan);
-                Debug.Assert(false);
+                // TODO(patrik): This cant be a fatal error
+                Log.Fatal($"Unexpected token '{CurrentToken.ToString()}' expected '{type.ToString()}'", currentTokenSpan);
             }
             else
             {

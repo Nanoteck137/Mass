@@ -184,9 +184,11 @@ namespace Mass.Compiler.Tests
             tokensNeededTesting.Remove(TokenType.FLOAT);
 
             lexer.Reset("3.14");
+            ExpectToken(TokenType.FLOAT);
             ExpectFloat(3.14, false);
 
             lexer.Reset("123.0f");
+            ExpectToken(TokenType.FLOAT);
             ExpectFloat(123.0f, true);
         }
 

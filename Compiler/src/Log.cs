@@ -5,19 +5,35 @@ using System.Text;
 
 namespace Mass.Compiler
 {
+
+    [Serializable]
+    public class FatalErrorException : Exception
+    {
+        public FatalErrorException() { }
+        public FatalErrorException(string message) : base(message) { }
+        public FatalErrorException(string message, Exception inner) : base(message, inner) { }
+        protected FatalErrorException(
+          System.Runtime.Serialization.SerializationInfo info,
+          System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+    }
+
     public class Log
     {
         private Log() { }
 
-        private static void Print(string type, string message, SourceSpan span)
+        private static string Print(string type, string message, SourceSpan span)
         {
             if (span == null)
             {
-                Console.WriteLine($"{type}: {message}");
+                string text = $"{type}: {message}";
+                Console.WriteLine(text);
+                return text;
             }
             else
             {
-                Console.WriteLine($"{span.FileName}({span.FromLineNumber}:{span.FromColumnNumber}, {span.ToLineNumber}:{span.ToColumnNumber}): error: {message}");
+                string text = $"{span.FileName}({span.FromLineNumber}:{span.FromColumnNumber}, {span.ToLineNumber}:{span.ToColumnNumber}): error: {message}";
+                Console.WriteLine(text);
+                return text;
             }
         }
 
@@ -38,9 +54,9 @@ namespace Mass.Compiler
 
         public static void Fatal(string message, SourceSpan span)
         {
-            Print("fatal", message, span);
-            Debugger.Break();
-            Environment.Exit(-1);
+            string text = Print("fatal", message, span);
+
+            throw new FatalErrorException(text);
         }
     }
 }
