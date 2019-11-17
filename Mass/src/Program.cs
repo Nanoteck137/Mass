@@ -10,9 +10,12 @@ namespace Mass
     {
         static void Main(string[] args)
         {
-            string fileContent = File.ReadAllText("test.ma");
+            string filePath = "test.ma";
+            filePath = Path.GetFullPath(filePath);
 
-            Lexer lexer = new Lexer("test.ma", fileContent);
+            string fileContent = File.ReadAllText(filePath);
+
+            Lexer lexer = new Lexer(Path.GetFileName(filePath), fileContent);
             Parser parser = new Parser(lexer);
 
             List<Decl> root = parser.Parse();
@@ -32,7 +35,7 @@ namespace Mass
             using LLVMGenerator gen = new LLVMGenerator(resolver);
             gen.Generate();
             gen.DebugPrint();
-            gen.WriteToFile("test.ll");
+            gen.WriteToFile(Path.ChangeExtension(filePath, "ll"));
 
             gen.RunCode();
         }
