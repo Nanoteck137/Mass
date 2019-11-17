@@ -5,10 +5,24 @@
 
 int main(int argc, char **argv)
 {
-	uint32_t *a = malloc(8);
-	a[0] = 123;
+	int a = 5;
 
-	free(a);
+	if(a < 5) 
+	{
+		printf("1\n");
+	} 
+	else if(a < 8)
+	{
+		printf("2\n");
+	} 
+	else if(a < 10)
+	{
+		printf("3\n");
+	}
+	else 
+	{
+		printf("4\n");
+	}
 
 	return 0;
 }

@@ -1527,6 +1527,7 @@ class Resolver
 
     private void ResolveIfStmt(IfStmt stmt, Type returnType)
     {
+        // TODO(patrik): Dose if stmts has the right scoping
         Debug.Assert(stmt != null);
 
         Operand cond = ResolveExpr(stmt.Cond);
@@ -1536,6 +1537,20 @@ class Resolver
         }
 
         ResolveStmtBlock(stmt.ThenBlock, returnType);
+
+        foreach (ElseIf elseIf in stmt.ElseIfs)
+        {
+            Operand elseIfCond = ResolveExpr(elseIf.Cond);
+            if (elseIfCond.Type != Type.Bool)
+            {
+                Log.Fatal("Else Ifs condition needs to be a boolean", null);
+            }
+
+            ResolveStmtBlock(elseIf.Block, returnType);
+        }
+
+        if (stmt.ElseBlock != null)
+            ResolveStmtBlock(stmt.ElseBlock, returnType);
     }
 
     private void ResolveInitStmt(InitStmt stmt)

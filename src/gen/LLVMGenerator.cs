@@ -65,7 +65,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
                     break;
             }
         }
-        else if (type is BoolType boolType)
+        else if (type is BoolType)
         {
             return LLVMTypeRef.Int1;
         }
@@ -111,7 +111,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
             if (structTypes.ContainsKey(name))
                 return structTypes[name];
 
-            LLVMTypeRef result = null;
+            LLVMTypeRef result;
             if (structType.IsOpaque)
             {
                 result = LLVMContextRef.Global.CreateNamedStruct("struct." + name);
@@ -323,9 +323,9 @@ class LLVMGenerator : CodeGenerator, IDisposable
             {
                 LLVMValueRef varValue = builder.BuildLoad(left);
                 if (isSigned)
-                    right = builder.BuildNSWAdd(left, right);
+                    right = builder.BuildNSWAdd(varValue, right);
                 else
-                    right = builder.BuildAdd(left, right);
+                    right = builder.BuildAdd(varValue, right);
                 builder.BuildStore(right, left);
                 break;
             }
@@ -333,7 +333,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
             {
                 LLVMValueRef varValue = builder.BuildLoad(left);
                 if (isSigned)
-                    right = builder.BuildNSWSub(left, right);
+                    right = builder.BuildNSWSub(varValue, right);
                 else
                     right = builder.BuildSub(varValue, right);
                 builder.BuildStore(right, left);
@@ -343,7 +343,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
             {
                 LLVMValueRef varValue = builder.BuildLoad(left);
                 if (isSigned)
-                    right = builder.BuildNSWMul(left, right);
+                    right = builder.BuildNSWMul(varValue, right);
                 else
                     right = builder.BuildMul(varValue, right);
                 builder.BuildStore(right, left);
@@ -353,7 +353,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
             {
                 LLVMValueRef varValue = builder.BuildLoad(left);
                 if (isSigned)
-                    right = builder.BuildSDiv(left, right);
+                    right = builder.BuildSDiv(varValue, right);
                 else
                     right = builder.BuildUDiv(varValue, right);
                 builder.BuildStore(right, left);
@@ -363,7 +363,7 @@ class LLVMGenerator : CodeGenerator, IDisposable
             {
                 LLVMValueRef varValue = builder.BuildLoad(left);
                 if (isSigned)
-                    right = builder.BuildSRem(left, right);
+                    right = builder.BuildSRem(varValue, right);
                 else
                     right = builder.BuildURem(varValue, right);
                 builder.BuildStore(right, left);
@@ -942,27 +942,79 @@ class LLVMGenerator : CodeGenerator, IDisposable
         }
         else if (stmt is IfStmt ifStmt)
         {
-            LLVMValueRef cond = GenExpr(builder, ifStmt.Cond);
+            // Cond
+            // Then
+            // ElseIfs
+            // End
 
-            LLVMBasicBlockRef then = currentEntryBlock.InsertBasicBlock("then");
-            then.MoveAfter(currentEntryBlock);
+            LLVMBasicBlockRef thenBlock = currentEntryBlock.InsertBasicBlock("then");
+            LLVMBasicBlockRef elseBlock = currentEntryBlock.InsertBasicBlock("else");
+            LLVMBasicBlockRef endBlock = currentEntryBlock.InsertBasicBlock("endif");
 
-            LLVMBasicBlockRef endif = currentEntryBlock.InsertBasicBlock("endif");
-            endif.MoveAfter(then);
+            thenBlock.MoveAfter(currentEntryBlock);
+            elseBlock.MoveAfter(thenBlock);
+            endBlock.MoveAfter(elseBlock);
 
-            builder.BuildCondBr(cond, then, endif);
+            List<LLVMBasicBlockRef> elseIfBlocks = new List<LLVMBasicBlockRef>();
+            for (int i = 0; i < ifStmt.ElseIfs.Count; i++)
+            {
+                LLVMBasicBlockRef block = currentEntryBlock.InsertBasicBlock("elseifcond");
+                elseIfBlocks.Add(block);
+            }
 
-            builder.PositionAtEnd(then);
+            elseIfBlocks.Add(elseBlock);
 
+            LLVMValueRef cond = GenLoadedExpr(builder, ifStmt.Cond);
+            builder.BuildCondBr(cond, thenBlock, elseIfBlocks[0]);
+
+            // Then Block
+            builder.PositionAtEnd(thenBlock);
 
             GenStmtBlockInfo blockInfo;
             GenStmtBlock(builder, ifStmt.ThenBlock, out blockInfo);
             if (!blockInfo.HasBreakStmt && !blockInfo.HasContinueStmt)
-                builder.BuildBr(endif);
+                builder.BuildBr(endBlock);
 
-            builder.PositionAtEnd(endif);
+            LLVMBasicBlockRef afterBlock = thenBlock;
+            for (int i = 0; i < ifStmt.ElseIfs.Count; i++)
+            {
+                ElseIf elseIf = ifStmt.ElseIfs[i];
 
-            currentEntryBlock = endif;
+                LLVMBasicBlockRef elseIfCondBlock = elseIfBlocks[i];
+                LLVMBasicBlockRef elseIfThenBlock = currentEntryBlock.InsertBasicBlock("elseifthen");
+
+                elseIfCondBlock.MoveAfter(afterBlock);
+                elseIfThenBlock.MoveAfter(elseIfCondBlock);
+
+                builder.PositionAtEnd(elseIfCondBlock);
+                LLVMValueRef elseIfCond = GenLoadedExpr(builder, elseIf.Cond);
+                builder.BuildCondBr(elseIfCond, elseIfThenBlock, elseIfBlocks[i + 1]);
+
+                builder.PositionAtEnd(elseIfThenBlock);
+
+                GenStmtBlock(builder, elseIf.Block, out blockInfo);
+                if (!blockInfo.HasBreakStmt && !blockInfo.HasContinueStmt)
+                    builder.BuildBr(endBlock);
+
+                afterBlock = elseIfThenBlock;
+            }
+
+            builder.PositionAtEnd(elseBlock);
+            if (ifStmt.ElseBlock != null)
+            {
+                GenStmtBlock(builder, ifStmt.ElseBlock, out blockInfo);
+                if (!blockInfo.HasBreakStmt && !blockInfo.HasContinueStmt)
+                    builder.BuildBr(endBlock);
+            }
+            else
+            {
+                builder.BuildBr(endBlock);
+            }
+
+            // End If
+            builder.PositionAtEnd(endBlock);
+
+            currentEntryBlock = endBlock;
         }
         else if (stmt is InitStmt initStmt)
         {

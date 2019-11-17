@@ -22,16 +22,25 @@ func malloc(size: u64) -> u8*;
 #external
 func free(ptr: u8*);
 
-func main(argc: s32, argv: u8**) -> s32 
+func main(argc: s32, argv: u8**) -> s32
 {
-	var ptr: u32* = malloc(8) as u32*;
+	var a: s32 = 3;
 
-	ptr[0] = 123;
-	ptr[1] = 321;
+	if(a < 5) 
+	{
+		var b: s32 = 123;
+		printf("1\n");
+	} 
+	else if(a < 8)
+	{
+		printf("2\n");
+	} 
+	else if(a < 10)
+	{
+		printf("3\n");
+	}
 
-	printf("Val: %u\n", ptr[1]);
-
-	free(ptr as u8*);
+	printf("%d\n", b);
 
 	ret 0;
 }
