@@ -122,6 +122,14 @@ namespace Mass
                 {
                     Console.WriteLine("Too many arguments");
                 }
+                else if (args.Length <= 0)
+                {
+                    Console.WriteLine("No input file");
+                }
+                else
+                {
+                    Console.WriteLine($"Compiling {args[0]}");
+                }
             }
         }
 
