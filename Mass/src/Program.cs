@@ -8,7 +8,8 @@ namespace Mass
 {
     class CompilerOptions
     {
-        public string OutputPath { get; set; }
+        public string OutputPath { get; set; } = "";
+        public bool DebugInfo { get; set; } = false;
     }
 
     class Option
@@ -44,8 +45,8 @@ namespace Mass
 
     class Program
     {
-        private Dictionary<string, Option> options;
-        private string executableName;
+        private readonly Dictionary<string, Option> options;
+        private readonly string executableName;
 
         void PrintUsage()
         {
@@ -106,6 +107,14 @@ namespace Mass
                                     return false;
                                 },
                                 new string[] { "file" }) },
+                { "-d", new Option(
+                                "-d",
+                                "Display debug infomation",
+                                (args, compilerOptions) =>
+                                {
+                                    compilerOptions.DebugInfo = true;
+                                    return false;
+                                }) }
             };
 
             string path = Assembly.GetEntryAssembly().Location;
@@ -128,7 +137,9 @@ namespace Mass
                 }
                 else
                 {
-                    Console.WriteLine($"Compiling {args[0]}");
+                    string filePath = args[0];
+                    Console.WriteLine($"Compiling {filePath}");
+                    StartCompiling(filePath, compilerOption);
                 }
             }
         }
@@ -181,12 +192,8 @@ namespace Mass
             return error;
         }
 
-        static void Main(string[] args)
+        void StartCompiling(string filePath, CompilerOptions options)
         {
-            new Program(args);
-
-            return;
-            string filePath = "test.ma";
             filePath = Path.GetFullPath(filePath);
 
             string fileContent = File.ReadAllText(filePath);
@@ -210,10 +217,28 @@ namespace Mass
 
             using LLVMGenerator gen = new LLVMGenerator(resolver);
             gen.Generate();
-            gen.DebugPrint();
-            gen.WriteToFile(Path.ChangeExtension(filePath, "ll"));
+
+            if (options.DebugInfo)
+                gen.DebugPrint();
+
+            string outputPath = "";
+            if (options.OutputPath == "")
+            {
+                outputPath = Path.ChangeExtension(filePath, "ll");
+            }
+            else
+            {
+                outputPath = options.OutputPath;
+            }
+
+            gen.WriteToFile(outputPath);
 
             gen.RunCode();
+        }
+
+        static void Main(string[] args)
+        {
+            new Program(args);
         }
     }
 }
