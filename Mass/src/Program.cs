@@ -44,20 +44,16 @@ namespace Mass
 
     class Program
     {
-        static void PrintUsage(string executableName)
-        {
-            Option[] options = new Option[]
-            {
-                new Option("--help", "Display this infomation", (args, compilerOptions) => { return false; }),
-                new Option("--version", "Display the version number", (args, compilerOptions) => { return false; }),
-                new Option("-o", "Set the output path", (args, compilerOptions) => { return false; }, new string[] { "file" }),
-            };
+        private Dictionary<string, Option> options;
+        private string executableName;
 
+        void PrintUsage()
+        {
             Console.WriteLine($"Usage: {executableName} [options] file");
             Console.WriteLine($"Options:");
 
             int maxCommandCharWidth = 0;
-            foreach (Option option in options)
+            foreach (Option option in options.Values)
             {
                 int width = option.CharWidth;
 
@@ -65,7 +61,7 @@ namespace Mass
                     maxCommandCharWidth = width;
             }
 
-            foreach (Option option in options)
+            foreach (Option option in options.Values)
             {
                 int padding = maxCommandCharWidth - option.CharWidth;
                 string paddingStr = "".PadLeft(padding);
@@ -81,52 +77,105 @@ namespace Mass
             }
         }
 
-        static void PrintVersion(string executableName)
+        bool PrintUsageOption(string[] args, CompilerOptions compilerOptions)
+        {
+            PrintUsage();
+
+            return true;
+        }
+
+        bool PrintVersionOption(string[] args, CompilerOptions compilerOptions)
         {
             Console.WriteLine($"{executableName} - v0.1");
+
+            return true;
+        }
+
+        public Program(string[] args)
+        {
+            this.options = new Dictionary<string, Option>
+            {
+                { "--help", new Option("--help", "Display this infomation", PrintUsageOption) },
+                { "--version", new Option("--version", "Display the version number", PrintVersionOption) },
+                { "-o", new Option(
+                                "-o",
+                                "Set the output path",
+                                (args, compilerOptions) =>
+                                {
+                                    compilerOptions.OutputPath = args[0];
+                                    return false;
+                                },
+                                new string[] { "file" }) },
+            };
+
+            string path = Assembly.GetEntryAssembly().Location;
+            this.executableName = Path.GetFileNameWithoutExtension(path);
+
+            bool error = ParseOptions(ref args, out CompilerOptions compilerOption);
+            if (error)
+            {
+                PrintUsage();
+            }
+            else
+            {
+                if (args.Length > 1)
+                {
+                    Console.WriteLine("Too many arguments");
+                }
+            }
+        }
+
+        bool ParseOptions(ref string[] args, out CompilerOptions compilerOptions)
+        {
+            bool error = false;
+            compilerOptions = new CompilerOptions();
+
+            int i = 0;
+            for (; i < args.Length; i++)
+            {
+                string command = args[i];
+                if (!command.Contains("-"))
+                    break;
+
+                if (!options.ContainsKey(command))
+                {
+                    Console.WriteLine($"Unknown Option - '{command}'");
+                    break;
+                }
+
+                Option option = options[command];
+                string[] commandArgs = null;
+                if (option.Parameters != null && option.Parameters.Length > 0)
+                {
+                    if (option.Parameters.Length >= args.Length)
+                    {
+                        int index = i;
+                        foreach (string param in option.Parameters)
+                        {
+                            index++;
+                            if (index >= args.Length)
+                            {
+                                Console.WriteLine($"Missing '{param}' after '{command}'");
+                            }
+                        }
+                        error = true;
+                        break;
+                    }
+
+                    commandArgs = args[(i + 1)..(option.Parameters.Length + 1)];
+                    i += option.Parameters.Length;
+                }
+
+                option.Callback(commandArgs, compilerOptions);
+            }
+
+            args = args[i..args.Length];
+            return error;
         }
 
         static void Main(string[] args)
         {
-            string path = Assembly.GetEntryAssembly().Location;
-            string executableName = Path.GetFileNameWithoutExtension(path);
-
-            Queue<string> arguments = new Queue<string>();
-            foreach (string arg in args)
-            {
-                arguments.Enqueue(arg);
-            }
-
-            CompilerOptions options = new CompilerOptions();
-
-            string currentArg = arguments.Dequeue();
-            bool stop = false;
-            while (!stop && currentArg.StartsWith("-"))
-            {
-                if (currentArg == "--help")
-                {
-                    PrintUsage(executableName);
-                    stop = true;
-                    break;
-                }
-                else if (currentArg == "--version")
-                {
-                    PrintVersion(executableName);
-                    stop = true;
-                    break;
-                }
-                else if (currentArg == "-o")
-                {
-                    string outputPath = arguments.Dequeue();
-                    options.OutputPath = outputPath;
-                }
-
-                if (!arguments.TryDequeue(out currentArg))
-                {
-                    PrintUsage(executableName);
-                    break;
-                }
-            }
+            new Program(args);
 
             return;
             string filePath = "test.ma";
