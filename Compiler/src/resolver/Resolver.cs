@@ -1801,6 +1801,13 @@ namespace Mass.Compiler
                         Console.WriteLine($"Resolve {decl.Name}");
                         ResolveFuncBody(symbol);
                     }
+                    else
+                    {
+                        if (decl.GetAttribute(typeof(ExternalDeclAttribute)) == null)
+                        {
+                            Log.Fatal("Functions needs a body if not #external used", null);
+                        }
+                    }
                 }
             }
         }

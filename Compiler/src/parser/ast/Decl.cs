@@ -14,6 +14,19 @@ namespace Mass.Compiler
     {
         public string Name { get; protected set; }
         public List<DeclAttribute> Attributes { get; set; }
+
+        public DeclAttribute GetAttribute(System.Type type)
+        {
+            for (int i = 0; i < Attributes.Count; i++)
+            {
+                if (Attributes[i].GetType() == type)
+                {
+                    return Attributes[i];
+                }
+            }
+
+            return null;
+        }
     }
 
     public class VarDecl : Decl

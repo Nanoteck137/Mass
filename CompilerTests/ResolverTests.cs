@@ -22,7 +22,9 @@ namespace Mass.Compiler.Tests
         {
             string[] code = new string[]
             {
-                "var a: s32 = 123;"
+                "var a: s32 = 123;",
+                @"
+                  func test();"
             };
 
             foreach (string c in code)
