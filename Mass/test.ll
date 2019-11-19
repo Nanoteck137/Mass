@@ -19,38 +19,25 @@ declare i8* @malloc(i64)
 
 declare void @free(i8*)
 
-define void @test(i8* %format, i8 %a, ...) {
-entry:
-  %format1 = alloca i8*
-  store i8* %format, i8** %format1
-  %a2 = alloca i8
-  store i8 %a, i8* %a2
-  ret void
-}
-
 define i32 @main(i32 %argc, i8** %argv) {
 entry:
   %argc1 = alloca i32
   store i32 %argc, i32* %argc1
   %argv2 = alloca i8**
   store i8** %argv, i8*** %argv2
-  %a = alloca i32
-  store i32 10, i32* %a
-  br label %then
-
-while:                                            ; preds = %then
-  %0 = load i32, i32* %a
-  %1 = icmp sgt i32 %0, 0
-  br i1 %1, label %then, label %endwhile
-
-then:                                             ; preds = %while, %entry
-  %2 = load i32, i32* %a
-  %3 = sub i32 %2, 1
-  store i32 %3, i32* %a
-  %4 = load i32, i32* %a
-  %5 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str, i32 0, i32 0), i32 %4)
-  br label %while
-
-endwhile:                                         ; preds = %while
+  %a = alloca i32*
+  %0 = call i8* @malloc(i64 8)
+  %1 = bitcast i8* %0 to i32*
+  store i32* %1, i32** %a
+  %2 = load i32*, i32** %a
+  %3 = getelementptr i32, i32* %2, i32 0
+  store i32 123, i32* %3
+  %4 = load i32*, i32** %a
+  %5 = getelementptr i32, i32* %4, i32 0
+  %6 = load i32, i32* %5
+  %7 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str, i32 0, i32 0), i32 %6)
+  %8 = load i32*, i32** %a
+  %9 = bitcast i32* %8 to i8*
+  call void @free(i8* %9)
   ret i32 0
 }
