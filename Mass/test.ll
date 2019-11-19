@@ -34,5 +34,8 @@ entry:
   store i8** %argv, i8*** %argv2
   %a = alloca float
   store float 0x40091EB860000000, float* %a
+  %0 = load float, float* %a
+  %1 = fadd float %0, 0x40091EB860000000
+  store float %1, float* %a
   ret i32 0
 }

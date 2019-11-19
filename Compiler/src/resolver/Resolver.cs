@@ -214,7 +214,16 @@ namespace Mass.Compiler
             {
                 return true;
             }
-            else if (dest.IsArithmetic && src.IsArithmetic)
+
+            if (src is FloatType srcFloatType && dest is FloatType destFloatType)
+            {
+                if (srcFloatType.Kind == FloatKind.F32 && destFloatType.Kind == FloatKind.F64)
+                {
+                    return false;
+                }
+            }
+
+            if (dest.IsArithmetic && src.IsArithmetic)
             {
                 return true;
             }

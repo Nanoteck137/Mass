@@ -1180,9 +1180,12 @@ namespace Mass.Compiler
                 LLVMValueRef right = GenLoadedExpr(builder, assignStmt.Right);
 
                 bool isFloatingPoint = false;
+                if (assignStmt.Left.ResolvedType is FloatType)
+                    isFloatingPoint = true;
+
+                // TODO(patrik): Move this to a method because i have similar everywhare
                 if (assignStmt.Left.ResolvedType is FloatType leftType && assignStmt.Right.ResolvedType is IntType)
                 {
-                    isFloatingPoint = true;
                     right = builder.BuildUIToFP(right, GetType(leftType));
                 }
 
