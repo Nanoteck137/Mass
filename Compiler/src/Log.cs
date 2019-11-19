@@ -31,7 +31,7 @@ namespace Mass.Compiler
             }
             else
             {
-                string text = $"{span.FileName}({span.FromLineNumber}:{span.FromColumnNumber}, {span.ToLineNumber}:{span.ToColumnNumber}): error: {message}";
+                string text = $"{span.FileName}({span.FromLineNumber}:{span.FromColumnNumber}, {span.ToLineNumber}:{span.ToColumnNumber}): {type}: {message}";
                 Console.WriteLine(text);
                 return text;
             }

@@ -24,7 +24,8 @@ namespace Mass.Compiler.Tests
             {
                 "var a: s32 = 123;",
                 "struct T { i: s32; }",
-                "func test() -> s32 { var test: T = { 123 }; var b: s32 = test.a; }"
+                "func testFunc(a: s32) { }",
+                "func test() -> s32 { testFunc(123); }"
             };
 
             foreach (string c in code)

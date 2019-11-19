@@ -833,7 +833,7 @@ namespace Mass.Compiler
             }
             else
             {
-                Log.Fatal($"{expr.Value} must be a var, const or func", null);
+                Log.Fatal($"{expr.Value} must be a var, const or func", expr.Span);
             }
 
             return null;
@@ -846,7 +846,7 @@ namespace Mass.Compiler
 
             if (!ConvertOperand(operand, type))
             {
-                Log.Fatal("Invalid cast", null);
+                Log.Fatal("Invalid cast", expr.Expr.Span);
             }
 
             return operand;
@@ -870,7 +870,7 @@ namespace Mass.Compiler
                     }
                     else if (left.Type is PtrType && right.Type is IntType)
                     {
-                        //TODO(patrik): Add more check here for base size == 0 and void ptrs
+                        // TODO(patrik): Add more check here for base size == 0 and void ptrs
 
                         // TODO(patrik): Remove this because i dont want implicit convertion
                         ConvertOperand(right, Type.U64);
@@ -878,7 +878,7 @@ namespace Mass.Compiler
                     }
                     else if (right.Type is PtrType && left.Type is IntType)
                     {
-                        //TODO(patrik): Add more check here for base size == 0 and void ptrs
+                        //  TODO(patrik): Add more check here for base size == 0 and void ptrs
 
                         // TODO(patrik): Remove this because i dont want implicit convertion
                         ConvertOperand(right, Type.U64);
@@ -898,7 +898,7 @@ namespace Mass.Compiler
                     }
                     else if (left.Type is PtrType && right.Type is IntType)
                     {
-                        //TODO(patrik): Add more check here for base size == 0 and void ptrs
+                        // TODO(patrik): Add more check here for base size == 0 and void ptrs
 
                         // TODO(patrik): Remove this because i dont want implicit convertion
                         ConvertOperand(right, Type.U64);
@@ -906,7 +906,7 @@ namespace Mass.Compiler
                     }
                     else if (right.Type is PtrType && left.Type is IntType)
                     {
-                        //TODO(patrik): Add more check here for base size == 0 and void ptrs
+                        // TODO(patrik): Add more check here for base size == 0 and void ptrs
 
                         // TODO(patrik): Remove this because i dont want implicit convertion
                         ConvertOperand(right, Type.U64);
@@ -960,12 +960,12 @@ namespace Mass.Compiler
 
             if (!operand.IsLValue)
             {
-                Log.Fatal("Cannot modify non-lvalue", null);
+                Log.Fatal("Cannot modify non-lvalue", expr.Expr.Span);
             }
 
             if (!(operand.Type is IntType))
             {
-                Log.Fatal($"'{expr.Op}' is only valid for integer types", null);
+                Log.Fatal($"'{expr.Op}' is only valid for integer types", expr.Expr.Span);
             }
 
             return OperandRValue(operand.Type);
@@ -982,14 +982,14 @@ namespace Mass.Compiler
                 case TokenType.MINUS:
                     if (!type.IsArithmetic)
                     {
-                        Log.Fatal("Can only use unary '-' with arithmetic types", null);
+                        Log.Fatal("Can only use unary '-' with arithmetic types", expr.Expr.Span);
                     }
 
                     return OperandRValue(type);
                 case TokenType.NOT:
                     if (!(type is BoolType))
                     {
-                        Log.Fatal("Can only use unary '!' with boolean types", null);
+                        Log.Fatal("Can only use unary '!' with boolean types", expr.Expr.Span);
                     }
 
                     return OperandRValue(Type.Bool);
@@ -1006,60 +1006,59 @@ namespace Mass.Compiler
             Debug.Assert(expr != null);
 
             Operand func = ResolveExpr(expr.Expr);
-            if (func.Type is FunctionType type)
+            if (!(func.Type is FunctionType))
             {
-                if (expr.Arguments.Count < type.Parameters.Count)
-                {
-                    Log.Fatal("Too few arguments for function call", null);
-                }
-
-                if (expr.Arguments.Count > type.Parameters.Count && !type.VarArgs)
-                {
-                    Log.Fatal("Too many arguments for function call", null);
-                }
-
-                for (int i = 0; i < type.Parameters.Count; i++)
-                {
-                    Type paramType = type.Parameters[i].Type;
-                    Operand argument = ResolveExpr(expr.Arguments[i]);
-                    /*if (argument.Type != paramType)
-                    {
-                        Log.Fatal($"Function argument type mismatch with argument '{i + 1}'", null);
-                    }*/
-
-                    if (!ConvertOperand(argument, paramType))
-                    {
-                        Log.Fatal($"Invalid type in function call argument '{i + 1}'", null);
-                    }
-
-                    expr.Arguments[i].ResolvedType = argument.Type;
-                }
-
-                for (int i = type.Parameters.Count; i < expr.Arguments.Count; i++)
-                {
-                    ResolveExpr(expr.Arguments[i]);
-                }
-
-                return OperandRValue(type.ReturnType);
-            }
-            else
-            {
-                Log.Fatal("Calling a non-function value", null);
+                Log.Fatal("Calling a non-function value", expr.Expr.Span);
             }
 
-            return null;
+            FunctionType type = (FunctionType)func.Type;
+
+            if (expr.Arguments.Count < type.Parameters.Count)
+            {
+                Log.Fatal("Too few arguments for function call", expr.Span);
+            }
+
+            if (expr.Arguments.Count > type.Parameters.Count && !type.VarArgs)
+            {
+                Log.Fatal("Too many arguments for function call", expr.Span);
+            }
+
+            for (int i = 0; i < type.Parameters.Count; i++)
+            {
+                Type paramType = type.Parameters[i].Type;
+                Operand argument = ResolveExpr(expr.Arguments[i]);
+                /*if (argument.Type != paramType)
+                {
+                    Log.Fatal($"Function argument type mismatch with argument '{i + 1}'", null);
+                }*/
+
+                if (!ConvertOperand(argument, paramType))
+                {
+                    Log.Fatal($"Invalid type in function call argument '{i + 1}'", expr.Arguments[i].Span);
+                }
+
+                expr.Arguments[i].ResolvedType = argument.Type;
+            }
+
+            for (int i = type.Parameters.Count; i < expr.Arguments.Count; i++)
+            {
+                ResolveExpr(expr.Arguments[i]);
+            }
+
+            return OperandRValue(type.ReturnType);
         }
 
-        private Operand ResolveSFAddr(List<Expr> arguments)
+        private Operand ResolveSFAddr(SpecialFunctionCallExpr expr)
         {
+            List<Expr> arguments = expr.Arguments;
             if (arguments.Count == 0)
             {
-                Log.Fatal("Special Function 'addr' needs one argument", null);
+                Log.Fatal("Special Function 'addr' needs one argument", expr.Span);
             }
 
             if (arguments.Count > 1)
             {
-                Log.Fatal("Special Function 'addr' too many arguments", null);
+                Log.Fatal("Special Function 'addr' too many arguments", expr.Span);
             }
 
             Operand arg = ResolveExpr(arguments[0]);
@@ -1067,23 +1066,25 @@ namespace Mass.Compiler
             return OperandRValue(new PtrType(arg.Type));
         }
 
-        private Operand ResolveSFDeref(List<Expr> arguments)
+        private Operand ResolveSFDeref(SpecialFunctionCallExpr expr)
         {
+            List<Expr> arguments = expr.Arguments;
+
             if (arguments.Count == 0)
             {
-                Log.Fatal("Special Function 'deref' needs one argument", null);
+                Log.Fatal("Special Function 'deref' needs one argument", expr.Span);
             }
 
             if (arguments.Count > 1)
             {
-                Log.Fatal("Special Function 'deref' too many arguments", null);
+                Log.Fatal("Special Function 'deref' too many arguments", expr.Span);
             }
 
             Operand arg = ResolveExpr(arguments[0]);
 
             if (!(arg.Type is PtrType))
             {
-                Log.Fatal("Dereferencing a non-ptr type", null);
+                Log.Fatal("Dereferencing a non-ptr type", arguments[0].Span);
             }
 
             PtrType ptrType = (PtrType)arg.Type;
@@ -1097,11 +1098,11 @@ namespace Mass.Compiler
             Operand result = null;
             if (expr.Kind == SpecialFunctionKind.Addr)
             {
-                result = ResolveSFAddr(expr.Arguments);
+                result = ResolveSFAddr(expr);
             }
             else if (expr.Kind == SpecialFunctionKind.Deref)
             {
-                result = ResolveSFDeref(expr.Arguments);
+                result = ResolveSFDeref(expr);
             }
             else
             {
@@ -1116,15 +1117,16 @@ namespace Mass.Compiler
             Debug.Assert(expr != null);
 
             Operand operand = ResolveExprRValue(expr.Expr);
+            //TODO(patrik): Changes this???
             if (!(operand.Type is PtrType))
             {
-                Log.Fatal("Can only index arrays and ptrs", null);
+                Log.Fatal("Can only index arrays and ptrs", expr.Expr.Span);
             }
 
             Operand index = ResolveExprRValue(expr.Index);
             if (!(index.Type is IntType))
             {
-                Log.Fatal("Index must be an integer", null);
+                Log.Fatal("Index must be an integer", expr.Index.Span);
             }
 
             PtrType ptrType = (PtrType)operand.Type;
@@ -1133,9 +1135,9 @@ namespace Mass.Compiler
 
         private Operand ResolveCompoundExpr(CompoundExpr expr, Type expectedType)
         {
-            if (expectedType == null && expr.Type == null)
+            if (expectedType is null && expr.Type is null)
             {
-                Log.Fatal("Compound Literal extected a type", null);
+                Log.Fatal("Compound Literal extected a type", expr.Span);
             }
 
             Type type = null;
@@ -1144,10 +1146,9 @@ namespace Mass.Compiler
             else
                 type = expectedType;
 
-            // TODO(patrik): Array type too
             if (!(type is StructType) && !(type is ArrayType))
             {
-                Log.Fatal("Compound literals can only be applied to struct and array types", null);
+                Log.Fatal("Compound literals can only be applied to struct and array types", expr.Span);
             }
 
             if (type is StructType structType)
@@ -1158,20 +1159,20 @@ namespace Mass.Compiler
                     CompoundField field = expr.Fields[i];
                     if (field is IndexCompoundField)
                     {
-                        Log.Fatal("Index Compound fields are not allowed for struct compounds", null);
+                        Log.Fatal("Index Compound fields are not allowed for struct compounds", field.Span);
                     }
                     else if (field is NameCompoundField nameField)
                     {
                         index = structType.GetItemIndex(nameField.Name.Value);
                         if (index == -1)
                         {
-                            Log.Fatal("Named field in compound literal dose not exist", null);
+                            Log.Fatal("Named field in compound literal dose not exist", field.Span);
                         }
                     }
 
                     if (index >= structType.Items.Count)
                     {
-                        Log.Fatal("Field initializer in struct compound out of range", null);
+                        Log.Fatal("Field initializer in struct compound out of range", field.Span);
                     }
 
                     Type itemType = structType.Items[index].Type;
@@ -1179,7 +1180,7 @@ namespace Mass.Compiler
 
                     if (!ConvertOperand(init, itemType))
                     {
-                        Log.Fatal("Illegal conversion in compound literal initializer", null);
+                        Log.Fatal("Illegal conversion in compound literal initializer", field.Init.Span);
                     }
 
                     index++;
@@ -1650,7 +1651,7 @@ namespace Mass.Compiler
                 Log.Fatal("Cannot assign to non-lvalue", stmt.Left.Span);
             }
 
-            Operand right = ResolveExpr(stmt.Right);
+            Operand right = ResolveExpectedExpr(stmt.Right, left.Type);
             Operand result = null;
 
             switch (stmt.Op)
