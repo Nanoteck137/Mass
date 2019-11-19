@@ -45,7 +45,7 @@ namespace Mass
 
     class Program
     {
-        private const string VERSION = "Alpha v1.0";
+        private const string VERSION = "v1.0-alpha";
 
         private readonly Dictionary<string, Option> options;
         private readonly string executableName;
