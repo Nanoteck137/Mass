@@ -23,7 +23,7 @@ namespace Mass.Compiler.Tests
             string[] code = new string[]
             {
                 "var a: s32 = 123;",
-                @"
+                @"#external
                   func test();"
             };
 

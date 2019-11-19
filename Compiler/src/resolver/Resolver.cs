@@ -1798,7 +1798,6 @@ namespace Mass.Compiler
                     FunctionDecl decl = (FunctionDecl)symbol.Decl;
                     if (decl.Body != null)
                     {
-                        Console.WriteLine($"Resolve {decl.Name}");
                         ResolveFuncBody(symbol);
                     }
                     else
@@ -1810,58 +1809,6 @@ namespace Mass.Compiler
                     }
                 }
             }
-        }
-
-        public static void Test()
-        {
-            Resolver resolver = new Resolver();
-
-            Typespec typespec = new ArrayTypespec(new IdentifierTypespec(new IdentifierExpr("s32")), new IntegerExpr(123));
-            Type type = resolver.ResolveTypespec(typespec);
-
-            Val val = new Val
-            {
-                u32 = 3
-            };
-
-            Operand operand = resolver.OperandConst(Type.U32, val);
-            resolver.ConvertOperand(operand, Type.F32);
-
-            Operand op1 = resolver.OperandRValue(Type.U64);
-            Operand op2 = resolver.OperandRValue(Type.U16);
-            resolver.UnifyArithmeticOperands(op1, op2);
-
-            Lexer lexer = new Lexer("ResolverTest", "");
-            Parser parser = new Parser(lexer);
-
-            string[] code = new string[]
-            {
-            //"struct R { h: s32; j: s32; }",
-            //"struct T { a: R; b: s64; c: s32; }",
-            //"var a: T = { { 1, 2 }, 2, 3 };",
-            //"var b: s32[4];",
-            //"var ta: s32 = 4;",
-            //"var tb: s32 = 4 + ta;",
-            //"func test(a: s32, ...);",
-            //"func add(val: T) -> s32 { var testVar: s32 = 321; test(3, 3.14f); ret testVar + 123; }",
-            /*"var a: s32 = 4;",
-            "func test() { a = 10; }"*/
-
-            "var a: s32[4];",
-            "func test() { a[0] = 123; }"
-            };
-
-            foreach (string c in code)
-            {
-                lexer.Reset(c);
-                lexer.NextToken();
-
-                Decl decl = parser.ParseDecl();
-                resolver.AddSymbol(decl);
-            }
-
-            resolver.ResolveSymbols();
-            resolver.FinalizeSymbols();
         }
     }
 }
