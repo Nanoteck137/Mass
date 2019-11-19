@@ -3,11 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-/* TODO(patrik):
- *  Fix SourceSpan for binary operator parsing
- *  Fix SourceSpan for some of the stmts
- */
-
 namespace Mass.Compiler
 {
     public class Parser
@@ -199,7 +194,7 @@ namespace Mass.Compiler
                 }
 
                 default:
-                    //TODO: Error?!?!?!
+                    Debug.Assert(false);
                     return null;
             }
         }
@@ -299,10 +294,9 @@ namespace Mass.Compiler
                     };
                     lexer.ExpectToken(TokenType.IDENTIFIER);
 
-                    SourceSpan firstSpan = expr.Span;
                     expr = new FieldExpr(expr, name)
                     {
-                        Span = SourceSpan.FromTo(firstSpan, name.Span)
+                        Span = SourceSpan.FromTo(expr.Span, name.Span)
                     };
                 }
                 else if (lexer.MatchToken(TokenType.KEYWORD_AS))
@@ -310,16 +304,24 @@ namespace Mass.Compiler
                     lexer.NextToken();
 
                     Typespec type = ParseTypespec();
-                    expr = new CastExpr(expr, type);
+
+                    expr = new CastExpr(expr, type)
+                    {
+                        Span = SourceSpan.FromTo(expr.Span, type.Span)
+                    };
                 }
                 else
                 {
                     Debug.Assert(lexer.MatchToken(TokenType.INC) || lexer.MatchToken(TokenType.DEC));
 
                     TokenType op = lexer.CurrentToken;
+                    SourceSpan lastSpan = lexer.CurrentTokenSpan;
                     lexer.NextToken();
 
-                    expr = new ModifyExpr(op, true, expr);
+                    expr = new ModifyExpr(op, true, expr)
+                    {
+                        Span = SourceSpan.FromTo(expr.Span, lastSpan)
+                    };
                 }
             }
 
@@ -334,12 +336,28 @@ namespace Mass.Compiler
                 lexer.MatchToken(TokenType.NOT))
             {
                 TokenType op = lexer.CurrentToken;
+                SourceSpan firstSpan = lexer.CurrentTokenSpan;
                 lexer.NextToken();
 
+                Expr expr = ParseBase();
+
                 if (op == TokenType.INC || op == TokenType.DEC)
-                    return new ModifyExpr(op, false, ParseBase());
+                {
+                    ModifyExpr result = new ModifyExpr(op, false, expr)
+                    {
+                        Span = SourceSpan.FromTo(firstSpan, expr.Span)
+                    };
+                    return result;
+                }
                 else
-                    return new UnaryExpr(op, ParseBase());
+                {
+                    UnaryExpr result = new UnaryExpr(op, expr)
+                    {
+                        Span = SourceSpan.FromTo(firstSpan, expr.Span)
+                    };
+                    return result;
+                }
+
             }
             else
             {
@@ -361,10 +379,9 @@ namespace Mass.Compiler
 
                 Expr right = ParseUnary();
 
-                SourceSpan leftSpan = left.Span;
                 left = new BinaryOpExpr(left, right, op)
                 {
-                    Span = SourceSpan.FromTo(leftSpan, right.Span)
+                    Span = SourceSpan.FromTo(left.Span, right.Span)
                 };
             }
 
@@ -384,10 +401,9 @@ namespace Mass.Compiler
 
                 Expr right = ParseMul();
 
-                SourceSpan leftSpan = left.Span;
                 left = new BinaryOpExpr(left, right, op)
                 {
-                    Span = SourceSpan.FromTo(leftSpan, right.Span)
+                    Span = SourceSpan.FromTo(left.Span, right.Span)
                 };
             }
 
@@ -396,7 +412,7 @@ namespace Mass.Compiler
 
         private Expr ParseCompare()
         {
-            Expr expr = ParseAdd();
+            Expr left = ParseAdd();
 
             while (lexer.MatchToken(TokenType.EQUAL2) ||
                     lexer.MatchToken(TokenType.NOT_EQUAL) ||
@@ -409,36 +425,45 @@ namespace Mass.Compiler
                 lexer.NextToken();
 
                 Expr right = ParseAdd();
-                expr = new BinaryOpExpr(expr, right, op);
+                left = new BinaryOpExpr(left, right, op)
+                {
+                    Span = SourceSpan.FromTo(left.Span, right.Span)
+                };
             }
 
-            return expr;
+            return left;
         }
 
         private Expr ParseAnd()
         {
-            Expr expr = ParseCompare();
+            Expr left = ParseCompare();
             while (lexer.MatchToken(TokenType.AND2))
             {
                 lexer.NextToken();
                 Expr right = ParseCompare();
-                expr = new BinaryOpExpr(expr, right, TokenType.AND2);
+                left = new BinaryOpExpr(left, right, TokenType.AND2)
+                {
+                    Span = SourceSpan.FromTo(left.Span, right.Span)
+                };
             }
 
-            return expr;
+            return left;
         }
 
         private Expr ParseOr()
         {
-            Expr expr = ParseAnd();
+            Expr left = ParseAnd();
             while (lexer.MatchToken(TokenType.OR2))
             {
                 lexer.NextToken();
                 Expr right = ParseAnd();
-                expr = new BinaryOpExpr(expr, right, TokenType.OR2);
+                left = new BinaryOpExpr(left, right, TokenType.OR2)
+                {
+                    Span = SourceSpan.FromTo(left.Span, right.Span)
+                };
             }
 
-            return expr;
+            return left;
         }
 
         private Expr ParseExpr()
@@ -514,7 +539,9 @@ namespace Mass.Compiler
                     lastSpan = block.Span;
 
                     if (elseBlock != null)
+                    {
                         Log.Error("Multiple elses", SourceSpan.FromTo(span, lastSpan));
+                    }
                     else
                     {
                         elseBlock = block;
@@ -1086,170 +1113,6 @@ namespace Mass.Compiler
             }
 
             return result;
-        }
-
-        public static void Test()
-        {
-            Lexer lexer = new Lexer("Parser Test", "");
-            Parser parser = new Parser(lexer);
-
-            #region Exprs Testing
-            lexer.Reset("4 + 2 * 8 + 3.14f");
-            lexer.NextToken();
-            Expr expr = parser.ParseExpr();
-            Debug.Assert(expr is BinaryOpExpr);
-
-            lexer.Reset("test(123, 321, 3.14f, \"Wooh\") + 123");
-            lexer.NextToken();
-            expr = parser.ParseExpr();
-            Debug.Assert(expr is BinaryOpExpr);
-
-            lexer.Reset("test[0]");
-            lexer.NextToken();
-            expr = parser.ParseExpr();
-            Debug.Assert(expr is IndexExpr);
-
-            lexer.Reset("test(321)[0][1]");
-            lexer.NextToken();
-            expr = parser.ParseExpr();
-            Debug.Assert(expr is IndexExpr);
-
-            lexer.Reset("T { test = 1, [4] = 2 }");
-            lexer.NextToken();
-            expr = parser.ParseExpr();
-            Debug.Assert(expr is CompoundExpr);
-
-            lexer.Reset("{ test = 1, [4] = 2 }");
-            lexer.NextToken();
-            expr = parser.ParseExpr();
-            Debug.Assert(expr is CompoundExpr);
-
-            lexer.Reset("test.a");
-            lexer.NextToken();
-            expr = parser.ParseExpr();
-            Debug.Assert(expr is FieldExpr);
-
-            lexer.Reset("123 >= 21 && 21 < 3");
-            lexer.NextToken();
-            expr = parser.ParseExpr();
-            Debug.Assert(expr is BinaryOpExpr);
-
-            #endregion
-
-            #region Stmts Testing
-            lexer.Reset("ret 123;");
-            lexer.NextToken();
-            Stmt stmt = parser.ParseStmt();
-            Debug.Assert(stmt is ReturnStmt);
-
-            lexer.Reset("{ ret 123; ret 321; }");
-            lexer.NextToken();
-            StmtBlock block = parser.ParseStmtBlock();
-
-            lexer.Reset("while(1) { ret 123; }");
-            lexer.NextToken();
-            Stmt stmt2 = parser.ParseStmt();
-            Debug.Assert(stmt2 is WhileStmt);
-
-            lexer.Reset("if(1) { continue; } else { break; }");
-            lexer.NextToken();
-            Stmt stmt3 = parser.ParseStmt();
-            Debug.Assert(stmt3 is IfStmt);
-
-            lexer.Reset("if(1) { continue; } else if(2) { ret 123; } else if(1) { continue; } else { break; }");
-            lexer.NextToken();
-            Stmt stmt4 = parser.ParseStmt();
-            Debug.Assert(stmt4 is IfStmt);
-
-            lexer.Reset("do { continue; } while(1);");
-            lexer.NextToken();
-            Stmt stmt5 = parser.ParseStmt();
-            Debug.Assert(stmt5 is DoWhileStmt);
-
-            lexer.Reset("a = 2;");
-            lexer.NextToken();
-            Stmt stmt6 = parser.ParseStmt();
-            Debug.Assert(stmt6 is AssignStmt);
-
-            lexer.Reset("var a: s32 = 123;");
-            lexer.NextToken();
-            Stmt stmt7 = parser.ParseStmt();
-            Debug.Assert(stmt7 is InitStmt);
-
-            lexer.Reset("for(var i: s32 = 0; i < 10; i++) { printf(\"Hello World\\n\"); }");
-            lexer.NextToken();
-            Stmt stmt8 = parser.ParseStmt();
-            Debug.Assert(stmt8 is ForStmt);
-            #endregion
-
-            #region Typespec Testing
-            lexer.Reset("s32**");
-            lexer.NextToken();
-            Typespec typespec = parser.ParseTypespec();
-            Debug.Assert(typespec is PtrTypespec);
-
-            lexer.Reset("s32*[4]*");
-            lexer.NextToken();
-            Typespec typespec2 = parser.ParseTypespec();
-            Debug.Assert(typespec2 is PtrTypespec);
-            #endregion
-
-            #region Decl Testing
-            lexer.Reset("var test: s32 = 123;");
-            lexer.NextToken();
-            Decl decl = parser.ParseDecl();
-            Debug.Assert(decl is VarDecl);
-            Debug.Assert(lexer.MatchToken(TokenType.EOF));
-
-            lexer.Reset("var test: s32;");
-            lexer.NextToken();
-            Decl decl2 = parser.ParseDecl();
-            Debug.Assert(decl2 is VarDecl);
-            Debug.Assert(lexer.MatchToken(TokenType.EOF));
-
-            lexer.Reset("struct Test { x: s32; y: s32; }");
-            lexer.NextToken();
-            Decl decl3 = parser.ParseDecl();
-            Debug.Assert(decl3 is StructDecl);
-            Debug.Assert(lexer.MatchToken(TokenType.EOF));
-
-            lexer.Reset("const test: s32 = 123;");
-            lexer.NextToken();
-            Decl decl4 = parser.ParseDecl();
-            Debug.Assert(decl4 is ConstDecl);
-            Debug.Assert(lexer.MatchToken(TokenType.EOF));
-
-            lexer.Reset("func test() { ret 123; }");
-            lexer.NextToken();
-            Decl decl5 = parser.ParseDecl();
-            Debug.Assert(decl5 is FunctionDecl);
-            Debug.Assert(lexer.MatchToken(TokenType.EOF));
-
-            lexer.Reset("func test();");
-            lexer.NextToken();
-            Decl decl6 = parser.ParseDecl();
-            Debug.Assert(decl6 is FunctionDecl);
-            Debug.Assert(lexer.MatchToken(TokenType.EOF));
-
-            lexer.Reset("func test() -> s32 { ret 123; }");
-            lexer.NextToken();
-            Decl decl7 = parser.ParseDecl();
-            Debug.Assert(decl7 is FunctionDecl);
-            Debug.Assert(lexer.MatchToken(TokenType.EOF));
-
-            lexer.Reset("func test() -> s32;");
-            lexer.NextToken();
-            Decl decl8 = parser.ParseDecl();
-            Debug.Assert(decl8 is FunctionDecl);
-            Debug.Assert(lexer.MatchToken(TokenType.EOF));
-
-            lexer.Reset("func test(x: s32, y: s32, ...) { ret 123; }");
-            lexer.NextToken();
-            Decl decl9 = parser.ParseDecl();
-            Debug.Assert(decl9 is FunctionDecl);
-            Debug.Assert(lexer.MatchToken(TokenType.EOF));
-
-            #endregion
         }
     }
 }

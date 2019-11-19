@@ -1,12 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <RuntimeIdentifier>win10-x64</RuntimeIdentifier>
     <Authors>Patrik Millvik Rosenström</Authors>
     <Company />
     <RepositoryUrl>https://github.com/Nanoteck137/Mass</RepositoryUrl>
+    <PackageId>MassCompiler</PackageId>
+    <Product>MassCompiler</Product>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

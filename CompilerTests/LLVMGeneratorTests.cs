@@ -13,7 +13,7 @@ namespace Mass.Compiler.Tests
         [Test]
         public void Test2()
         {
-            Assert.Pass();
+            //Assert.Pass();
         }
     }
 }
