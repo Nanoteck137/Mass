@@ -886,7 +886,7 @@ namespace Mass.Compiler
                     }
                     else
                     {
-                        Log.Fatal("Operands of + must both have arithmetic type, or pointer and integer type", null);
+                        Log.Fatal("Operands of + must both have arithmetic type, or pointer and integer type", expr.Span);
                     }
                     break;
 
@@ -914,7 +914,7 @@ namespace Mass.Compiler
                     }
                     else
                     {
-                        Log.Fatal("Operands of - must both have arithmetic type, or pointer and integer type", null);
+                        Log.Fatal("Operands of - must both have arithmetic type, or pointer and integer type", expr.Span);
                     }
                     break;
 
@@ -922,9 +922,9 @@ namespace Mass.Compiler
                 case TokenType.DIVIDE:
                 case TokenType.MODULO:
                     if (!left.Type.IsArithmetic)
-                        Log.Fatal($"Left of operand '{expr.Op}' must have arithmetic type", null);
+                        Log.Fatal($"Left of operand '{expr.Op}' must have arithmetic type", expr.Left.Span);
                     if (!right.Type.IsArithmetic)
-                        Log.Fatal($"Right of operand '{expr.Op}' must have arithmetic type", null);
+                        Log.Fatal($"Right of operand '{expr.Op}' must have arithmetic type", expr.Right.Span);
 
                     return OperandRValue(left.Type);
 
@@ -944,7 +944,15 @@ namespace Mass.Compiler
                     }
                     else
                     {
-                        Log.Fatal($"Operands of '{expr.Op}' needs to be of type boolean", null);
+                        if (!(left.Type is BoolType))
+                        {
+                            Log.Fatal($"Left Operand of '{expr.Op}' needs to be of type boolean", expr.Left.Span);
+                        }
+                        else
+                        {
+                            Log.Fatal($"Right Operand of '{expr.Op}' needs to be of type boolean", expr.Right.Span);
+                        }
+
                         return null;
                     }
             }
