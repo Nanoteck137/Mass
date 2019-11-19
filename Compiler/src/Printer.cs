@@ -198,7 +198,7 @@ namespace Mass.Compiler
 
                 Console.Write(")");
             }
-            else if (stmt is DoWhileStmt doWhileStmt)
+            /*else if (stmt is DoWhileStmt doWhileStmt)
             {
                 Console.Write("(do while ");
                 PrintExpr(doWhileStmt.Cond);
@@ -207,7 +207,7 @@ namespace Mass.Compiler
                 PrintNewline();
                 PrintStmtBlock(doWhileStmt.Block);
                 indent--;
-            }
+            }*/
             else if (stmt is ReturnStmt returnStmt)
             {
                 Console.Write("(return ");
@@ -349,159 +349,6 @@ namespace Mass.Compiler
             {
                 PrintDecl(decl);
                 Console.WriteLine();
-                Console.WriteLine();
-            }
-        }
-
-        public static void Test()
-        {
-            /*Expr[] exprs = new Expr[]
-            {
-                new BinaryOpExpr(new IntegerExpr(123), new FloatExpr(3.14, true), TokenType.PLUS),
-                new CallExpr(
-                    new IdentifierExpr("printf"),
-                    new List<Expr>()
-                    {
-                        new StringExpr("Hello %s\n"),
-                        new IndexExpr(
-                            new IdentifierExpr("arr"),
-                            new IntegerExpr(2)),
-                    }
-                ),
-            };
-
-            foreach (Expr expr in exprs)
-            {
-                PrintExpr(expr);
-                Console.WriteLine();
-            }*/
-
-            /*
-            ForStmt
-            */
-
-            Stmt[] stmts = new Stmt[]
-            {
-            new IfStmt(
-                new IntegerExpr(1),
-                new StmtBlock(
-                    new List<Stmt>() {
-                        new ReturnStmt(
-                            new IntegerExpr(123)),
-                        new ContinueStmt(),
-                        new BreakStmt()
-                    }),
-                new List<ElseIf>() {
-                    new ElseIf(
-                        new IntegerExpr(1),
-                        new StmtBlock(
-                            new List<Stmt>() {
-                                new BreakStmt()
-                            }))
-                },
-                new StmtBlock(
-                    new List<Stmt>() {
-                        new ContinueStmt()
-                    }
-                )),
-
-            new WhileStmt(
-                new IntegerExpr(1),
-                new StmtBlock(
-                    new List<Stmt>()
-                    {
-                        new BreakStmt()
-                    })),
-
-            new DoWhileStmt(
-                new IntegerExpr(1),
-                new StmtBlock(
-                    new List<Stmt>()
-                    {
-                        new BreakStmt()
-                    })),
-
-                /*new ForStmt(
-                    new DeclStmt(
-                        new VarDecl("i",
-                        new IdentifierTypespec(
-                            new IdentifierExpr("s32")),
-                        new IntegerExpr(0))),
-                    null,
-                    null,
-                    new StmtBlock(new List<Stmt>() {
-                        new ContinueStmt()
-                    }))*/
-
-                //new DeclStmt(new VarDecl("a", new IdentifierTypespec(new IdentifierExpr("s32")), new IntegerExpr(321)))
-            };
-
-            foreach (Stmt stmt in stmts)
-            {
-                //PrintStmt(stmt);
-                //Console.WriteLine();
-            }
-
-            Typespec[] types = new Typespec[]
-            {
-            new IdentifierTypespec(new IdentifierExpr("s32")),
-            new PtrTypespec(new IdentifierTypespec(new IdentifierExpr("s32"))),
-            new ArrayTypespec(new PtrTypespec(new IdentifierTypespec(new IdentifierExpr("s32"))), new IntegerExpr(4)),
-            };
-
-            foreach (Typespec typespec in types)
-            {
-                //PrintTypespec(typespec);
-                //Console.WriteLine();
-            }
-
-            Typespec type = new IdentifierTypespec(new IdentifierExpr("s32"));
-            Decl[] decls = new Decl[]
-            {
-            new VarDecl("a", new IdentifierTypespec(new IdentifierExpr("s32")), new IntegerExpr(123)),
-            new ConstDecl("a", new IdentifierTypespec(new IdentifierExpr("s32")), new IntegerExpr(123)),
-            new FunctionDecl(
-                "add",
-                new List<FunctionParameter>()
-                {
-                    new FunctionParameter("a", type),
-                    new FunctionParameter("b", type)
-                },
-                type,
-                false,
-                new StmtBlock(new List<Stmt>() {
-                    //new DeclStmt(new VarDecl("a", new IdentifierTypespec(new IdentifierExpr("s32")), new IntegerExpr(321)))
-                })),
-
-            new StructDecl("vec2", new List<StructItem>()
-            {
-                new StructItem("x", new IdentifierTypespec(new IdentifierExpr("f32"))),
-                new StructItem("y", new IdentifierTypespec(new IdentifierExpr("f32"))),
-            }, false),
-            };
-
-            foreach (Decl decl in decls)
-            {
-                //PrintDecl(decl);
-                //Console.WriteLine();
-            }
-
-            Lexer lexer = new Lexer("Printer Test", "");
-            Parser parser = new Parser(lexer);
-
-            string[] code = new string[]
-            {
-            "var t: s32 = 123;",
-            "var t: T = T { [1] = 1, test = 2, 3 };",
-            };
-
-            foreach (string c in code)
-            {
-                lexer.Reset(c);
-                lexer.NextToken();
-
-                Decl decl = parser.ParseDecl();
-                PrintDecl(decl);
                 Console.WriteLine();
             }
         }

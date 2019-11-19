@@ -3,6 +3,8 @@ source_filename = "NO NAME"
 
 %struct.FILE = type opaque
 
+@str = private unnamed_addr constant [7 x i8] c"A: %d\0A\00", align 1
+
 declare i32 @printf(i8*, ...)
 
 declare %struct.FILE* @fopen(i8*, i8*)
@@ -32,10 +34,23 @@ entry:
   store i32 %argc, i32* %argc1
   %argv2 = alloca i8**
   store i8** %argv, i8*** %argv2
-  %a = alloca float
-  store float 0x40091EB860000000, float* %a
-  %0 = load float, float* %a
-  %1 = fadd float %0, 0x40091EB860000000
-  store float %1, float* %a
+  %a = alloca i32
+  store i32 10, i32* %a
+  br label %then
+
+while:                                            ; preds = %then
+  %0 = load i32, i32* %a
+  %1 = icmp sgt i32 %0, 0
+  br i1 %1, label %then, label %endwhile
+
+then:                                             ; preds = %while, %entry
+  %2 = load i32, i32* %a
+  %3 = sub i32 %2, 1
+  store i32 %3, i32* %a
+  %4 = load i32, i32* %a
+  %5 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @str, i32 0, i32 0), i32 %4)
+  br label %while
+
+endwhile:                                         ; preds = %while
   ret i32 0
 }

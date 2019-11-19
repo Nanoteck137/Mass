@@ -82,23 +82,13 @@ namespace Mass.Compiler
     {
         public Expr Cond { get; private set; }
         public StmtBlock Block { get; private set; }
+        public bool IsDoWhile { get; private set; }
 
-        public WhileStmt(Expr cond, StmtBlock block)
+        public WhileStmt(Expr cond, StmtBlock block, bool isDoWhile)
         {
             this.Cond = cond;
             this.Block = block;
-        }
-    }
-
-    public class DoWhileStmt : Stmt
-    {
-        public Expr Cond { get; private set; }
-        public StmtBlock Block { get; private set; }
-
-        public DoWhileStmt(Expr cond, StmtBlock block)
-        {
-            this.Cond = cond;
-            this.Block = block;
+            this.IsDoWhile = isDoWhile;
         }
     }
 

@@ -27,7 +27,13 @@ func test(format: u8*, a: u8, ...) {
 
 func main(argc: s32, argv: u8**) -> s32
 {
-    var a: f32 = 3.14f;
-    a += 3.14f;
+	var a: s32 = 10;
+
+	do {
+		a--;
+
+		printf("A: %d\n", a);
+	} while(a > 0);
+
     ret 0;
 }

@@ -1633,9 +1633,10 @@ namespace Mass.Compiler
             ResolveStmtBlock(stmt.Block, returnType);
         }
 
-        private void ResolveDoWhileStmt(DoWhileStmt stmt, Type returnType)
+        /*private void ResolveDoWhileStmt(WhileStmt stmt, Type returnType)
         {
             Debug.Assert(stmt != null);
+            Debug.Assert(stmt.IsDoWhile);
 
             Operand cond = ResolveExpectedExpr(stmt.Cond, Type.Bool);
             if (cond.Type != Type.Bool)
@@ -1644,7 +1645,7 @@ namespace Mass.Compiler
             }
 
             ResolveStmtBlock(stmt.Block, returnType);
-        }
+        }*/
 
         private void ResolveReturnStmt(ReturnStmt stmt, Type returnType)
         {
@@ -1733,10 +1734,6 @@ namespace Mass.Compiler
             else if (stmt is WhileStmt whileStmt)
             {
                 ResolveWhileStmt(whileStmt, returnType);
-            }
-            else if (stmt is DoWhileStmt doWhileStmt)
-            {
-                ResolveDoWhileStmt(doWhileStmt, returnType);
             }
             else if (stmt is ReturnStmt returnStmt)
             {

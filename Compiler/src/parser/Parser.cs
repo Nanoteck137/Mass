@@ -651,7 +651,7 @@ namespace Mass.Compiler
 
             SourceSpan lastSpan = block.Span;
 
-            WhileStmt result = new WhileStmt(expr, block)
+            WhileStmt result = new WhileStmt(expr, block, false)
             {
                 Span = SourceSpan.FromTo(firstSpan, lastSpan)
             };
@@ -676,8 +676,7 @@ namespace Mass.Compiler
             SourceSpan lastSpan = lexer.CurrentTokenSpan;
             lexer.ExpectToken(TokenType.SEMICOLON);
 
-
-            DoWhileStmt result = new DoWhileStmt(cond, block)
+            WhileStmt result = new WhileStmt(cond, block, true)
             {
                 Span = SourceSpan.FromTo(firstSpan, lastSpan)
             };

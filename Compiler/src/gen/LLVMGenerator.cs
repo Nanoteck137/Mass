@@ -1097,38 +1097,40 @@ namespace Mass.Compiler
                 LLVMBasicBlockRef oldEnd = currentLoopEnd;
 
                 LLVMBasicBlockRef whileBlock = currentEntryBlock.InsertBasicBlock("while");
+                LLVMBasicBlockRef thenBlock = currentEntryBlock.InsertBasicBlock("then");
+                LLVMBasicBlockRef endBlock = currentEntryBlock.InsertBasicBlock("endwhile");
+
                 whileBlock.MoveAfter(currentEntryBlock);
+                thenBlock.MoveAfter(whileBlock);
+                endBlock.MoveAfter(thenBlock);
+
                 currentLoopStart = whileBlock;
+                currentLoopEnd = endBlock;
 
-                LLVMBasicBlockRef then = currentEntryBlock.InsertBasicBlock("then");
-                then.MoveAfter(whileBlock);
-
-                LLVMBasicBlockRef endWhile = currentEntryBlock.InsertBasicBlock("endwhile");
-                endWhile.MoveAfter(then);
-                currentLoopEnd = endWhile;
-
-                builder.BuildBr(whileBlock);
+                if (whileStmt.IsDoWhile)
+                    builder.BuildBr(thenBlock);
+                else
+                    builder.BuildBr(whileBlock);
 
                 builder.PositionAtEnd(whileBlock);
                 LLVMValueRef cond = GenExpr(builder, whileStmt.Cond);
-                builder.BuildCondBr(cond, then, endWhile);
+                builder.BuildCondBr(cond, thenBlock, endBlock);
 
-                builder.PositionAtEnd(then);
+                builder.PositionAtEnd(thenBlock);
 
-                GenStmtBlockInfo blockInfo;
-                GenStmtBlock(builder, whileStmt.Block, out blockInfo);
+                GenStmtBlock(builder, whileStmt.Block, out GenStmtBlockInfo blockInfo);
 
                 if (!blockInfo.HasBreakStmt && !blockInfo.HasContinueStmt)
                     builder.BuildBr(whileBlock);
 
-                builder.PositionAtEnd(endWhile);
+                builder.PositionAtEnd(endBlock);
 
-                currentEntryBlock = endWhile;
+                currentEntryBlock = endBlock;
 
                 currentLoopStart = oldStart;
                 currentLoopEnd = oldEnd;
             }
-            else if (stmt is DoWhileStmt doWhileStmt)
+            /*else if (stmt is DoWhileStmt doWhileStmt)
             {
                 LLVMBasicBlockRef then = currentEntryBlock.InsertBasicBlock("then");
                 then.MoveAfter(currentEntryBlock);
@@ -1154,7 +1156,7 @@ namespace Mass.Compiler
                 builder.PositionAtEnd(endWhile);
 
                 currentEntryBlock = endWhile;
-            }
+            }*/
             else if (stmt is ReturnStmt returnStmt)
             {
                 LLVMValueRef value = GenLoadedExpr(builder, returnStmt.Value);
