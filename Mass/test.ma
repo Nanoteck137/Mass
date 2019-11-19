@@ -26,9 +26,9 @@ func main(argc: s32, argv: u8**) -> s32
 {
     var a: s32* = malloc(8) as s32*;
 
-	a[0] = 123;
+    a[0] = 123;
 
-	printf("A: %d\n", a[0]);
+    printf("A: %d\n", a[0]);
 
     free(a as u8*);
 

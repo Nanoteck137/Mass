@@ -45,6 +45,8 @@ namespace Mass
 
     class Program
     {
+        private const string VERSION = "Alpha v1.0";
+
         private readonly Dictionary<string, Option> options;
         private readonly string executableName;
 
@@ -87,7 +89,7 @@ namespace Mass
 
         bool PrintVersionOption(string[] args, CompilerOptions compilerOptions)
         {
-            Console.WriteLine($"{executableName} - v0.1");
+            Console.WriteLine($"{executableName} - {VERSION}");
 
             return true;
         }

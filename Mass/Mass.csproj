@@ -13,6 +13,10 @@
     <RepositoryUrl>https://github.com/Nanoteck137/Mass</RepositoryUrl>
     <PackageId>Mass</PackageId>
     <Product>Mass</Product>
+    <AssemblyName>mass</AssemblyName>
+
+    <PublishSingleFile>true</PublishSingleFile>
+    <PublishTrimmed>true</PublishTrimmed>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
