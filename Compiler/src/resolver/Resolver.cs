@@ -1633,20 +1633,6 @@ namespace Mass.Compiler
             ResolveStmtBlock(stmt.Block, returnType);
         }
 
-        /*private void ResolveDoWhileStmt(WhileStmt stmt, Type returnType)
-        {
-            Debug.Assert(stmt != null);
-            Debug.Assert(stmt.IsDoWhile);
-
-            Operand cond = ResolveExpectedExpr(stmt.Cond, Type.Bool);
-            if (cond.Type != Type.Bool)
-            {
-                Log.Fatal("Do While stmt condition needs to be a boolean", stmt.Cond.Span);
-            }
-
-            ResolveStmtBlock(stmt.Block, returnType);
-        }*/
-
         private void ResolveReturnStmt(ReturnStmt stmt, Type returnType)
         {
             Debug.Assert(stmt != null);

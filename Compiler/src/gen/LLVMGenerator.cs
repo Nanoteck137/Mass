@@ -1130,33 +1130,6 @@ namespace Mass.Compiler
                 currentLoopStart = oldStart;
                 currentLoopEnd = oldEnd;
             }
-            /*else if (stmt is DoWhileStmt doWhileStmt)
-            {
-                LLVMBasicBlockRef then = currentEntryBlock.InsertBasicBlock("then");
-                then.MoveAfter(currentEntryBlock);
-
-                LLVMBasicBlockRef whileBlock = currentEntryBlock.InsertBasicBlock("dowhile");
-                whileBlock.MoveAfter(then);
-
-                LLVMBasicBlockRef endWhile = currentEntryBlock.InsertBasicBlock("enddowhile");
-                endWhile.MoveAfter(then);
-
-                builder.BuildBr(then);
-
-                builder.PositionAtEnd(then);
-
-                GenStmtBlock(builder, doWhileStmt.Block, out GenStmtBlockInfo blockInfo);
-                if (!blockInfo.HasBreakStmt && !blockInfo.HasContinueStmt)
-                    builder.BuildBr(whileBlock);
-
-                builder.PositionAtEnd(whileBlock);
-                LLVMValueRef cond = GenExpr(builder, doWhileStmt.Cond);
-                builder.BuildCondBr(cond, then, endWhile);
-
-                builder.PositionAtEnd(endWhile);
-
-                currentEntryBlock = endWhile;
-            }*/
             else if (stmt is ReturnStmt returnStmt)
             {
                 LLVMValueRef value = GenLoadedExpr(builder, returnStmt.Value);
