@@ -154,7 +154,9 @@ namespace Mass.Compiler
                             Span = ident.Span
                         };
 
-                        return ParseCompound(typespec);
+                        CompoundExpr result = ParseCompound(typespec);
+                        result.Span = SourceSpan.FromTo(ident.Span, result.Span);
+                        return result;
                     }
                     else
                     {
@@ -565,6 +567,7 @@ namespace Mass.Compiler
 
             if (lexer.MatchToken(TokenType.KEYWORD_VAR))
             {
+                SourceSpan firstSpan = lexer.CurrentTokenSpan;
                 lexer.NextToken();
 
                 IdentifierExpr identifier = new IdentifierExpr(lexer.CurrentIdentifier);
@@ -574,14 +577,24 @@ namespace Mass.Compiler
                 Typespec type = ParseTypespec();
 
                 Expr value = null;
+                SourceSpan lastSpan = null;
                 if (lexer.MatchToken(TokenType.EQUAL))
                 {
                     lexer.NextToken();
 
                     value = ParseExpr();
+                    lastSpan = value.Span;
+                }
+                else
+                {
+                    lastSpan = type.Span;
                 }
 
-                return new InitStmt(identifier, type, value);
+                InitStmt result = new InitStmt(identifier, type, value)
+                {
+                    Span = SourceSpan.FromTo(firstSpan, lastSpan)
+                };
+                return result;
             }
 
             return null;
@@ -797,7 +810,10 @@ namespace Mass.Compiler
             else
             {
                 Stmt result = ParseSimpleStmt();
+                SourceSpan lastSpan = lexer.CurrentTokenSpan;
                 lexer.ExpectToken(TokenType.SEMICOLON);
+                result.Span = SourceSpan.FromTo(result.Span, lastSpan);
+
                 return result;
             }
         }
@@ -1011,16 +1027,22 @@ namespace Mass.Compiler
             }
 
             StmtBlock block = null;
+            SourceSpan lastSpan = null;
             if (lexer.MatchToken(TokenType.OPEN_BRACE))
             {
                 block = ParseStmtBlock();
+                lastSpan = block.Span;
             }
             else
             {
+                lastSpan = lexer.CurrentTokenSpan;
                 lexer.ExpectToken(TokenType.SEMICOLON);
             }
 
-            FunctionDecl result = new FunctionDecl(name, parameters, returnType, varArgs, block);
+            FunctionDecl result = new FunctionDecl(name, parameters, returnType, varArgs, block)
+            {
+                Span = SourceSpan.FromTo(firstSpan, lastSpan)
+            };
             return result;
         }
 
@@ -1035,7 +1057,7 @@ namespace Mass.Compiler
 
             bool isOpaque = false;
             List<StructItem> items = new List<StructItem>();
-            SourceSpan lastSpan = null;
+            SourceSpan lastSpan;
             if (lexer.MatchToken(TokenType.OPEN_BRACE))
             {
                 lexer.NextToken();

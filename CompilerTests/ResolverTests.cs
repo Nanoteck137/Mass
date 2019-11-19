@@ -23,8 +23,8 @@ namespace Mass.Compiler.Tests
             string[] code = new string[]
             {
                 "var a: s32 = 123;",
-                @"#external
-                  func test();"
+                "struct T { i: s32; }",
+                "func test() -> s32 { var test: T = { 123 }; var b: s32 = test.a; }"
             };
 
             foreach (string c in code)

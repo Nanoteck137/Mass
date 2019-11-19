@@ -1233,14 +1233,14 @@ namespace Mass.Compiler
             Operand operand = ResolveExpr(expr.Expr);
             if (!(operand.Type is StructType))
             {
-                Log.Fatal("Field expr needs to have a struct type", null);
+                Log.Fatal("Field expr needs to have a struct type", expr.Expr.Span);
             }
 
             StructType structType = (StructType)operand.Type;
             int index = structType.GetItemIndex(expr.Name.Value);
             if (index == -1)
             {
-                Log.Fatal($"Struct has no field with name '{expr.Name.Value}'", null);
+                Log.Fatal($"Struct has no field with name '{expr.Name.Value}'", expr.Expr.Span);
             }
 
             return OperandRValue(structType.Items[index].Type);
@@ -1325,7 +1325,7 @@ namespace Mass.Compiler
             Operand result = ResolveExpr(expr);
             if (!result.IsConst)
             {
-                Log.Fatal("Expected const expr", null);
+                Log.Fatal("Expected const expr", expr.Span);
             }
 
             return result;
@@ -1362,14 +1362,14 @@ namespace Mass.Compiler
 
                     if (!(operand.Type is IntType))
                     {
-                        Log.Fatal("Array size must be a integer", null);
+                        Log.Fatal("Array size must be a integer", arrayTypespec.Size.Span);
                     }
 
                     ConvertOperand(operand, Type.S32);
                     size = operand.Val.s32;
                     if (size <= 0)
                     {
-                        Log.Fatal("Array size cant be negative", null);
+                        Log.Fatal("Array size cant be negative", arrayTypespec.Size.Span);
                     }
                 }
 
@@ -1393,7 +1393,7 @@ namespace Mass.Compiler
                 Operand expr = ResolveExpectedExpr(decl.Value, type);
                 if (!ConvertOperand(expr, type))
                 {
-                    Log.Fatal("Invalid type in variable initializer", null);
+                    Log.Fatal("Invalid type in variable initializer", decl.Value.Span);
                 }
 
                 /*if (!expr.IsConst)
@@ -1417,7 +1417,7 @@ namespace Mass.Compiler
                 Operand expr = ResolveConstExpr(decl.Value);
                 if (expr.Type != type)
                 {
-                    Log.Fatal("Var type value mismatch", null);
+                    Log.Fatal("Var type value mismatch", decl.Type.Span);
                 }
             }
 
@@ -1532,7 +1532,7 @@ namespace Mass.Compiler
             Operand cond = ResolveExpr(stmt.Cond);
             if (cond.Type != Type.Bool)
             {
-                Log.Fatal("If stmt condition needs to be a boolean", null);
+                Log.Fatal("If stmt condition needs to be a boolean", stmt.Cond.Span);
             }
 
             ResolveStmtBlock(stmt.ThenBlock, returnType);
@@ -1542,7 +1542,7 @@ namespace Mass.Compiler
                 Operand elseIfCond = ResolveExpr(elseIf.Cond);
                 if (elseIfCond.Type != Type.Bool)
                 {
-                    Log.Fatal("Else Ifs condition needs to be a boolean", null);
+                    Log.Fatal("Else Ifs condition needs to be a boolean", elseIf.Cond.Span);
                 }
 
                 ResolveStmtBlock(elseIf.Block, returnType);
@@ -1563,7 +1563,7 @@ namespace Mass.Compiler
                 Operand expr = ResolveExpectedExpr(stmt.Value, type);
                 if (!ConvertOperand(expr, type))
                 {
-                    Log.Fatal("Invalid type in variable initializer", null);
+                    Log.Fatal("Invalid type in variable initializer", stmt.Value.Span);
                 }
 
                 stmt.Value.ResolvedType = expr.Type;
@@ -1588,7 +1588,7 @@ namespace Mass.Compiler
                 Operand operand = ResolveExprRValue(stmt.Cond);
                 if (!(operand.Type is BoolType))
                 {
-                    Log.Fatal("Condition on for loop needs to be evaluated to a boolean type", null);
+                    Log.Fatal("Condition on for loop needs to be evaluated to a boolean type", stmt.Cond.Span);
                 }
             }
 
@@ -1609,7 +1609,7 @@ namespace Mass.Compiler
             Operand cond = ResolveExpectedExpr(stmt.Cond, Type.Bool);
             if (cond.Type != Type.Bool)
             {
-                Log.Fatal("While stmt condition needs to be a boolean", null);
+                Log.Fatal("While stmt condition needs to be a boolean", stmt.Cond.Span);
             }
 
             ResolveStmtBlock(stmt.Block, returnType);
@@ -1622,7 +1622,7 @@ namespace Mass.Compiler
             Operand cond = ResolveExpectedExpr(stmt.Cond, Type.Bool);
             if (cond.Type != Type.Bool)
             {
-                Log.Fatal("While stmt condition needs to be a boolean", null);
+                Log.Fatal("Do While stmt condition needs to be a boolean", stmt.Cond.Span);
             }
 
             ResolveStmtBlock(stmt.Block, returnType);
@@ -1635,7 +1635,8 @@ namespace Mass.Compiler
             Operand expr = ResolveExpectedExpr(stmt.Value, returnType);
             if (expr.Type != returnType)
             {
-                Log.Fatal("Return type mismatch", null);
+                // TODO(patrik): Print out the expected type
+                Log.Fatal("Return type mismatch", stmt.Value.Span);
             }
         }
 
@@ -1646,20 +1647,11 @@ namespace Mass.Compiler
             Operand left = ResolveExpr(stmt.Left);
             if (!left.IsLValue)
             {
-                Log.Fatal("Cannot assign to non-lvalue", null);
+                Log.Fatal("Cannot assign to non-lvalue", stmt.Left.Span);
             }
 
             Operand right = ResolveExpr(stmt.Right);
             Operand result = null;
-
-            /*
-                EQUAL
-                PLUS_EQUAL
-                MINUS_EQUAL
-                MULTIPLY_EQUALS
-                DIVIDE_EQUALS
-                MODULO_EQUALS
-             */
 
             switch (stmt.Op)
             {
@@ -1680,7 +1672,7 @@ namespace Mass.Compiler
 
             if (!ConvertOperand(result, left.Type))
             {
-                Log.Fatal("Invalid type in assignment", null);
+                Log.Fatal("Invalid type in assignment", stmt.Right.Span);
             }
         }
 
@@ -1698,7 +1690,7 @@ namespace Mass.Compiler
             }
             else
             {
-                Log.Fatal("Only call, inc and dec expressions can be used a statement", null);
+                Log.Fatal("Only call, inc and dec expressions can be used a statement", stmt.Span);
             }
         }
 
@@ -1801,7 +1793,7 @@ namespace Mass.Compiler
                     {
                         if (decl.GetAttribute(typeof(ExternalDeclAttribute)) == null)
                         {
-                            Log.Fatal("Functions needs a body if not #external used", null);
+                            Log.Fatal("Functions needs a body if not #external used", decl.Span);
                         }
                     }
                 }
