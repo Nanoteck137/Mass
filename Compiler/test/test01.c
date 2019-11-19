@@ -3,26 +3,13 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+void test(char* format, ...) {
+
+}
+
 int main(int argc, char **argv)
 {
-	int a = 5;
-
-	if(a < 5) 
-	{
-		printf("1\n");
-	} 
-	else if(a < 8)
-	{
-		printf("2\n");
-	} 
-	else if(a < 10)
-	{
-		printf("3\n");
-	}
-	else 
-	{
-		printf("4\n");
-	}
-
+	int16_t a = 5;
+	test("", a);
 	return 0;
 }

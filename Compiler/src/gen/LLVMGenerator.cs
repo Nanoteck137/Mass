@@ -757,23 +757,43 @@ namespace Mass.Compiler
             }
             else if (expr is CallExpr callExpr)
             {
+                Debug.Assert(callExpr.Expr.ResolvedType is FunctionType);
+                FunctionType funcType = (FunctionType)callExpr.Expr.ResolvedType;
                 LLVMValueRef func = GenExpr(builder, callExpr.Expr);
 
                 LLVMValueRef[] arguments = new LLVMValueRef[callExpr.Arguments.Count];
                 for (int i = 0; i < arguments.Length; i++)
                 {
                     arguments[i] = GenLoadedExpr(builder, callExpr.Arguments[i]);
-                    if (callExpr.Arguments[i].ResolvedType is FloatType floatType)
+
+                    if (i >= funcType.Parameters.Count)
                     {
-                        if (floatType.Kind == FloatKind.F32)
+                        if (callExpr.Arguments[i].ResolvedType is FloatType floatType)
                         {
-                            // TODO(patrik): We need to convert float to double if the argument is part of the varargs
-                            arguments[i] = builder.BuildFPExt(arguments[i], LLVMTypeRef.Double);
+                            if (floatType.Kind == FloatKind.F32)
+                            {
+                                // TODO(patrik): We need to convert float to double if the argument is part of the varargs
+                                arguments[i] = builder.BuildFPExt(arguments[i], LLVMTypeRef.Double);
+                            }
                         }
-                    }
-                    else if (callExpr.Arguments[i].ResolvedType is BoolType)
-                    {
-                        arguments[i] = builder.BuildZExt(arguments[i], LLVMTypeRef.Int32);
+                        else if (callExpr.Arguments[i].ResolvedType is BoolType)
+                        {
+                            arguments[i] = builder.BuildZExt(arguments[i], LLVMTypeRef.Int32);
+                        }
+                        else if (callExpr.Arguments[i].ResolvedType is IntType intType)
+                        {
+                            switch (intType.Kind)
+                            {
+                                case IntKind.U8:
+                                case IntKind.U16:
+                                    arguments[i] = builder.BuildZExt(arguments[i], LLVMTypeRef.Int32);
+                                    break;
+                                case IntKind.S8:
+                                case IntKind.S16:
+                                    arguments[i] = builder.BuildSExt(arguments[i], LLVMTypeRef.Int32);
+                                    break;
+                            }
+                        }
                     }
                 }
 
@@ -1123,8 +1143,7 @@ namespace Mass.Compiler
 
                 builder.PositionAtEnd(then);
 
-                GenStmtBlockInfo blockInfo;
-                GenStmtBlock(builder, doWhileStmt.Block, out blockInfo);
+                GenStmtBlock(builder, doWhileStmt.Block, out GenStmtBlockInfo blockInfo);
                 if (!blockInfo.HasBreakStmt && !blockInfo.HasContinueStmt)
                     builder.BuildBr(whileBlock);
 
@@ -1173,6 +1192,7 @@ namespace Mass.Compiler
                 }
                 else
                 {
+                    Debug.Assert(assignStmt.Left.ResolvedType is IntType);
                     GenIntegerOperators(builder, left, right, assignStmt.Op, (IntType)assignStmt.Left.ResolvedType);
                 }
 

@@ -76,19 +76,19 @@ namespace Mass.Compiler
             AddGlobalType("void", Type.Void);
 
             typeRank = new Dictionary<Type, int>()
-        {
-            { Type.U8, 1 },
-            { Type.S8, 1 },
+            {
+                { Type.U8, 1 },
+                { Type.S8, 1 },
 
-            { Type.U16, 2 },
-            { Type.S16, 2 },
+                { Type.U16, 2 },
+                { Type.S16, 2 },
 
-            { Type.U32, 3 },
-            { Type.S32, 3 },
+                { Type.U32, 3 },
+                { Type.S32, 3 },
 
-            { Type.U64, 4 },
-            { Type.S64, 4 },
-        };
+                { Type.U64, 4 },
+                { Type.S64, 4 },
+            };
         }
 
         private int GetTypeRank(Type type)
@@ -198,9 +198,6 @@ namespace Mass.Compiler
 
         public int EnterScope()
         {
-            //if (localSymbols.Count <= 0)
-            //return 0;
-
             return localSymbols.Count - 1;
         }
 
