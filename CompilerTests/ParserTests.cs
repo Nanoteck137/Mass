@@ -20,7 +20,8 @@ namespace Mass.Compiler.Tests
         {
             string[] code = new string[]
             {
-                "var a: s32 = 123;",
+                "var a: s32 = 123 + 321 * 3;",
+
                 "func test(a: s32[3], b: s32*) { }",
                 "func test(a: s32, b: f32) { printf(\"Hello World\"); }",
                 "struct Test { a: T; b: s32; }",
