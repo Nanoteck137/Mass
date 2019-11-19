@@ -122,12 +122,12 @@ namespace Mass
             string path = Assembly.GetEntryAssembly().Location;
             this.executableName = Path.GetFileNameWithoutExtension(path);
 
-            bool error = ParseOptions(ref args, out CompilerOptions compilerOption);
+            bool error = ParseOptions(ref args, out CompilerOptions compilerOption, out bool exit);
             if (error)
             {
                 PrintUsage();
             }
-            else
+            else if (!exit)
             {
                 if (args.Length > 1)
                 {
@@ -146,9 +146,10 @@ namespace Mass
             }
         }
 
-        bool ParseOptions(ref string[] args, out CompilerOptions compilerOptions)
+        bool ParseOptions(ref string[] args, out CompilerOptions compilerOptions, out bool exit)
         {
             bool error = false;
+            exit = false;
             compilerOptions = new CompilerOptions();
 
             int i = 0;
@@ -187,7 +188,7 @@ namespace Mass
                     i += option.Parameters.Length;
                 }
 
-                option.Callback(commandArgs, compilerOptions);
+                exit = option.Callback(commandArgs, compilerOptions);
             }
 
             args = args[i..args.Length];
