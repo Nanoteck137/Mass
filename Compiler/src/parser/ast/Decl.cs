@@ -15,6 +15,8 @@ namespace Mass.Compiler
         public string Name { get; protected set; }
         public List<DeclAttribute> Attributes { get; set; }
 
+        public SourceSpan Span { get; set; }
+
         public DeclAttribute GetAttribute(System.Type type)
         {
             for (int i = 0; i < Attributes.Count; i++)
@@ -59,6 +61,8 @@ namespace Mass.Compiler
     {
         public string Name { get; private set; }
         public Typespec Type { get; private set; }
+
+        public SourceSpan Span { get; set; }
 
         public FunctionParameter(string name, Typespec type)
         {

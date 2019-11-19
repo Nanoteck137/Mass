@@ -747,11 +747,17 @@ namespace Mass.Compiler
                     lexer.NextToken();
 
                     Expr right = ParseExpr();
-                    stmt = new AssignStmt(expr, right, op);
+                    stmt = new AssignStmt(expr, right, op)
+                    {
+                        Span = SourceSpan.FromTo(expr.Span, right.Span)
+                    };
                 }
                 else
                 {
-                    stmt = new ExprStmt(expr);
+                    stmt = new ExprStmt(expr)
+                    {
+                        Span = expr.Span
+                    };
                 }
             }
 
@@ -873,6 +879,7 @@ namespace Mass.Compiler
         private Decl ParseVarDecl()
         {
             // Format: var test: s32 = 123;
+            SourceSpan firstSpan = lexer.CurrentTokenSpan;
             lexer.ExpectToken(TokenType.KEYWORD_VAR);
 
             string name = lexer.CurrentIdentifier;
@@ -890,9 +897,13 @@ namespace Mass.Compiler
                 expr = ParseExpr();
             }
 
+            SourceSpan lastSpan = lexer.CurrentTokenSpan;
             lexer.ExpectToken(TokenType.SEMICOLON);
 
-            VarDecl result = new VarDecl(name, type, expr);
+            VarDecl result = new VarDecl(name, type, expr)
+            {
+                Span = SourceSpan.FromTo(firstSpan, lastSpan)
+            };
 
             return result;
         }
@@ -900,6 +911,7 @@ namespace Mass.Compiler
         private Decl ParseConstDecl()
         {
             // const test: s32 = 123;
+            SourceSpan firstSpan = lexer.CurrentTokenSpan;
             lexer.ExpectToken(TokenType.KEYWORD_CONST);
 
             string name = lexer.CurrentIdentifier;
@@ -912,21 +924,31 @@ namespace Mass.Compiler
 
             Expr expr = ParseExpr();
 
+            SourceSpan lastSpan = lexer.CurrentTokenSpan;
             lexer.ExpectToken(TokenType.SEMICOLON);
 
-            ConstDecl result = new ConstDecl(name, type, expr);
+            ConstDecl result = new ConstDecl(name, type, expr)
+            {
+                Span = SourceSpan.FromTo(firstSpan, lastSpan)
+            };
+
             return result;
         }
 
         private FunctionParameter ParseFuncParam()
         {
             string paramName = lexer.CurrentIdentifier;
+            SourceSpan firstSpan = lexer.CurrentTokenSpan;
             lexer.ExpectToken(TokenType.IDENTIFIER);
             lexer.ExpectToken(TokenType.COLON);
 
             Typespec paramType = ParseTypespec();
 
-            return new FunctionParameter(paramName, paramType);
+            FunctionParameter result = new FunctionParameter(paramName, paramType)
+            {
+                Span = SourceSpan.FromTo(firstSpan, paramType.Span)
+            };
+            return result;
         }
 
         private Decl ParseFuncDecl()
@@ -935,6 +957,8 @@ namespace Mass.Compiler
             //         func test(x: s32, y: s32, ...) -> s32 { stmt* }
             //         func test(x: s32, y: s32, ...);
             //         func test(x: s32, y: s32, ...) -> s32;
+
+            SourceSpan firstSpan = lexer.CurrentTokenSpan;
             lexer.ExpectToken(TokenType.KEYWORD_FUNC);
 
             string name = lexer.CurrentIdentifier;
@@ -1003,7 +1027,7 @@ namespace Mass.Compiler
         private Decl ParseStructDecl()
         {
             // Format: struct Test { x: s32; y: s32; }
-
+            SourceSpan firstSpan = lexer.CurrentTokenSpan;
             lexer.ExpectToken(TokenType.KEYWORD_STRUCT);
 
             string name = lexer.CurrentIdentifier;
@@ -1011,6 +1035,7 @@ namespace Mass.Compiler
 
             bool isOpaque = false;
             List<StructItem> items = new List<StructItem>();
+            SourceSpan lastSpan = null;
             if (lexer.MatchToken(TokenType.OPEN_BRACE))
             {
                 lexer.NextToken();
@@ -1026,15 +1051,20 @@ namespace Mass.Compiler
                     items.Add(new StructItem(itemName, itemType));
                 }
 
+                lastSpan = lexer.CurrentTokenSpan;
                 lexer.ExpectToken(TokenType.CLOSE_BRACE);
             }
             else
             {
+                lastSpan = lexer.CurrentTokenSpan;
                 lexer.ExpectToken(TokenType.SEMICOLON);
                 isOpaque = true;
             }
 
-            StructDecl result = new StructDecl(name, items, isOpaque);
+            StructDecl result = new StructDecl(name, items, isOpaque)
+            {
+                Span = SourceSpan.FromTo(firstSpan, lastSpan)
+            };
             return result;
         }
 
