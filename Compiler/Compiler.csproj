@@ -9,6 +9,8 @@
     <RepositoryUrl>https://github.com/Nanoteck137/Mass</RepositoryUrl>
     <PackageId>MassCompiler</PackageId>
     <Product>MassCompiler</Product>
+
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
