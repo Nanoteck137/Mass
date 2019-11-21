@@ -100,7 +100,7 @@ namespace Mass.Compiler.Tests
         [Test, Order(1)]
         public void TestKeywords()
         {
-            string text = "var const func struct if for while do ret continue break else as test";
+            string text = "var const func struct if for while do ret continue break else as import from test";
             TokenType[] expectedTokens = new TokenType[]
             {
                 TokenType.KEYWORD_VAR,
@@ -118,6 +118,9 @@ namespace Mass.Compiler.Tests
 
                 TokenType.KEYWORD_ELSE,
                 TokenType.KEYWORD_AS,
+                TokenType.KEYWORD_IMPORT,
+                TokenType.KEYWORD_FROM,
+
                 TokenType.IDENTIFIER,
             };
 

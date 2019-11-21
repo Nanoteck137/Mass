@@ -29,6 +29,7 @@ namespace Mass.Compiler
         KEYWORD_ELSE,
         KEYWORD_AS,
         KEYWORD_IMPORT,
+        KEYWORD_FROM,
 
         IDENTIFIER,
         STRING,
@@ -148,6 +149,7 @@ namespace Mass.Compiler
                 { "else", TokenType.KEYWORD_ELSE },
                 { "as", TokenType.KEYWORD_AS },
                 { "import", TokenType.KEYWORD_IMPORT },
+                { "from", TokenType.KEYWORD_FROM },
             };
 
             hexCharMap = new Dictionary<char, int>()

@@ -1026,7 +1026,7 @@ namespace Mass.Compiler
             }
 
             StmtBlock block = null;
-            SourceSpan lastSpan = null;
+            SourceSpan lastSpan;
             if (lexer.MatchToken(TokenType.OPEN_BRACE))
             {
                 block = ParseStmtBlock();
@@ -1089,6 +1089,71 @@ namespace Mass.Compiler
             return result;
         }
 
+        private Decl ParseImportDecl()
+        {
+            // Format 1: import test
+            //        2: import { } from test
+
+            lexer.ExpectToken(TokenType.KEYWORD_IMPORT);
+
+            IdentifierExpr packageName = null;
+            List<IdentifierExpr> symbols = new List<IdentifierExpr>();
+
+            if (lexer.MatchToken(TokenType.IDENTIFIER))
+            {
+                packageName = new IdentifierExpr(lexer.CurrentIdentifier)
+                {
+                    Span = lexer.CurrentTokenSpan
+                };
+                lexer.NextToken();
+            }
+            else if (lexer.MatchToken(TokenType.OPEN_BRACE))
+            {
+                lexer.NextToken();
+
+                if (lexer.MatchToken(TokenType.IDENTIFIER))
+                {
+                    IdentifierExpr sym = new IdentifierExpr(lexer.CurrentIdentifier)
+                    {
+                        Span = lexer.CurrentTokenSpan
+                    };
+                    symbols.Add(sym);
+                    lexer.NextToken();
+
+                    while (!lexer.MatchToken(TokenType.CLOSE_BRACE))
+                    {
+                        lexer.ExpectToken(TokenType.COMMA);
+
+                        sym = new IdentifierExpr(lexer.CurrentIdentifier)
+                        {
+                            Span = lexer.CurrentTokenSpan
+                        };
+                        symbols.Add(sym);
+                        lexer.ExpectToken(TokenType.IDENTIFIER);
+                    }
+                }
+
+                lexer.ExpectToken(TokenType.CLOSE_BRACE);
+                lexer.ExpectToken(TokenType.KEYWORD_FROM);
+
+                packageName = new IdentifierExpr(lexer.CurrentIdentifier)
+                {
+                    Span = lexer.CurrentTokenSpan
+                };
+
+                lexer.ExpectToken(TokenType.IDENTIFIER);
+            }
+            else
+            {
+                Debug.Assert(false);
+            }
+
+            lexer.ExpectToken(TokenType.SEMICOLON);
+
+            ImportDecl result = new ImportDecl(packageName, symbols);
+            return result;
+        }
+
         private List<DeclAttribute> ParseDeclAttributes()
         {
             List<DeclAttribute> result = new List<DeclAttribute>();
@@ -1147,6 +1212,16 @@ namespace Mass.Compiler
                 Decl decl = ParseStructDecl();
                 decl.Attributes = attributes;
                 return decl;
+            }
+            else if (lexer.MatchToken(TokenType.KEYWORD_IMPORT))
+            {
+                Decl decl = ParseImportDecl();
+                decl.Attributes = attributes;
+                return decl;
+            }
+            else
+            {
+                Debug.Assert(false);
             }
 
             return null;
