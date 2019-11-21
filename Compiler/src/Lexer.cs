@@ -28,6 +28,7 @@ namespace Mass.Compiler
 
         KEYWORD_ELSE,
         KEYWORD_AS,
+        KEYWORD_IMPORT,
 
         IDENTIFIER,
         STRING,
@@ -130,38 +131,39 @@ namespace Mass.Compiler
             this.builder = new StringBuilder();
 
             keywords = new Dictionary<string, TokenType>
-        {
-            { "var", TokenType.KEYWORD_VAR },
-            { "const", TokenType.KEYWORD_CONST },
-            { "func", TokenType.KEYWORD_FUNC },
-            { "struct", TokenType.KEYWORD_STRUCT },
+            {
+                { "var", TokenType.KEYWORD_VAR },
+                { "const", TokenType.KEYWORD_CONST },
+                { "func", TokenType.KEYWORD_FUNC },
+                { "struct", TokenType.KEYWORD_STRUCT },
 
-            { "if", TokenType.KEYWORD_IF },
-            { "for", TokenType.KEYWORD_FOR },
-            { "while", TokenType.KEYWORD_WHILE },
-            { "do", TokenType.KEYWORD_DO },
-            { "ret", TokenType.KEYWORD_RET },
-            { "continue", TokenType.KEYWORD_CONTINUE },
-            { "break", TokenType.KEYWORD_BREAK },
+                { "if", TokenType.KEYWORD_IF },
+                { "for", TokenType.KEYWORD_FOR },
+                { "while", TokenType.KEYWORD_WHILE },
+                { "do", TokenType.KEYWORD_DO },
+                { "ret", TokenType.KEYWORD_RET },
+                { "continue", TokenType.KEYWORD_CONTINUE },
+                { "break", TokenType.KEYWORD_BREAK },
 
-            { "else", TokenType.KEYWORD_ELSE },
-            { "as", TokenType.KEYWORD_AS },
-        };
+                { "else", TokenType.KEYWORD_ELSE },
+                { "as", TokenType.KEYWORD_AS },
+                { "import", TokenType.KEYWORD_IMPORT },
+            };
 
             hexCharMap = new Dictionary<char, int>()
-        {
-            { '0', 0 }, { '1', 1 }, { '2', 2 }, { '3', 3 },
-            { '4', 4 }, { '5', 5 }, { '6', 6 }, { '7', 7 },
-            { '8', 8 }, { '9', 9 },
+            {
+                { '0', 0 }, { '1', 1 }, { '2', 2 }, { '3', 3 },
+                { '4', 4 }, { '5', 5 }, { '6', 6 }, { '7', 7 },
+                { '8', 8 }, { '9', 9 },
 
-            { 'a', 10 }, { 'b', 11 },
-            { 'c', 12 }, { 'd', 13 },
-            { 'e', 14 }, { 'f', 15 },
+                { 'a', 10 }, { 'b', 11 },
+                { 'c', 12 }, { 'd', 13 },
+                { 'e', 14 }, { 'f', 15 },
 
-            { 'A', 10 }, { 'B', 11 },
-            { 'C', 12 }, { 'D', 13 },
-            { 'E', 14 }, { 'F', 15 },
-        };
+                { 'A', 10 }, { 'B', 11 },
+                { 'C', 12 }, { 'D', 13 },
+                { 'E', 14 }, { 'F', 15 },
+            };
 
             Reset(text);
         }
@@ -187,8 +189,6 @@ namespace Mass.Compiler
             CurrentInteger = 0;
             CurrentFloat = 0.0;
         }
-
-
 
         public void ExpectToken(TokenType type, bool skip = true)
         {

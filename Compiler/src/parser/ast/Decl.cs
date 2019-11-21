@@ -112,4 +112,16 @@ namespace Mass.Compiler
             this.IsOpaque = isOpaque;
         }
     }
+
+    public class ImportDecl : Decl
+    {
+        public IdentifierExpr PackageName { get; private set; }
+        public List<IdentifierExpr> Symbols { get; private set; }
+
+        public ImportDecl(IdentifierExpr packageName, List<IdentifierExpr> symbols)
+        {
+            this.PackageName = packageName;
+            this.Symbols = symbols;
+        }
+    }
 }
