@@ -115,12 +115,11 @@ namespace Mass.Compiler
 
     public class ImportDecl : Decl
     {
-        public IdentifierExpr PackageName { get; private set; }
         public List<IdentifierExpr> Symbols { get; private set; }
 
-        public ImportDecl(IdentifierExpr packageName, List<IdentifierExpr> symbols)
+        public ImportDecl(string name, List<IdentifierExpr> symbols)
         {
-            this.PackageName = packageName;
+            this.Name = name;
             this.Symbols = symbols;
         }
     }

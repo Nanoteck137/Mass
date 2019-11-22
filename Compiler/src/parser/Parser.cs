@@ -1096,15 +1096,12 @@ namespace Mass.Compiler
 
             lexer.ExpectToken(TokenType.KEYWORD_IMPORT);
 
-            IdentifierExpr packageName = null;
+            string name = null;
             List<IdentifierExpr> symbols = new List<IdentifierExpr>();
 
             if (lexer.MatchToken(TokenType.IDENTIFIER))
             {
-                packageName = new IdentifierExpr(lexer.CurrentIdentifier)
-                {
-                    Span = lexer.CurrentTokenSpan
-                };
+                name = lexer.CurrentIdentifier;
                 lexer.NextToken();
             }
             else if (lexer.MatchToken(TokenType.OPEN_BRACE))
@@ -1136,11 +1133,7 @@ namespace Mass.Compiler
                 lexer.ExpectToken(TokenType.CLOSE_BRACE);
                 lexer.ExpectToken(TokenType.KEYWORD_FROM);
 
-                packageName = new IdentifierExpr(lexer.CurrentIdentifier)
-                {
-                    Span = lexer.CurrentTokenSpan
-                };
-
+                name = lexer.CurrentIdentifier;
                 lexer.ExpectToken(TokenType.IDENTIFIER);
             }
             else
@@ -1150,7 +1143,7 @@ namespace Mass.Compiler
 
             lexer.ExpectToken(TokenType.SEMICOLON);
 
-            ImportDecl result = new ImportDecl(packageName, symbols);
+            ImportDecl result = new ImportDecl(name, symbols);
             return result;
         }
 

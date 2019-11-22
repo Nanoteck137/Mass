@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace Mass.Compiler
@@ -43,8 +44,23 @@ namespace Mass.Compiler
         }
     }
 
+    public class Package
+    {
+        public string Name { get; private set; }
+
+        private List<Symbol> symbols;
+        public List<Symbol> ResolvedSymbols { get; private set; }
+
+        public Package(string name)
+        {
+            this.Name = name;
+        }
+    }
+
     public class Resolver
     {
+        public Package CompilePackage { get; private set; }
+
         private List<Symbol> localSymbols;
         private Dictionary<string, Symbol> globalSymbols;
 
@@ -54,6 +70,8 @@ namespace Mass.Compiler
 
         public Resolver()
         {
+            CompilePackage = new Package("CompilePackage");
+
             localSymbols = new List<Symbol>();
             globalSymbols = new Dictionary<string, Symbol>();
             ResolvedSymbols = new List<Symbol>();
@@ -1534,6 +1552,16 @@ namespace Mass.Compiler
 
         public void ResolveSymbols()
         {
+            foreach (var item in globalSymbols)
+            {
+                Symbol sym = item.Value;
+                if (sym.Decl is ImportDecl)
+                {
+                    Console.WriteLine("Process Import");
+                    sym.State = SymbolState.Resolved;
+                }
+            }
+
             foreach (var item in globalSymbols)
             {
                 ResolveSymbol(item.Value);
