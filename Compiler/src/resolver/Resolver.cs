@@ -46,12 +46,11 @@ namespace Mass.Compiler
 
     public class Resolver
     {
-        public Package CompilePackage { get; private set; }
-
         private List<Symbol> localSymbols;
         private Dictionary<string, Symbol> globalSymbols;
 
         public List<Symbol> ResolvedSymbols { get; private set; }
+        public List<Symbol> ExportedSymbols { get; private set; }
 
         private readonly Dictionary<Type, int> typeRank;
 
@@ -59,7 +58,9 @@ namespace Mass.Compiler
         {
             localSymbols = new List<Symbol>();
             globalSymbols = new Dictionary<string, Symbol>();
+
             ResolvedSymbols = new List<Symbol>();
+            ExportedSymbols = new List<Symbol>();
 
             AddGlobalType("u8", Type.U8);
             AddGlobalType("u16", Type.U16);
@@ -92,6 +93,33 @@ namespace Mass.Compiler
                 { Type.U64, 4 },
                 { Type.S64, 4 },
             };
+        }
+
+        public void ImportPackage(Package package)
+        {
+            if (globalSymbols.ContainsKey(package.Name))
+                // TODO(patrik): Error!!!
+                Debug.Assert(false);
+
+            // TODO(patrik): Move this
+            Resolver resolver = new Resolver();
+            foreach (CompileUnit unit in package.CompileUnits)
+            {
+                foreach (Decl decl in unit.Decls)
+                {
+                    resolver.AddSymbol(decl);
+                }
+            }
+
+            resolver.ResolveSymbols();
+            resolver.FinalizeSymbols();
+
+            package.ExportedSymbols = resolver.ExportedSymbols;
+            package.ResolvedSymbols = resolver.ResolvedSymbols;
+
+            Symbol sym = new Symbol(package.Name, SymbolState.Resolved, package);
+            ResolvedSymbols.Add(sym);
+            globalSymbols.Add(package.Name, sym);
         }
 
         private int GetTypeRank(Type type)
@@ -1249,8 +1277,29 @@ namespace Mass.Compiler
             return OperandLValue(type);
         }
 
+        public Package ResolvePackage(Expr expr)
+        {
+            Debug.Assert(expr != null);
+
+            if (expr is IdentifierExpr identExpr)
+            {
+                Symbol sym = ResolveName(identExpr.Value);
+                if (sym != null && sym.Kind == SymbolKind.Package)
+                    return sym.Package;
+            }
+
+            return null;
+        }
+
         private Operand ResolveFieldExpr(FieldExpr expr)
         {
+            Package package = ResolvePackage(expr.Expr);
+
+            if (package != null)
+            {
+                return OperandRValue(package.GetExportedSymbol(expr.Name.Value).Type);
+            }
+
             Operand operand = ResolveExpr(expr.Expr);
             if (!(operand.Type is StructType))
             {
@@ -1520,6 +1569,11 @@ namespace Mass.Compiler
 
             symbol.State = SymbolState.Resolved;
             ResolvedSymbols.Add(symbol);
+
+            if (symbol.Decl.GetAttribute(typeof(ExportDeclAttribute)) != null)
+            {
+                ExportedSymbols.Add(symbol);
+            }
         }
 
         public Symbol ResolveName(string name)

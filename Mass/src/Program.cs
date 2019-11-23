@@ -208,7 +208,7 @@ namespace Mass
             Package libc = Package.Import(workingDir, "libc");
 
             Resolver resolver = new Resolver();
-            // resolver.ImportPackage(libc);
+            resolver.ImportPackage(libc);
 
             foreach (Decl decl in programUnit.Decls)
             {

@@ -1281,6 +1281,9 @@ namespace Mass.Compiler
 
         private void GenDecl(Symbol symbol)
         {
+            Debug.Assert(symbol != null);
+            Debug.Assert(symbol.Decl != null);
+
             Decl decl = symbol.Decl;
 
             /*
@@ -1313,11 +1316,30 @@ namespace Mass.Compiler
             }
         }
 
+        private void GenPackage(Symbol symbol)
+        {
+            Debug.Assert(symbol != null);
+            Debug.Assert(symbol.Package != null);
+
+            Package package = symbol.Package;
+
+            foreach (Symbol packageSymbol in package.ResolvedSymbols)
+            {
+                if (packageSymbol.Kind == SymbolKind.Package)
+                    GenPackage(packageSymbol);
+                else
+                    GenDecl(packageSymbol);
+            }
+        }
+
         public override void Generate()
         {
             foreach (Symbol symbol in resolver.ResolvedSymbols)
             {
-                GenDecl(symbol);
+                if (symbol.Kind == SymbolKind.Package)
+                    GenPackage(symbol);
+                else
+                    GenDecl(symbol);
             }
         }
 
