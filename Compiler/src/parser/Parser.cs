@@ -1167,6 +1167,10 @@ namespace Mass.Compiler
                     {
                         result.Add(new InlineDeclAttribute());
                     }
+                    else if (name == "export")
+                    {
+                        result.Add(new ExportDeclAttribute());
+                    }
                     else
                     {
                         //TODO(patrik): Error or warning

@@ -11,6 +11,8 @@
     <Product>MassCompiler</Product>
 
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <RootNamespace>Mass.Compiler</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

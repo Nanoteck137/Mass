@@ -44,19 +44,6 @@ namespace Mass.Compiler
         }
     }
 
-    public class Package
-    {
-        public string Name { get; private set; }
-
-        private List<Symbol> symbols;
-        public List<Symbol> ResolvedSymbols { get; private set; }
-
-        public Package(string name)
-        {
-            this.Name = name;
-        }
-    }
-
     public class Resolver
     {
         public Package CompilePackage { get; private set; }
@@ -70,8 +57,6 @@ namespace Mass.Compiler
 
         public Resolver()
         {
-            CompilePackage = new Package("CompilePackage");
-
             localSymbols = new List<Symbol>();
             globalSymbols = new Dictionary<string, Symbol>();
             ResolvedSymbols = new List<Symbol>();

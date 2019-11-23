@@ -9,6 +9,7 @@ namespace Mass.Compiler
     // TODO(patrik): Add an alias to the external function if the user wants it
     public class ExternalDeclAttribute : DeclAttribute { }
     public class InlineDeclAttribute : DeclAttribute { }
+    public class ExportDeclAttribute : DeclAttribute { }
 
     public abstract class Decl
     {

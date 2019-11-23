@@ -199,16 +199,18 @@ namespace Mass
         {
             filePath = Path.GetFullPath(filePath);
 
-            string fileContent = File.ReadAllText(filePath);
+            //Package package = Package.Compile(filePath);
+            //Package library = Package.CompileLibrary(Path.GetDirectoryName(filePath), "libc");
 
-            Lexer lexer = new Lexer(Path.GetFileName(filePath), fileContent);
-            Parser parser = new Parser(lexer);
+            CompileUnit programUnit = CompileUnit.CompileFile(filePath);
 
-            List<Decl> root = parser.Parse();
+            string workingDir = Path.GetDirectoryName(filePath);
+            Package libc = Package.Import(workingDir, "libc");
 
             Resolver resolver = new Resolver();
+            // resolver.ImportPackage(libc);
 
-            foreach (Decl decl in root)
+            foreach (Decl decl in programUnit.Decls)
             {
                 resolver.AddSymbol(decl);
             }
