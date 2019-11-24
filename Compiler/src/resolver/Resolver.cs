@@ -95,31 +95,8 @@ namespace Mass.Compiler
             };
         }
 
-        public void ImportPackage(Package package)
+        public void ImportUnit(CompileUnit unit)
         {
-            if (globalSymbols.ContainsKey(package.Name))
-                // TODO(patrik): Error!!!
-                Debug.Assert(false);
-
-            // TODO(patrik): Move this
-            Resolver resolver = new Resolver();
-            foreach (CompileUnit unit in package.CompileUnits)
-            {
-                foreach (Decl decl in unit.Decls)
-                {
-                    resolver.AddSymbol(decl);
-                }
-            }
-
-            resolver.ResolveSymbols();
-            resolver.FinalizeSymbols();
-
-            package.ExportedSymbols = resolver.ExportedSymbols;
-            package.ResolvedSymbols = resolver.ResolvedSymbols;
-
-            Symbol sym = new Symbol(package.Name, SymbolState.Resolved, package);
-            ResolvedSymbols.Add(sym);
-            globalSymbols.Add(package.Name, sym);
         }
 
         private int GetTypeRank(Type type)

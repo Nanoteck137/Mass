@@ -94,3 +94,22 @@ stmt = 'return' expr ';'
         1. If Unresolved then set state to resolving, and start resolving
         2. If resolved, return resolved data
         3. If resolving, loop, error
+
+# Random thoughts
+Decls need a fully qualified name
+    Resolver to provide this???
+
+Mapping name to LLVMValue in code generator
+    Map the fully qualified name to the generated value??
+
+Packages:
+
+Compile Unit:
+All decls from a single file
+
+Package Class:
+
+List of the compile units
+
+List Symbols of Exported Symbols from the compile units
+  This should be generated from the resolver

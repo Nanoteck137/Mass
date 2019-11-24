@@ -202,28 +202,27 @@ namespace Mass
             //Package package = Package.Compile(filePath);
             //Package library = Package.CompileLibrary(Path.GetDirectoryName(filePath), "libc");
 
+            string dir = Path.GetDirectoryName(filePath);
             CompileUnit programUnit = CompileUnit.CompileFile(filePath);
+            CompileUnit otherUnit = CompileUnit.CompileFile(Path.Join(dir, "other.ma"));
 
-            string workingDir = Path.GetDirectoryName(filePath);
-            Package libc = Package.Import(workingDir, "libc");
+            programUnit.Resolve();
+            otherUnit.Resolve();
 
-            Resolver resolver = new Resolver();
-            resolver.ImportPackage(libc);
-
-            foreach (Decl decl in programUnit.Decls)
+            /*foreach (Decl decl in programUnit.Decls)
             {
                 resolver.AddSymbol(decl);
             }
 
             resolver.ResolveSymbols();
-            resolver.FinalizeSymbols();
+            resolver.FinalizeSymbols();*/
 
             LLVMGenerator.Setup();
 
-            using LLVMGenerator gen = new LLVMGenerator(resolver.ResolvedSymbols);
+            using LLVMGenerator gen = new LLVMGenerator(programUnit.ResolvedSymbols);
             gen.Generate();
 
-            using LLVMGenerator gen2 = new LLVMGenerator(libc.ResolvedSymbols);
+            using LLVMGenerator gen2 = new LLVMGenerator(otherUnit.ResolvedSymbols);
             gen2.Generate();
             gen2.DebugPrint();
 

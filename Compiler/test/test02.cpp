@@ -1,8 +1,13 @@
 #include <stdio.h>
 
+namespace Test {
+    int add(int a, int b) {
+        return a + b;
+    }
+}
+
 int main(int argc, char **argv)
 {
-    int x = 123;
-    short y = (short)x;
+    int res = Test::add(5, 10);
     return 0;
 }
