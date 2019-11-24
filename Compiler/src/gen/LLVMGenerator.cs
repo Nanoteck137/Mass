@@ -18,6 +18,8 @@ namespace Mass.Compiler
     {
         private LLVMModuleRef module;
 
+        private Dictionary<string, Package> packages;
+
         private Dictionary<string, LLVMValueRef> globals;
         private Dictionary<string, LLVMValueRef> locals;
         private Dictionary<string, LLVMTypeRef> structTypes;
@@ -28,12 +30,17 @@ namespace Mass.Compiler
         private LLVMBasicBlockRef currentLoopStart;
         private LLVMBasicBlockRef currentLoopEnd;
 
+        private string namePrefix = "";
+
         private Type prevType;
 
-        public LLVMGenerator(Resolver resolver)
-            : base(resolver)
+        public LLVMGenerator(List<Symbol> symbols)
+            : base(symbols)
         {
             module = LLVMModuleRef.CreateWithName("NO NAME");
+
+            packages = new Dictionary<string, Package>();
+
             globals = new Dictionary<string, LLVMValueRef>();
             locals = new Dictionary<string, LLVMValueRef>();
             structTypes = new Dictionary<string, LLVMTypeRef>();
@@ -42,6 +49,12 @@ namespace Mass.Compiler
         public void Dispose()
         {
             module.Dispose();
+        }
+
+        public void ImportPackage(Package package)
+        {
+            Debug.Assert(!packages.ContainsKey(package.Name));
+            packages.Add(package.Name, package);
         }
 
         private LLVMTypeRef GetType(Type type)
@@ -469,6 +482,21 @@ namespace Mass.Compiler
                 default:
                     Debug.Assert(false);
                     break;
+            }
+
+            return null;
+        }
+
+        public Package TryGetPackage(Expr expr)
+        {
+            Debug.Assert(expr != null);
+
+            if (expr is IdentifierExpr identExpr)
+            {
+                if (packages.ContainsKey(identExpr.Value))
+                {
+                    return packages[identExpr.Value];
+                }
             }
 
             return null;
@@ -931,6 +959,25 @@ namespace Mass.Compiler
             }
             else if (expr is FieldExpr fieldExpr)
             {
+                Package package = TryGetPackage(fieldExpr.Expr);
+                if (package != null)
+                {
+                    LLVMValueRef value;
+                    if (globals.ContainsKey(package.Name + "::" + fieldExpr.Name.Value))
+                    {
+                        value = globals[package.Name + "::" + fieldExpr.Name.Value];
+                    }
+                    else
+                    {
+                        value = globals[fieldExpr.Name.Value];
+                    }
+
+                    if (load)
+                        return builder.BuildLoad(value);
+                    else
+                        return value;
+                }
+
                 StructType t = (StructType)fieldExpr.Expr.ResolvedType;
                 int index = t.GetItemIndex(fieldExpr.Name.Value);
                 LLVMValueRef ptr = GenExpr(builder, fieldExpr.Expr);
@@ -1035,7 +1082,7 @@ namespace Mass.Compiler
             }
             else if (stmt is InitStmt initStmt)
             {
-                LLVMTypeRef type = GetType(resolver.ResolveTypespec(initStmt.Type));
+                LLVMTypeRef type = GetType(initStmt.ResolvedType);
                 LLVMValueRef ptr = builder.BuildAlloca(type, initStmt.Name.Value);
                 currentValuePtr = ptr;
 
@@ -1302,8 +1349,14 @@ namespace Mass.Compiler
             }
             else if (decl is FunctionDecl functionDecl)
             {
+                if (globals.ContainsKey(functionDecl.Name))
+                    return;
                 LLVMValueRef value = GenFuncDecl(functionDecl, symbol.Type);
-                globals[functionDecl.Name] = value;
+
+                if (namePrefix != "" && functionDecl.Body != null)
+                    globals[namePrefix + "::" + functionDecl.Name] = value;
+                else
+                    globals[functionDecl.Name] = value;
             }
             else if (decl is StructDecl structDecl)
             {
@@ -1322,22 +1375,47 @@ namespace Mass.Compiler
             Debug.Assert(symbol.Package != null);
 
             Package package = symbol.Package;
+            ImportPackage(package);
+
+            namePrefix = package.Name;
 
             foreach (Symbol packageSymbol in package.ResolvedSymbols)
             {
                 if (packageSymbol.Kind == SymbolKind.Package)
                     GenPackage(packageSymbol);
                 else
-                    GenDecl(packageSymbol);
+                {
+                    Decl decl = packageSymbol.Decl;
+                    if (decl is FunctionDecl functionDecl)
+                    {
+                        if (globals.ContainsKey(functionDecl.Name))
+                            return;
+
+                        LLVMValueRef func = module.AddFunction(decl.Name, GetType(packageSymbol.Type));
+                        for (int i = 0; i < functionDecl.Parameters.Count; i++)
+                        {
+                            func.Params[i].Name = functionDecl.Parameters[i].Name;
+                        }
+
+                        if (namePrefix != "" && functionDecl.Body != null)
+                            globals[namePrefix + "::" + functionDecl.Name] = func;
+                        else
+                            globals[functionDecl.Name] = func;
+                    }
+                }
             }
+
+            namePrefix = "";
         }
 
         public override void Generate()
         {
-            foreach (Symbol symbol in resolver.ResolvedSymbols)
+            foreach (Symbol symbol in symbols)
             {
                 if (symbol.Kind == SymbolKind.Package)
+                {
                     GenPackage(symbol);
+                }
                 else
                     GenDecl(symbol);
             }
@@ -1357,9 +1435,13 @@ namespace Mass.Compiler
             File.WriteAllText(fileName, content);
         }
 
-        public void RunCode()
+        public void RunCode(LLVMGenerator[] packages)
         {
             LLVMExecutionEngineRef engine = module.CreateExecutionEngine();
+            foreach (LLVMGenerator package in packages)
+            {
+                engine.AddModule(package.module);
+            }
 
             LLVMValueRef t = engine.FindFunction("main");
 
@@ -1382,47 +1464,6 @@ namespace Mass.Compiler
             LLVM.InitializeX86AsmPrinter();
 
             initialized = true;
-        }
-
-        public static void Test()
-        {
-            Lexer lexer = new Lexer("LLVM Code Generator Test", "");
-            Parser parser = new Parser(lexer);
-            Resolver resolver = new Resolver();
-            using LLVMGenerator gen = new LLVMGenerator(resolver);
-
-            string[] code = new string[]
-            {
-            "var a: s32[2][2] = { { 1, 2 }, { 3, 4 } };",
-            "struct R { c: s32; d: s32; e: s32; }",
-            "struct T { a: R; b: s32; }",
-            "var structTest: T = { { 321, 2, 3 }, 4 };",
-            "func printf(format: u8*, ...) -> s32;",
-            "func test() { printf(\"Before: %d\n\", a[0][0]); a[0][0] = 123; printf(\"After: %d\n\", a[0][0]); }",
-            };
-
-            foreach (string c in code)
-            {
-                lexer.Reset(c);
-                lexer.NextToken();
-
-                Decl decl = parser.ParseDecl();
-                resolver.AddSymbol(decl);
-            }
-
-            resolver.ResolveSymbols();
-            resolver.FinalizeSymbols();
-
-            gen.Generate();
-            gen.DebugPrint();
-
-            Console.WriteLine("----------- RUNNING PROGRAM -----------");
-            Setup();
-
-            LLVMExecutionEngineRef engine = gen.module.CreateExecutionEngine();
-
-            LLVMValueRef t = engine.FindFunction("test");
-            engine.RunFunction(t, new LLVMGenericValueRef[] { });
         }
     }
 }

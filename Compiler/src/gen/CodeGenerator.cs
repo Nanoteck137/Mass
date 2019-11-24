@@ -8,11 +8,11 @@ namespace Mass.Compiler
 {
     public abstract class CodeGenerator
     {
-        protected Resolver resolver;
+        protected List<Symbol> symbols;
 
-        public CodeGenerator(Resolver resolver)
+        public CodeGenerator(List<Symbol> symbols)
         {
-            this.resolver = resolver;
+            this.symbols = symbols;
         }
 
         public abstract void Generate();

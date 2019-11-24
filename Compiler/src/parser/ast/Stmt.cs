@@ -54,6 +54,8 @@ namespace Mass.Compiler
         public Typespec Type { get; private set; }
         public Expr Value { get; private set; }
 
+        public Type ResolvedType { get; set; }
+
         public InitStmt(IdentifierExpr name, Typespec type, Expr value)
         {
             this.Name = name;

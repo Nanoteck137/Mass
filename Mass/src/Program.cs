@@ -220,8 +220,12 @@ namespace Mass
 
             LLVMGenerator.Setup();
 
-            using LLVMGenerator gen = new LLVMGenerator(resolver);
+            using LLVMGenerator gen = new LLVMGenerator(resolver.ResolvedSymbols);
             gen.Generate();
+
+            using LLVMGenerator gen2 = new LLVMGenerator(libc.ResolvedSymbols);
+            gen2.Generate();
+            gen2.DebugPrint();
 
             if (options.DebugInfo)
                 gen.DebugPrint();
@@ -238,7 +242,7 @@ namespace Mass
 
             gen.WriteToFile(outputPath);
 
-            gen.RunCode();
+            gen.RunCode(new LLVMGenerator[] { gen2 });
         }
 
         static void Main(string[] args)

@@ -1642,6 +1642,7 @@ namespace Mass.Compiler
             Debug.Assert(stmt != null);
 
             Type type = ResolveTypespec(stmt.Type);
+            stmt.ResolvedType = type;
 
             if (stmt.Value != null)
             {
