@@ -7,9 +7,11 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/Mass.csproj",
+                "${workspaceFolder}/Mass/Mass.csproj",
                 "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
+                "/consoleloggerparameters:NoSummary",
+                "-r",
+                "linux-x64"
             ],
             "problemMatcher": "$msCompile",
             "group": {
@@ -23,7 +25,7 @@
             "type": "process",
             "args": [
                 "publish",
-                "${workspaceFolder}/Mass.csproj",
+                "${workspaceFolder}/Mass/Mass.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
@@ -36,7 +38,7 @@
             "args": [
                 "watch",
                 "run",
-                "${workspaceFolder}/Mass.csproj",
+                "${workspaceFolder}/Mass/Mass.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],

@@ -95,10 +95,6 @@ namespace Mass.Compiler
             };
         }
 
-        public void ImportUnit(CompileUnit unit)
-        {
-        }
-
         private int GetTypeRank(Type type)
         {
             Debug.Assert(typeRank.ContainsKey(type));
@@ -1270,12 +1266,13 @@ namespace Mass.Compiler
 
         private Operand ResolveFieldExpr(FieldExpr expr)
         {
-            Package package = ResolvePackage(expr.Expr);
+            // TODO(patrik): Resolve Package Stuff
+            /*Package package = ResolvePackage(expr.Expr);
 
             if (package != null)
             {
                 return OperandRValue(package.GetExportedSymbol(expr.Name.Value).Type);
-            }
+            }*/
 
             Operand operand = ResolveExpr(expr.Expr);
             if (!(operand.Type is StructType))

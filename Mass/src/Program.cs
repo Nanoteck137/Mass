@@ -203,11 +203,11 @@ namespace Mass
             //Package library = Package.CompileLibrary(Path.GetDirectoryName(filePath), "libc");
 
             string dir = Path.GetDirectoryName(filePath);
-            CompileUnit programUnit = CompileUnit.CompileFile(filePath);
-            CompileUnit otherUnit = CompileUnit.CompileFile(Path.Join(dir, "other.ma"));
+            //CompileUnit programUnit = CompileUnit.CompileFile(filePath);
+            //CompileUnit otherUnit = CompileUnit.CompileFile(Path.Join(dir, "other.ma"));
 
-            programUnit.Resolve();
-            otherUnit.Resolve();
+            //programUnit.Resolve();
+            //otherUnit.Resolve();
 
             /*foreach (Decl decl in programUnit.Decls)
             {
@@ -219,7 +219,7 @@ namespace Mass
 
             LLVMGenerator.Setup();
 
-            using LLVMGenerator gen = new LLVMGenerator(programUnit.ResolvedSymbols);
+            /*using LLVMGenerator gen = new LLVMGenerator(programUnit.ResolvedSymbols);
             gen.Generate();
 
             using LLVMGenerator gen2 = new LLVMGenerator(otherUnit.ResolvedSymbols);
@@ -241,12 +241,31 @@ namespace Mass
 
             gen.WriteToFile(outputPath);
 
-            gen.RunCode(new LLVMGenerator[] { gen2 });
+            gen.RunCode(new LLVMGenerator[] { gen2 });*/
         }
 
         static void Main(string[] args)
         {
-            new Program(args);
+            // new Program(args);
+
+            // NOTE(patrik): Temp Testing
+
+            string libcText = @"
+                #external
+                #export
+                func printf(format: s8*, ...) -> s32;
+            ";
+
+            CompilationUnit libcUnit = MassCompiler.CompileText(libcText, "libc.ma");
+
+            string programText = @"
+                func TestFunction() 
+                {
+                    libc.printf(""Hello World"");
+                }
+            ";
+
+            CompilationUnit unit = MassCompiler.CompileText(programText, "test.ma");
         }
     }
 }
