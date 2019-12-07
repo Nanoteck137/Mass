@@ -1164,6 +1164,38 @@ namespace Mass.Compiler
             return result;
         }
 
+        private Decl ParseUseDecl()
+        {
+            // Format 1: use namespace identifier ('.' identifier)*
+
+            SourceSpan firstSpan = lexer.CurrentTokenSpan;
+
+            lexer.ExpectToken(TokenType.KEYWORD_USE);
+            lexer.ExpectToken(TokenType.KEYWORD_NAMESPACE);
+
+            string namespaceName = lexer.CurrentIdentifier;
+            lexer.ExpectToken(TokenType.IDENTIFIER);
+
+            while (lexer.MatchToken(TokenType.DOT))
+            {
+                lexer.NextToken();
+
+                namespaceName += $".{lexer.CurrentIdentifier}";
+                lexer.ExpectToken(TokenType.IDENTIFIER);
+            }
+
+            lexer.ExpectToken(TokenType.SEMICOLON);
+
+            SourceSpan lastSpan = lexer.CurrentTokenSpan;
+
+            NamespaceDecl result = new NamespaceDecl(namespaceName)
+            {
+                Span = SourceSpan.FromTo(firstSpan, lastSpan)
+            };
+
+            return result;
+        }
+
         private List<DeclAttribute> ParseDeclAttributes()
         {
             List<DeclAttribute> result = new List<DeclAttribute>();
@@ -1231,6 +1263,11 @@ namespace Mass.Compiler
             {
                 Decl decl = ParseImportDecl();
                 decl.Attributes = attributes;
+                return decl;
+            }
+            else if (lexer.MatchToken(TokenType.KEYWORD_USE))
+            {
+                Decl decl = ParseUseDecl();
                 return decl;
             }
             else

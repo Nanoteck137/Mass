@@ -269,7 +269,9 @@ namespace Mass
 
             PackageManager.ResolvePackage(main);
 
-            LLVMGenerator gen = new LLVMGenerator(main);
+            LLVMGenerator.Setup();
+
+            using LLVMGenerator gen = new LLVMGenerator(main);
             gen.Generate();
 
             gen.DebugPrint();

@@ -124,4 +124,12 @@ namespace Mass.Compiler
             this.Symbols = symbols;
         }
     }
+
+    public class NamespaceDecl : Decl
+    {
+        public NamespaceDecl(string name)
+        {
+            this.Name = name;
+        }
+    }
 }

@@ -31,6 +31,9 @@ namespace Mass.Compiler
         KEYWORD_IMPORT,
         KEYWORD_FROM,
 
+        KEYWORD_USE,
+        KEYWORD_NAMESPACE,
+
         IDENTIFIER,
         STRING,
         INTEGER,
@@ -150,6 +153,9 @@ namespace Mass.Compiler
                 { "as", TokenType.KEYWORD_AS },
                 { "import", TokenType.KEYWORD_IMPORT },
                 { "from", TokenType.KEYWORD_FROM },
+
+                { "use", TokenType.KEYWORD_USE },
+                { "namespace", TokenType.KEYWORD_NAMESPACE },
             };
 
             hexCharMap = new Dictionary<char, int>()
@@ -527,33 +533,33 @@ namespace Mass.Compiler
                     break;
 
                 case '"':
-                {
-                    while (text[ptr] != '"')
                     {
-                        builder.Append(text[ptr]);
+                        while (text[ptr] != '"')
+                        {
+                            builder.Append(text[ptr]);
+
+                            Inc();
+
+                            if (ptr >= text.Length)
+                            {
+                                Log.Fatal("String never ends", new SourceSpan(currentTokenSpan.FileName,
+                                                                              currentTokenSpan.FromLineNumber,
+                                                                              currentTokenSpan.FromLineNumber,
+                                                                              currentTokenSpan.FromLineNumber,
+                                                                              currentTokenSpan.FromLineNumber + 1));
+                            }
+                        }
 
                         Inc();
 
-                        if (ptr >= text.Length)
-                        {
-                            Log.Fatal("String never ends", new SourceSpan(currentTokenSpan.FileName,
-                                                                          currentTokenSpan.FromLineNumber,
-                                                                          currentTokenSpan.FromLineNumber,
-                                                                          currentTokenSpan.FromLineNumber,
-                                                                          currentTokenSpan.FromLineNumber + 1));
-                        }
+                        CurrentString = builder.ToString();
+                        CurrentString = Regex.Unescape(CurrentString);
+                        CurrentToken = TokenType.STRING;
+
+                        builder.Clear();
+
+                        break;
                     }
-
-                    Inc();
-
-                    CurrentString = builder.ToString();
-                    CurrentString = Regex.Unescape(CurrentString);
-                    CurrentToken = TokenType.STRING;
-
-                    builder.Clear();
-
-                    break;
-                }
 
                 default:
                     if (char.IsLetter(current) || current == '_')
