@@ -26,5 +26,4 @@ namespace Mass.Compiler
             return CompileText(fileContent, filePath);
         }
     }
-
 }

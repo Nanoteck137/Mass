@@ -505,4 +505,30 @@ namespace Mass.Compiler
             return -1;
         }
     }
+
+    public class PackageType : Type
+    {
+        public Package Package { get; private set; }
+
+        public override int Size => throw new NotImplementedException();
+
+        public PackageType(Package package)
+        {
+            this.Package = package;
+        }
+    }
+
+    public class PackageUnitType : Type
+    {
+        public Package Package { get; private set; }
+        public CompilationUnit Unit { get; private set; }
+
+        public override int Size => throw new NotImplementedException();
+
+        public PackageUnitType(Package package, CompilationUnit unit)
+        {
+            this.Package = package;
+            this.Unit = unit;
+        }
+    }
 }

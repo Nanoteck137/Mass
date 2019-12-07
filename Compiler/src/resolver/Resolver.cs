@@ -46,6 +46,8 @@ namespace Mass.Compiler
 
     public class Resolver
     {
+        public Package Package { get; private set; }
+
         private List<Symbol> localSymbols;
         private Dictionary<string, Symbol> globalSymbols;
 
@@ -54,14 +56,17 @@ namespace Mass.Compiler
 
         private readonly Dictionary<Type, int> typeRank;
 
-        public Resolver()
+        public Resolver(Package package)
         {
-            localSymbols = new List<Symbol>();
-            globalSymbols = new Dictionary<string, Symbol>();
+            this.Package = package;
 
-            ResolvedSymbols = new List<Symbol>();
-            ExportedSymbols = new List<Symbol>();
+            this.localSymbols = new List<Symbol>();
+            this.globalSymbols = new Dictionary<string, Symbol>();
 
+            this.ResolvedSymbols = new List<Symbol>();
+            this.ExportedSymbols = new List<Symbol>();
+
+            // TODO(patrik): Move this
             AddGlobalType("u8", Type.U8);
             AddGlobalType("u16", Type.U16);
             AddGlobalType("u32", Type.U32);
@@ -93,6 +98,19 @@ namespace Mass.Compiler
                 { Type.U64, 4 },
                 { Type.S64, 4 },
             };
+
+            ProcessPackage(this.Package);
+        }
+
+        private void ProcessPackage(Package package)
+        {
+            foreach (var unit in package.Units)
+            {
+                foreach (Decl decl in unit.Value.Decls)
+                {
+                    AddSymbol(decl, unit.Value);
+                }
+            }
         }
 
         private int GetTypeRank(Type type)
@@ -104,7 +122,7 @@ namespace Mass.Compiler
 
         private void AddGlobalType(string name, Type type)
         {
-            Symbol sym = new Symbol(name, SymbolKind.Type, SymbolState.Resolved, null)
+            Symbol sym = new Symbol(name, SymbolKind.Type, SymbolState.Resolved, null, null)
             {
                 Type = type
             };
@@ -141,6 +159,18 @@ namespace Mass.Compiler
             return operand;
         }
 
+        public Symbol GetExportedSymbol(string qualifiedName)
+        {
+            foreach (Symbol symbol in ExportedSymbols)
+            {
+                if (symbol.QualifiedName == qualifiedName)
+                {
+                    return symbol;
+                }
+            }
+            return null;
+        }
+
         public Symbol GetSymbol(string name)
         {
             for (int i = localSymbols.Count - 1; i >= 0; i--)
@@ -159,7 +189,7 @@ namespace Mass.Compiler
             return null;
         }
 
-        public void AddSymbol(Decl decl)
+        public void AddSymbol(Decl decl, CompilationUnit unit)
         {
             Debug.Assert(decl != null);
             Debug.Assert(decl.Name != null);
@@ -187,13 +217,13 @@ namespace Mass.Compiler
                 Debug.Assert(false);
             }
 
-            Symbol sym = new Symbol(decl.Name, kind, SymbolState.Unresolved, decl);
+            Symbol sym = new Symbol(decl.Name, kind, SymbolState.Unresolved, decl, unit);
             globalSymbols.Add(decl.Name, sym);
         }
 
         public void PushVar(string name, Type type)
         {
-            Symbol symbol = new Symbol(name, SymbolKind.Var, SymbolState.Resolved, null)
+            Symbol symbol = new Symbol(name, SymbolKind.Var, SymbolState.Resolved, null, null)
             {
                 Type = type
             };
@@ -1267,27 +1297,49 @@ namespace Mass.Compiler
         private Operand ResolveFieldExpr(FieldExpr expr)
         {
             // TODO(patrik): Resolve Package Stuff
-            /*Package package = ResolvePackage(expr.Expr);
-
-            if (package != null)
+            if (expr.Expr is IdentifierExpr identExpr)
             {
-                return OperandRValue(package.GetExportedSymbol(expr.Name.Value).Type);
-            }*/
+                Package package = this.Package.GetImportPackage(identExpr.Value);
+
+                if (package != null)
+                {
+                    // return OperandRValue(package.GetExportedSymbol(expr.Name.Value).Type);
+
+                    // TODO(patrik): This is wrong because a symbol should and chould be in the global namespace in the package
+
+                    CompilationUnit unit = package.FindUnitByName(expr.Name.Value);
+                    return OperandLValue(new PackageUnitType(package, unit));
+                }
+            }
 
             Operand operand = ResolveExpr(expr.Expr);
-            if (!(operand.Type is StructType))
+            if (!(operand.Type is StructType) && !(operand.Type is PackageUnitType))
             {
-                Log.Fatal("Field expr needs to have a struct type", expr.Expr.Span);
+                Log.Fatal("Field expr needs to have a struct or package type", expr.Expr.Span);
             }
 
-            StructType structType = (StructType)operand.Type;
-            int index = structType.GetItemIndex(expr.Name.Value);
-            if (index == -1)
+            if (operand.Type is StructType structType)
             {
-                Log.Fatal($"Struct has no field with name '{expr.Name.Value}'", expr.Expr.Span);
-            }
+                int index = structType.GetItemIndex(expr.Name.Value);
+                if (index == -1)
+                {
+                    Log.Fatal($"Struct has no field with name '{expr.Name.Value}'", expr.Expr.Span);
+                }
 
-            return OperandRValue(structType.Items[index].Type);
+                return OperandRValue(structType.Items[index].Type);
+            }
+            else if (operand.Type is PackageUnitType unitType)
+            {
+                //return unitType.FindResolvedSymbol("stdio.printf");
+                string packageName = unitType.Package.Name;
+                string namespaceName = Path.GetFileNameWithoutExtension(unitType.Unit.FilePath);
+                return OperandLValue(unitType.Package.Resolver.GetExportedSymbol($"{packageName}.{namespaceName}.{expr.Name.Value}").Type);
+            }
+            else
+            {
+                Debug.Assert(false);
+                return null;
+            }
         }
 
         private Operand ResolveExpectedExpr(Expr expr, Type expectedType)
@@ -1534,14 +1586,21 @@ namespace Mass.Compiler
             else if (symbol.Decl is StructDecl structDecl)
             {
                 symbol.Type = ResolveStructDecl(structDecl);
-                symbol.Type.Symbol = symbol;
             }
             else
             {
                 Debug.Assert(false);
             }
 
+            symbol.Type.Symbol = symbol;
             symbol.State = SymbolState.Resolved;
+
+            string libName = Package.Name;
+            string fileName = Path.GetFileNameWithoutExtension(symbol.CompilationUnit.FilePath);
+            string symbolName = symbol.Name;
+
+            symbol.QualifiedName = $"{libName}.{fileName}.{symbolName}";
+
             ResolvedSymbols.Add(symbol);
 
             if (symbol.Decl.GetAttribute(typeof(ExportDeclAttribute)) != null)
@@ -1842,5 +1901,6 @@ namespace Mass.Compiler
                 }
             }
         }
+
     }
 }

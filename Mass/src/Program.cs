@@ -250,32 +250,23 @@ namespace Mass
 
             // NOTE(patrik): Temp Testing
 
-            /*string libcText = @"
-                #external
-                #export
-                func printf(format: s8*, ...) -> s32;
-            ";
-
-            CompilationUnit libcUnit = MassCompiler.CompileText(libcText, "libc.ma");*/
-
             Package libc = PackageManager.FindPackage("libc");
-
-            // NOTE(patrik): Maybe the package manager should resolve stuff like search paths
-            // and find the packages
-            // Package libc = MassCompiler.CompilePackage(); // Needs to resolve how the package is constructed and resolves search paths
-
-            // NOTE(patrik): Cache Maybe
-            // PackageManager.AddPackage(libc);
 
             string programText = @"
                 func TestFunction() 
                 {
-                    libc.printf(""Hello World"");
+                    libc.stdio.printf(""Hello World"");
+                    var res: s32 = libc.stdio.add(123, 321);
                 }
             ";
 
             // NOTE(patrik): Maybe change CompileText to ParseText or ParseCompililationUnit ?!??!?!
-            CompilationUnit unit = MassCompiler.CompileText(programText, "test.ma");
+            CompilationUnit unit = MassCompiler.CompileText(programText, "main.ma");
+
+            Package main = new Package("test", new List<CompilationUnit>() { unit }, true);
+            main.ImportPackage(libc);
+
+            PackageManager.ResolvePackage(main);
 
             // Package main = MassCompiler.GetMainPackage();
             // Package package = MassCompiler.CompileProgram();
