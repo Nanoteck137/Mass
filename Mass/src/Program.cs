@@ -250,13 +250,22 @@ namespace Mass
 
             // NOTE(patrik): Temp Testing
 
-            string libcText = @"
+            /*string libcText = @"
                 #external
                 #export
                 func printf(format: s8*, ...) -> s32;
             ";
 
-            CompilationUnit libcUnit = MassCompiler.CompileText(libcText, "libc.ma");
+            CompilationUnit libcUnit = MassCompiler.CompileText(libcText, "libc.ma");*/
+
+            Package libc = PackageManager.FindPackage("libc");
+
+            // NOTE(patrik): Maybe the package manager should resolve stuff like search paths
+            // and find the packages
+            // Package libc = MassCompiler.CompilePackage(); // Needs to resolve how the package is constructed and resolves search paths
+
+            // NOTE(patrik): Cache Maybe
+            // PackageManager.AddPackage(libc);
 
             string programText = @"
                 func TestFunction() 
@@ -265,7 +274,18 @@ namespace Mass
                 }
             ";
 
+            // NOTE(patrik): Maybe change CompileText to ParseText or ParseCompililationUnit ?!??!?!
             CompilationUnit unit = MassCompiler.CompileText(programText, "test.ma");
+
+            // Package main = MassCompiler.GetMainPackage();
+            // Package package = MassCompiler.CompileProgram();
+            // package.IsRunnable // Returns true if the package should or can be runnable
+
+            // Package program = Package.CreateRunnablePackage();
+
+            // NOTE(patrik): Maybe not needed!?
+            // PackageManager.SetRunnablePackage(program);
+
         }
     }
 }

@@ -20,10 +20,10 @@ namespace Mass.Compiler
             return result;
         }
 
-        public static void CompileFile(string filePath)
+        public static CompilationUnit CompileFile(string filePath)
         {
             string fileContent = File.ReadAllText(filePath);
-            CompileText(fileContent, filePath);
+            return CompileText(fileContent, filePath);
         }
     }
 
