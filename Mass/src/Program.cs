@@ -253,10 +253,12 @@ namespace Mass
             Package libc = PackageManager.FindPackage("libc");
 
             string programText = @"
-                func TestFunction() 
+                func main(argc: s32, argv: u8**) -> s32
                 {
                     libc.stdio.printf(""Hello World"");
                     var res: s32 = libc.stdio.add(123, 321);
+
+                    ret 0;
                 }
             ";
 
@@ -268,6 +270,11 @@ namespace Mass
 
             PackageManager.ResolvePackage(main);
 
+            LLVMGenerator gen = new LLVMGenerator(main);
+            gen.Generate();
+
+            gen.DebugPrint();
+
             // Package main = MassCompiler.GetMainPackage();
             // Package package = MassCompiler.CompileProgram();
             // package.IsRunnable // Returns true if the package should or can be runnable
@@ -276,7 +283,6 @@ namespace Mass
 
             // NOTE(patrik): Maybe not needed!?
             // PackageManager.SetRunnablePackage(program);
-
         }
     }
 }

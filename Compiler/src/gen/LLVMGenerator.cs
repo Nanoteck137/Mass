@@ -30,14 +30,12 @@ namespace Mass.Compiler
         private LLVMBasicBlockRef currentLoopStart;
         private LLVMBasicBlockRef currentLoopEnd;
 
-        private string namePrefix = "";
-
         private Type prevType;
 
-        public LLVMGenerator(List<Symbol> symbols)
-            : base(symbols)
+        public LLVMGenerator(Package package)
+            : base(package)
         {
-            module = LLVMModuleRef.CreateWithName("NO NAME");
+            module = LLVMModuleRef.CreateWithName(package.Name);
 
             packages = new Dictionary<string, Package>();
 
@@ -953,7 +951,18 @@ namespace Mass.Compiler
             }
             else if (expr is FieldExpr fieldExpr)
             {
-                // TODO(patrik): Implement Package Stuff
+                if (!(fieldExpr.ResolvedType is StructType))
+                {
+                    // NOTE(patrik): Package Stuff
+                    Symbol symbol = fieldExpr.ResolvedType.Symbol;
+                    LLVMValueRef value = globals[symbol.QualifiedName];
+
+                    if (load)
+                        return builder.BuildLoad(value);
+                    else
+                        return value;
+                }
+
                 /*Package package = TryGetPackage(fieldExpr.Expr);
                 if (package != null)
                 {
@@ -1265,13 +1274,19 @@ namespace Mass.Compiler
             return null;
         }
 
-        private LLVMValueRef GenFuncDecl(FunctionDecl decl, Type funcType)
+        private LLVMValueRef GenFuncDecl(FunctionDecl decl, Symbol symbol, Type funcType)
         {
             Debug.Assert(decl != null);
             Debug.Assert(funcType != null);
             Debug.Assert(funcType is FunctionType);
 
-            LLVMValueRef func = module.AddFunction(decl.Name, GetType(funcType));
+            string functionName = symbol.QualifiedName;
+            if (decl.GetAttribute(typeof(ExternalDeclAttribute)) != null)
+            {
+                functionName = decl.Name;
+            }
+
+            LLVMValueRef func = module.AddFunction(functionName, GetType(funcType));
             for (int i = 0; i < decl.Parameters.Count; i++)
             {
                 func.Params[i].Name = decl.Parameters[i].Name;
@@ -1346,12 +1361,10 @@ namespace Mass.Compiler
             {
                 if (globals.ContainsKey(functionDecl.Name))
                     return;
-                LLVMValueRef value = GenFuncDecl(functionDecl, symbol.Type);
+                LLVMValueRef value = GenFuncDecl(functionDecl, symbol, symbol.Type);
 
-                if (namePrefix != "" && functionDecl.Body != null)
-                    globals[namePrefix + "::" + functionDecl.Name] = value;
-                else
-                    globals[functionDecl.Name] = value;
+                //globals[functionDecl.Name] = value;
+                globals[symbol.QualifiedName] = value;
             }
             else if (decl is StructDecl structDecl)
             {
@@ -1364,56 +1377,30 @@ namespace Mass.Compiler
             }
         }
 
-        private void GenPackage(Symbol symbol)
+        public void GeneratePackage(Package package)
         {
-            Debug.Assert(symbol != null);
-            Debug.Assert(symbol.Package != null);
-
-            // Package package = symbol.Package;
-            // ImportPackage(package);
-
-            /*namePrefix = package.Name;
-
-            foreach (Symbol packageSymbol in package.ResolvedSymbols)
+            // TODO(patrik): Generate for imports
+            foreach (var import in package.Imports)
             {
-                if (packageSymbol.Kind == SymbolKind.Package)
-                    GenPackage(packageSymbol);
-                else
-                {
-                    Decl decl = packageSymbol.Decl;
-                    if (decl is FunctionDecl functionDecl)
-                    {
-                        if (globals.ContainsKey(functionDecl.Name))
-                            return;
+                GeneratePackage(import.Value);
+            }
 
-                        LLVMValueRef func = module.AddFunction(decl.Name, GetType(packageSymbol.Type));
-                        for (int i = 0; i < functionDecl.Parameters.Count; i++)
-                        {
-                            func.Params[i].Name = functionDecl.Parameters[i].Name;
-                        }
+            // TODO(patrik): Generate for main package
+            Console.WriteLine($"DEBUG: Generating code for package '{package.Name}'");
 
-                        if (namePrefix != "" && functionDecl.Body != null)
-                            globals[namePrefix + "::" + functionDecl.Name] = func;
-                        else
-                            globals[functionDecl.Name] = func;
-                    }
-                }
-            }*/
-
-            namePrefix = "";
+            foreach (Symbol symbol in package.Resolver.ResolvedSymbols)
+            {
+                GenDecl(symbol);
+            }
         }
 
         public override void Generate()
         {
-            foreach (Symbol symbol in symbols)
+            /*foreach (Symbol symbol in symbols)
             {
-                if (symbol.Kind == SymbolKind.Package)
-                {
-                    GenPackage(symbol);
-                }
-                else
-                    GenDecl(symbol);
-            }
+                GenDecl(symbol);
+            }*/
+            GeneratePackage(this.Package);
         }
 
         public void DebugPrint()
@@ -1421,6 +1408,7 @@ namespace Mass.Compiler
             string str = module.PrintToString();
             Console.WriteLine(str);
 
+            // TODO(patrik): Move this verify
             module.Verify(LLVMVerifierFailureAction.LLVMPrintMessageAction);
         }
 
@@ -1430,17 +1418,12 @@ namespace Mass.Compiler
             File.WriteAllText(fileName, content);
         }
 
-        public void RunCode(LLVMGenerator[] packages)
+        public void RunCode()
         {
             LLVMExecutionEngineRef engine = module.CreateExecutionEngine();
-            foreach (LLVMGenerator package in packages)
-            {
-                engine.AddModule(package.module);
-            }
-
             LLVMValueRef t = engine.FindFunction("main");
 
-            string[] args = new string[] { "test.ma", "testarg" };
+            string[] args = new string[] { };
             engine.RunFunctionAsMain(t, (uint)args.Length, args, new string[] { });
         }
 

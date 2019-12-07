@@ -11,7 +11,6 @@ namespace Mass.Compiler
         Const,
         Func,
         Type,
-        Package
     }
 
     public enum SymbolState
@@ -31,7 +30,6 @@ namespace Mass.Compiler
 
         public CompilationUnit CompilationUnit { get; private set; }
         public Decl Decl { get; private set; }
-        public Package Package { get; set; }
 
         public Type Type { get; set; }
         public Val Val { get; set; }
@@ -46,7 +44,6 @@ namespace Mass.Compiler
             this.CompilationUnit = compilationUnit;
             this.Decl = decl;
 
-            this.Package = null;
             this.Type = null;
 
             this.Val = new Val
@@ -55,12 +52,10 @@ namespace Mass.Compiler
             };
         }
 
-        public Symbol(string name, SymbolState state, Package package)
+        public Symbol(string name, SymbolState state)
         {
             this.Name = name;
             this.State = state;
-            this.Kind = SymbolKind.Package;
-            this.Package = package;
 
             this.Decl = null;
             this.Type = null;

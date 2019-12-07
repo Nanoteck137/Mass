@@ -1280,20 +1280,6 @@ namespace Mass.Compiler
             return OperandLValue(type);
         }
 
-        public Package ResolvePackage(Expr expr)
-        {
-            Debug.Assert(expr != null);
-
-            if (expr is IdentifierExpr identExpr)
-            {
-                Symbol sym = ResolveName(identExpr.Value);
-                if (sym != null && sym.Kind == SymbolKind.Package)
-                    return sym.Package;
-            }
-
-            return null;
-        }
-
         private Operand ResolveFieldExpr(FieldExpr expr)
         {
             // TODO(patrik): Resolve Package Stuff
@@ -1303,8 +1289,6 @@ namespace Mass.Compiler
 
                 if (package != null)
                 {
-                    // return OperandRValue(package.GetExportedSymbol(expr.Name.Value).Type);
-
                     // TODO(patrik): This is wrong because a symbol should and chould be in the global namespace in the package
 
                     CompilationUnit unit = package.FindUnitByName(expr.Name.Value);
