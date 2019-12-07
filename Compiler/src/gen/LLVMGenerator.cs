@@ -1421,7 +1421,7 @@ namespace Mass.Compiler
         public void RunCode()
         {
             LLVMExecutionEngineRef engine = module.CreateExecutionEngine();
-            LLVMValueRef t = engine.FindFunction("main");
+            LLVMValueRef t = engine.FindFunction("test.main.main");
 
             string[] args = new string[] { };
             engine.RunFunctionAsMain(t, (uint)args.Length, args, new string[] { });

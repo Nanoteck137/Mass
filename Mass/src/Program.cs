@@ -255,10 +255,8 @@ namespace Mass
             string programText = @"
                 func main(argc: s32, argv: u8**) -> s32
                 {
-                    var test: libc.stdio.TestStruct = { 1, 2 };
-                    libc.stdio.printf(""Hello World"");
-                    var res: s32 = libc.stdio.add(123, 321);
-
+                    var num: s32 = libc.stdlib.rand();
+                    libc.stdio.printf(""Random Number '%d'\n"", num);
                     ret 0;
                 }
             ";
@@ -275,6 +273,7 @@ namespace Mass
             gen.Generate();
 
             gen.DebugPrint();
+            gen.RunCode();
 
             // Package main = MassCompiler.GetMainPackage();
             // Package package = MassCompiler.CompileProgram();
