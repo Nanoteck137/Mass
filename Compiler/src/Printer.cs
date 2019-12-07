@@ -254,7 +254,7 @@ namespace Mass.Compiler
             }
             else if (spec is IdentifierTypespec ident)
             {
-                Console.Write("{0}", ident.Value.Value);
+                // Console.Write("{0}", ident.Value.Value);
             }
             else
             {

@@ -1,3 +1,9 @@
+#export
+struct TestStruct {
+	a: s32;
+	b: s32;
+}
+
 #external
 #export
 func printf(format: u8*, ...);

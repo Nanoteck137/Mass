@@ -114,7 +114,7 @@ namespace Mass.Compiler
             }
             else if (type is StructType structType)
             {
-                string name = structType.Symbol.Name;
+                string name = structType.Symbol.QualifiedName;
                 if (structTypes.ContainsKey(name))
                     return structTypes[name];
 

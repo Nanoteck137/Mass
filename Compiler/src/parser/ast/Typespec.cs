@@ -33,11 +33,11 @@ namespace Mass.Compiler
 
     public class IdentifierTypespec : Typespec
     {
-        public IdentifierExpr Value { get; private set; }
+        public IdentifierExpr[] Values { get; private set; }
 
-        public IdentifierTypespec(IdentifierExpr value)
+        public IdentifierTypespec(IdentifierExpr[] values)
         {
-            this.Value = value;
+            this.Values = values;
         }
     }
 }

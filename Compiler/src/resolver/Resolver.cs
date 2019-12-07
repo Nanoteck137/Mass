@@ -1282,7 +1282,6 @@ namespace Mass.Compiler
 
         private Operand ResolveFieldExpr(FieldExpr expr)
         {
-            // TODO(patrik): Resolve Package Stuff
             if (expr.Expr is IdentifierExpr identExpr)
             {
                 Package package = this.Package.GetImportPackage(identExpr.Value);
@@ -1290,7 +1289,6 @@ namespace Mass.Compiler
                 if (package != null)
                 {
                     // TODO(patrik): This is wrong because a symbol should and chould be in the global namespace in the package
-
                     CompilationUnit unit = package.FindUnitByName(expr.Name.Value);
                     return OperandLValue(new PackageUnitType(package, unit));
                 }
@@ -1317,7 +1315,9 @@ namespace Mass.Compiler
                 //return unitType.FindResolvedSymbol("stdio.printf");
                 string packageName = unitType.Package.Name;
                 string namespaceName = Path.GetFileNameWithoutExtension(unitType.Unit.FilePath);
-                return OperandLValue(unitType.Package.Resolver.GetExportedSymbol($"{packageName}.{namespaceName}.{expr.Name.Value}").Type);
+                Symbol symbol = unitType.Package.Resolver.GetExportedSymbol($"{packageName}.{namespaceName}.{expr.Name.Value}");
+                Debug.Assert(symbol != null);
+                return OperandLValue(symbol.Type);
             }
             else
             {
@@ -1425,7 +1425,13 @@ namespace Mass.Compiler
         {
             if (typespec is IdentifierTypespec identTypespec)
             {
-                Symbol symbol = ResolveName(identTypespec.Value.Value);
+                string name = identTypespec.Values[0].Value;
+                for (int i = 1; i < identTypespec.Values.Length; i++)
+                {
+                    name += $".{identTypespec.Values[i].Value}";
+                }
+
+                Symbol symbol = ResolveName(name);
                 return symbol.Type;
             }
             else if (typespec is PtrTypespec ptrTypespec)
@@ -1595,15 +1601,24 @@ namespace Mass.Compiler
 
         public Symbol ResolveName(string name)
         {
-            Symbol sym = GetSymbol(name);
-            if (sym == null)
+            string[] parts = name.Split(".");
+            Package package = Package.GetImportPackage(parts[0]);
+            if (package != null)
             {
-                Log.Fatal($"Unknown symbol name: '{name}'", null);
+                return package.Resolver.GetExportedSymbol(name);
             }
+            else
+            {
+                Symbol sym = GetSymbol(name);
+                if (sym == null)
+                {
+                    Log.Fatal($"Unknown symbol name: '{name}'", null);
+                }
 
-            ResolveSymbol(sym);
+                ResolveSymbol(sym);
 
-            return sym;
+                return sym;
+            }
         }
 
         public void ResolveSymbols()
