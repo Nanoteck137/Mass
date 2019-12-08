@@ -3,13 +3,12 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-void test(char* format, ...) {
-
+void test() {
+	test();
 }
 
 int main(int argc, char **argv)
 {
-	int16_t a = 5;
-	test("", a);
+	test();
 	return 0;
 }

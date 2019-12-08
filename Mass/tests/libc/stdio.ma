@@ -1,16 +1,16 @@
 use namespace stdio.random;
 
-func Add(a: s32, b: s32) -> s32 
+#export
+func Test() -> s32 
 {
-    ret a + b;
+    ret Add(123, 321);
 }
 
 use namespace stdio;
 
-#export
-func Test() -> s32 
+func Add(a: s32, b: s32) -> s32 
 {
-    ret libc.stdio.random.Add(123, 321);
+    ret a + b;
 }
 
 #external

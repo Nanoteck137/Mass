@@ -255,6 +255,13 @@ namespace Mass
             string programText = @"
                 func test() {
                     libc.stdio.printf(""Test\n"");
+                    test2();
+                }
+
+                func test2() {
+                    libc.stdio.printf(""Test2\n"");
+
+                    test2();
                 }
 
                 func main(argc: s32, argv: u8**) -> s32

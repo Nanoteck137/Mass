@@ -190,7 +190,7 @@ namespace Mass.Compiler
 
             for (int i = 0; i < globalSymbols.Count; i++)
             {
-                if (globalSymbols[i].Name == name)
+                if (globalSymbols[i].Name == name || globalSymbols[i].QualifiedName == name)
                 {
                     return globalSymbols[i];
                 }
@@ -1310,10 +1310,12 @@ namespace Mass.Compiler
         {
             if (expr is IdentifierExpr ident)
             {
+                Package package = Package.GetImportPackage(ident.Value);
+
                 FoundPackage result = new FoundPackage()
                 {
-                    package = Package.GetImportPackage(ident.Value),
-                    currentNamespace = ""
+                    package = package,
+                    currentNamespace = ident.Value
                 };
 
                 return result;
@@ -1321,6 +1323,7 @@ namespace Mass.Compiler
             else if (expr is FieldExpr field)
             {
                 FoundPackage result = TryResolvePackage(field.Expr);
+
                 if (result.currentNamespace != "")
                     result.currentNamespace += ".";
                 result.currentNamespace += $"{field.Name.Value}";
@@ -1344,13 +1347,24 @@ namespace Mass.Compiler
 
             if (found != null)
             {
-                Package package = found.package;
+                if (found.package != null)
+                {
+                    Package package = found.package;
 
-                string symbolName = $"{package.Name}.{found.currentNamespace}";
-                Symbol symbol = found.package.Resolver.GetExportedSymbol(symbolName);
-                Debug.Assert(symbol != null);
+                    string symbolName = $"{found.currentNamespace}";
+                    Symbol symbol = found.package.Resolver.GetExportedSymbol(symbolName);
+                    Debug.Assert(symbol != null);
 
-                return OperandLValue(symbol.Type);
+                    return OperandLValue(symbol.Type);
+                }
+                else
+                {
+                    string symbolName = $"{Package.Name}.{found.currentNamespace}";
+                    Symbol symbol = ResolveName(symbolName);
+                    Debug.Assert(symbol != null);
+
+                    return OperandLValue(symbol.Type);
+                }
             }
 
             Operand operand = ResolveExpr(expr.Expr);
@@ -1630,6 +1644,10 @@ namespace Mass.Compiler
             else if (symbol.Decl is FunctionDecl funcDecl)
             {
                 symbol.Type = ResolveFuncDecl(funcDecl);
+                symbol.State = SymbolState.Resolved;
+
+                if (funcDecl.Body != null)
+                    ResolveFuncBody(symbol);
             }
             else if (symbol.Decl is StructDecl structDecl)
             {
@@ -1923,7 +1941,7 @@ namespace Mass.Compiler
             Debug.Assert(symbol != null);
             Debug.Assert(symbol.Kind == SymbolKind.Func);
             Debug.Assert(symbol.Decl is FunctionDecl);
-            Debug.Assert(symbol.State == SymbolState.Resolved);
+            // Debug.Assert(symbol.State == SymbolState.Resolved);
             Debug.Assert(symbol.Type is FunctionType);
 
             FunctionDecl decl = (FunctionDecl)symbol.Decl;
@@ -1945,7 +1963,6 @@ namespace Mass.Compiler
 
         public void FinalizeSymbols()
         {
-            // TODO(patrik): Resolve the function bodies
             foreach (Symbol symbol in ResolvedSymbols)
             {
                 if (symbol.Kind == SymbolKind.Func)
@@ -1953,7 +1970,7 @@ namespace Mass.Compiler
                     FunctionDecl decl = (FunctionDecl)symbol.Decl;
                     if (decl.Body != null)
                     {
-                        ResolveFuncBody(symbol);
+                        // ResolveFuncBody(symbol);
                     }
                     else
                     {
