@@ -518,17 +518,17 @@ namespace Mass.Compiler
         }
     }
 
-    public class PackageUnitType : Type
+    public class PackageNamespaceType : Type
     {
         public Package Package { get; private set; }
-        public CompilationUnit Unit { get; private set; }
+        public string Name { get; private set; }
 
         public override int Size => throw new NotImplementedException();
 
-        public PackageUnitType(Package package, CompilationUnit unit)
+        public PackageNamespaceType(Package package, string name)
         {
             this.Package = package;
-            this.Unit = unit;
+            this.Name = name;
         }
     }
 }

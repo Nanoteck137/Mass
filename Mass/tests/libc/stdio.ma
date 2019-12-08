@@ -1,5 +1,11 @@
 use namespace stdio;
 
+#export
+func Add(a: s32, b: s32) -> s32 
+{
+    ret a + b;
+}
+
 #external
 #export
 func printf(format: u8*, ...);

@@ -48,23 +48,26 @@ namespace Mass.Compiler
     {
         public Package Package { get; private set; }
 
-        private List<Symbol> localSymbols;
-        private Dictionary<string, Symbol> globalSymbols;
-
         public List<Symbol> ResolvedSymbols { get; private set; }
         public List<Symbol> ExportedSymbols { get; private set; }
+
+        private string currentNamespace;
+
+        private List<Symbol> localSymbols;
+        private List<Symbol> globalSymbols;
 
         private readonly Dictionary<Type, int> typeRank;
 
         public Resolver(Package package)
         {
             this.Package = package;
-
-            this.localSymbols = new List<Symbol>();
-            this.globalSymbols = new Dictionary<string, Symbol>();
+            this.currentNamespace = "";
 
             this.ResolvedSymbols = new List<Symbol>();
             this.ExportedSymbols = new List<Symbol>();
+
+            this.localSymbols = new List<Symbol>();
+            this.globalSymbols = new List<Symbol>();
 
             // TODO(patrik): Move this
             AddGlobalType("u8", Type.U8);
@@ -104,12 +107,16 @@ namespace Mass.Compiler
 
         private void ProcessPackage(Package package)
         {
+            ChangeNamespace(package.Name);
+
             foreach (var unit in package.Units)
             {
                 foreach (Decl decl in unit.Value.Decls)
                 {
                     AddSymbol(decl, unit.Value);
                 }
+
+                ChangeNamespace(package.Name);
             }
         }
 
@@ -122,12 +129,12 @@ namespace Mass.Compiler
 
         private void AddGlobalType(string name, Type type)
         {
-            Symbol sym = new Symbol(name, SymbolKind.Type, SymbolState.Resolved, null, null)
+            Symbol sym = new Symbol(name, currentNamespace, SymbolKind.Type, SymbolState.Resolved, null, null)
             {
                 Type = type
             };
 
-            globalSymbols.Add(name, sym);
+            globalSymbols.Add(sym);
         }
 
         //NOTE(patrik): Helper function
@@ -181,12 +188,20 @@ namespace Mass.Compiler
                 }
             }
 
-            if (globalSymbols.ContainsKey(name))
+            for (int i = 0; i < globalSymbols.Count; i++)
             {
-                return globalSymbols[name];
+                if (globalSymbols[i].Name == name)
+                {
+                    return globalSymbols[i];
+                }
             }
 
             return null;
+        }
+
+        private void ChangeNamespace(string name)
+        {
+            currentNamespace = name;
         }
 
         public void AddSymbol(Decl decl, CompilationUnit unit)
@@ -212,18 +227,23 @@ namespace Mass.Compiler
             {
                 kind = SymbolKind.Type;
             }
+            else if (decl is NamespaceDecl)
+            {
+                currentNamespace = currentNamespace + "." + decl.Name;
+                return;
+            }
             else
             {
                 Debug.Assert(false);
             }
 
-            Symbol sym = new Symbol(decl.Name, kind, SymbolState.Unresolved, decl, unit);
-            globalSymbols.Add(decl.Name, sym);
+            Symbol sym = new Symbol(decl.Name, currentNamespace, kind, SymbolState.Unresolved, decl, unit);
+            globalSymbols.Add(sym);
         }
 
         public void PushVar(string name, Type type)
         {
-            Symbol symbol = new Symbol(name, SymbolKind.Var, SymbolState.Resolved, null, null)
+            Symbol symbol = new Symbol(name, "", SymbolKind.Var, SymbolState.Resolved, null, null)
             {
                 Type = type
             };
@@ -1280,24 +1300,63 @@ namespace Mass.Compiler
             return OperandLValue(type);
         }
 
+        class FoundPackage
+        {
+            public Package package;
+            public string currentNamespace;
+        }
+
+        private FoundPackage TryResolvePackage(Expr expr)
+        {
+            if (expr is IdentifierExpr ident)
+            {
+                FoundPackage result = new FoundPackage()
+                {
+                    package = Package.GetImportPackage(ident.Value),
+                    currentNamespace = ""
+                };
+
+                return result;
+            }
+            else if (expr is FieldExpr field)
+            {
+                FoundPackage result = TryResolvePackage(field.Expr);
+                if (result.currentNamespace != "")
+                    result.currentNamespace += ".";
+                result.currentNamespace += $"{field.Name.Value}";
+                /*if (package)
+                {
+                    Sym* sym = get_package_sym(package, expr->field.name);
+                    if (sym && sym->kind == SYM_PACKAGE)
+                    {
+                        return sym->package;
+                    }
+                }*/
+                return result;
+            }
+
+            return null;
+        }
+
         private Operand ResolveFieldExpr(FieldExpr expr)
         {
-            if (expr.Expr is IdentifierExpr identExpr)
-            {
-                Package package = this.Package.GetImportPackage(identExpr.Value);
+            FoundPackage found = TryResolvePackage(expr);
 
-                if (package != null)
-                {
-                    // TODO(patrik): This is wrong because a symbol should and chould be in the global namespace in the package
-                    CompilationUnit unit = package.FindUnitByName(expr.Name.Value);
-                    return OperandLValue(new PackageUnitType(package, unit));
-                }
+            if (found != null)
+            {
+                Package package = found.package;
+
+                string symbolName = $"{package.Name}.{found.currentNamespace}";
+                Symbol symbol = found.package.Resolver.GetExportedSymbol(symbolName);
+                Debug.Assert(symbol != null);
+
+                return OperandLValue(symbol.Type);
             }
 
             Operand operand = ResolveExpr(expr.Expr);
-            if (!(operand.Type is StructType) && !(operand.Type is PackageUnitType))
+            if (!(operand.Type is StructType) && !(operand.Type is PackageNamespaceType))
             {
-                Log.Fatal("Field expr needs to have a struct or package type", expr.Expr.Span);
+                Log.Fatal("Field expr needs to have a struct or be part of the a package namespace", expr.Expr.Span);
             }
 
             if (operand.Type is StructType structType)
@@ -1310,12 +1369,11 @@ namespace Mass.Compiler
 
                 return OperandRValue(structType.Items[index].Type);
             }
-            else if (operand.Type is PackageUnitType unitType)
+            else if (operand.Type is PackageNamespaceType unitType)
             {
                 //return unitType.FindResolvedSymbol("stdio.printf");
                 string packageName = unitType.Package.Name;
-                string namespaceName = Path.GetFileNameWithoutExtension(unitType.Unit.FilePath);
-                Symbol symbol = unitType.Package.Resolver.GetExportedSymbol($"{packageName}.{namespaceName}.{expr.Name.Value}");
+                Symbol symbol = unitType.Package.Resolver.GetExportedSymbol($"");
                 Debug.Assert(symbol != null);
                 return OperandLValue(symbol.Type);
             }
@@ -1577,25 +1635,33 @@ namespace Mass.Compiler
             {
                 symbol.Type = ResolveStructDecl(structDecl);
             }
+            else if (symbol.Decl is NamespaceDecl namespaceDecl)
+            {
+                currentNamespace = $"{Package.Name}.{namespaceDecl.Name}";
+            }
             else
             {
                 Debug.Assert(false);
             }
 
-            symbol.Type.Symbol = symbol;
+            if (!(symbol.Type is null))
+                symbol.Type.Symbol = symbol;
             symbol.State = SymbolState.Resolved;
 
-            string libName = Package.Name;
-            string fileName = Path.GetFileNameWithoutExtension(symbol.CompilationUnit.FilePath);
+            /*string libName = Package.Name;
+            string fileName = Path.GetFileNameWithoutExtension(symbol.CompilationUnit.FilePath);*/
             string symbolName = symbol.Name;
 
-            symbol.QualifiedName = $"{libName}.{fileName}.{symbolName}";
+            symbol.QualifiedName = $"{symbol.Namespace}.{symbolName}";
 
-            ResolvedSymbols.Add(symbol);
-
-            if (symbol.Decl.GetAttribute(typeof(ExportDeclAttribute)) != null)
+            if (!(symbol.Decl is NamespaceDecl))
             {
-                ExportedSymbols.Add(symbol);
+                ResolvedSymbols.Add(symbol);
+
+                if (symbol.Decl.GetAttribute(typeof(ExportDeclAttribute)) != null)
+                {
+                    ExportedSymbols.Add(symbol);
+                }
             }
         }
 
@@ -1623,19 +1689,18 @@ namespace Mass.Compiler
 
         public void ResolveSymbols()
         {
-            foreach (var item in globalSymbols)
+            /*foreach (Symbol sym in globalSymbols)
             {
-                Symbol sym = item.Value;
                 if (sym.Decl is ImportDecl)
                 {
                     Console.WriteLine("Process Import");
                     sym.State = SymbolState.Resolved;
                 }
-            }
+            }*/
 
-            foreach (var item in globalSymbols)
+            foreach (Symbol sym in globalSymbols)
             {
-                ResolveSymbol(item.Value);
+                ResolveSymbol(sym);
             }
 
             // TODO(patrik): Finalize Symbols here??

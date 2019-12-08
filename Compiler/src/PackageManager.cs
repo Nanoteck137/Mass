@@ -64,13 +64,10 @@ namespace Mass.Compiler
 
         public static void ResolvePackage(Package package)
         {
-            // TODO(patrik): Resolve import packages first
             foreach (var import in package.Imports)
             {
                 ResolvePackage(import.Value);
             }
-
-            // TODO(patrik): Resolve the package
 
             Resolver resolver = new Resolver(package);
             resolver.ResolveSymbols();

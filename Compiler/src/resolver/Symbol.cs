@@ -23,6 +23,7 @@ namespace Mass.Compiler
     public class Symbol
     {
         public string Name { get; private set; }
+        public string Namespace { get; private set; }
         public string QualifiedName { get; set; }
 
         public SymbolKind Kind { get; private set; }
@@ -34,9 +35,10 @@ namespace Mass.Compiler
         public Type Type { get; set; }
         public Val Val { get; set; }
 
-        public Symbol(string name, SymbolKind kind, SymbolState state, Decl decl, CompilationUnit compilationUnit)
+        public Symbol(string name, string namespaceName, SymbolKind kind, SymbolState state, Decl decl, CompilationUnit compilationUnit)
         {
             this.Name = name;
+            this.Namespace = namespaceName;
 
             this.Kind = kind;
             this.State = state;
