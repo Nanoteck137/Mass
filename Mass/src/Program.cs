@@ -255,7 +255,7 @@ namespace Mass
             string programText = @"
                 func main(argc: s32, argv: u8**) -> s32
                 {
-                    var num: s32 = libc.stdio.Add(10, 4);
+                    var num: s32 = libc.stdio.random.Add(10, 4);
                     libc.stdio.printf(""Random Number '%d'\n"", num);
                     ret 0;
                 }

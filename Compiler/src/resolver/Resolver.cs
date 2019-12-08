@@ -229,7 +229,7 @@ namespace Mass.Compiler
             }
             else if (decl is NamespaceDecl)
             {
-                currentNamespace = currentNamespace + "." + decl.Name;
+                currentNamespace = Package.Name + "." + decl.Name;
                 return;
             }
             else

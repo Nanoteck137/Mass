@@ -1,10 +1,12 @@
-use namespace stdio;
+use namespace stdio.random;
 
 #export
 func Add(a: s32, b: s32) -> s32 
 {
     ret a + b;
 }
+
+use namespace stdio;
 
 #external
 #export
