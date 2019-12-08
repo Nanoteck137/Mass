@@ -1,12 +1,17 @@
 use namespace stdio.random;
 
-#export
 func Add(a: s32, b: s32) -> s32 
 {
     ret a + b;
 }
 
 use namespace stdio;
+
+#export
+func Test() -> s32 
+{
+    ret libc.stdio.random.Add(123, 321);
+}
 
 #external
 #export

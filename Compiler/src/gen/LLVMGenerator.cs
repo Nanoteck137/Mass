@@ -32,6 +32,8 @@ namespace Mass.Compiler
 
         private Type prevType;
 
+        private string currentWorkingNamespace;
+
         public LLVMGenerator(Package package)
             : base(package)
         {
@@ -42,6 +44,8 @@ namespace Mass.Compiler
             globals = new Dictionary<string, LLVMValueRef>();
             locals = new Dictionary<string, LLVMValueRef>();
             structTypes = new Dictionary<string, LLVMTypeRef>();
+
+            currentWorkingNamespace = "";
         }
 
         public void Dispose()
@@ -515,7 +519,16 @@ namespace Mass.Compiler
                 if (locals.ContainsKey(identExpr.Value))
                     ptr = locals[identExpr.Value];
                 else
-                    ptr = globals[identExpr.Value];
+                {
+                    if (globals.ContainsKey(currentWorkingNamespace + "." + identExpr.Value))
+                    {
+                        ptr = globals[currentWorkingNamespace + "." + identExpr.Value];
+                    }
+                    else
+                    {
+                        ptr = globals[identExpr.Value];
+                    }
+                }
 
                 if (load)
                     return builder.BuildLoad(ptr);
@@ -1342,6 +1355,8 @@ namespace Mass.Compiler
             Debug.Assert(symbol.Decl != null);
 
             Decl decl = symbol.Decl;
+
+            currentWorkingNamespace = symbol.Namespace;
 
             /*
             ConstDecl

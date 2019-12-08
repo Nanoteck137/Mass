@@ -253,10 +253,15 @@ namespace Mass
             Package libc = PackageManager.FindPackage("libc");
 
             string programText = @"
+                func test() {
+                    libc.stdio.printf(""Test\n"");
+                }
+
                 func main(argc: s32, argv: u8**) -> s32
                 {
-                    var num: s32 = libc.stdio.random.Add(10, 4);
-                    libc.stdio.printf(""Random Number '%d'\n"", num);
+                    // var num: s32 = libc.stdio.Test();
+                    // libc.stdio.printf(""Random Number '%d'\n"", num);
+                    test();
                     ret 0;
                 }
             ";
