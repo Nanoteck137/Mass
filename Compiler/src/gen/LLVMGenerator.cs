@@ -25,8 +25,6 @@ namespace Mass.Compiler
         private Dictionary<string, LLVMValueRef> locals;
         private Dictionary<string, LLVMTypeRef> structTypes;
 
-        //private Dictionary<string, Symbol> generatedSymbol;
-
         private LLVMValueRef currentValuePtr;
         private LLVMBasicBlockRef currentEntryBlock;
 
@@ -48,8 +46,6 @@ namespace Mass.Compiler
             globals = new Dictionary<string, LLVMValueRef>();
             locals = new Dictionary<string, LLVMValueRef>();
             structTypes = new Dictionary<string, LLVMTypeRef>();
-
-            //generatedSymbol = new Dictionary<string, Symbol>();
 
             currentWorkingNamespace = "";
         }
@@ -538,11 +534,6 @@ namespace Mass.Compiler
                         while (searchNamespace != "")
                         {
                             string symbolName = searchNamespace + "." + identExpr.Value;
-                            /*Symbol symbol = currentWorkingPackage.Resolver.GetSymbol(symbolName);
-                            if (symbol != null && !generatedSymbol.ContainsKey(symbol.QualifiedName))
-                            {
-                                GenDecl(symbol);
-                            }*/
 
                             if (globals.ContainsKey(symbolName))
                             {
@@ -550,9 +541,11 @@ namespace Mass.Compiler
                                 found = true;
                                 break;
                             }
+
                             int index = searchNamespace.LastIndexOf('.');
                             if (index == -1)
                                 break;
+
                             searchNamespace = searchNamespace.Substring(0, index);
                         }
 
@@ -564,7 +557,7 @@ namespace Mass.Compiler
                             }
                             else
                             {
-
+                                Debug.Assert(false);
                             }
                         }
                     }
@@ -1018,25 +1011,6 @@ namespace Mass.Compiler
                         return value;
                 }
 
-                /*Package package = TryGetPackage(fieldExpr.Expr);
-                if (package != null)
-                {
-                    LLVMValueRef value;
-                    if (globals.ContainsKey(package.Name + "::" + fieldExpr.Name.Value))
-                    {
-                        value = globals[package.Name + "::" + fieldExpr.Name.Value];
-                    }
-                    else
-                    {
-                        value = globals[fieldExpr.Name.Value];
-                    }
-
-                    if (load)
-                        return builder.BuildLoad(value);
-                    else
-                        return value;
-                }*/
-
                 StructType t = (StructType)fieldExpr.Expr.ResolvedType;
                 int index = t.GetItemIndex(fieldExpr.Name.Value);
                 LLVMValueRef ptr = GenExpr(builder, fieldExpr.Expr);
@@ -1347,38 +1321,6 @@ namespace Mass.Compiler
                 func.Params[i].Name = decl.Parameters[i].Name;
             }
 
-            /*if (decl.Body != null)
-            {
-                LLVMBasicBlockRef entry = func.AppendBasicBlock("entry");
-                currentEntryBlock = entry;
-
-                LLVMBuilderRef builder = module.Context.CreateBuilder();
-                builder.PositionAtEnd(entry);
-
-                currentValuePtr = func;
-
-                FunctionType type = (FunctionType)funcType;
-                for (int i = 0; i < type.Parameters.Count; i++)
-                {
-                    FunctionParameterType param = type.Parameters[i];
-                    LLVMValueRef ptr = builder.BuildAlloca(GetType(param.Type), param.Name);
-                    builder.BuildStore(func.Params[i], ptr);
-
-                    locals.Add(param.Name, ptr);
-                }
-
-                GenStmtBlock(builder, decl.Body, out _);
-
-                if (type.ReturnType == Type.Void)
-                {
-                    builder.BuildRetVoid();
-                }
-
-                locals.Clear();
-                currentValuePtr = null;
-                currentEntryBlock = null;
-            }*/
-
             return func;
         }
 
@@ -1477,8 +1419,6 @@ namespace Mass.Compiler
             }
 
             currentWorkingNamespace = "";
-
-            //generatedSymbol.Add(symbol.QualifiedName, symbol);
         }
 
         public void GeneratePackage(Package package)
@@ -1493,7 +1433,6 @@ namespace Mass.Compiler
             currentWorkingPackage = package;
             foreach (Symbol symbol in package.Resolver.ResolvedSymbols)
             {
-                // NOTE(patrik): Generate only symbol that not been generated already
                 GenDecl(symbol);
             }
 
@@ -1512,10 +1451,6 @@ namespace Mass.Compiler
 
         public override void Generate()
         {
-            /*foreach (Symbol symbol in symbols)
-            {
-                GenDecl(symbol);
-            }*/
             GeneratePackage(this.Package);
         }
 
