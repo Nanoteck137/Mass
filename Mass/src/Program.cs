@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using Mass.Compiler;
@@ -52,7 +53,7 @@ namespace Mass
 
         void PrintUsage()
         {
-            Console.WriteLine($"Usage: {executableName} [options] file");
+            Console.WriteLine($"Usage: {executableName} [options] dir");
             Console.WriteLine($"Options:");
 
             int maxCommandCharWidth = 0;
@@ -140,9 +141,11 @@ namespace Mass
                 else
                 {
                     string filePath = args[0];
-                    Console.WriteLine($"Compiling {filePath}");
+                    Console.WriteLine($"DEBUG: Trying to compile project at '{filePath}'");
                     StartCompiling(filePath, compilerOption);
                 }
+
+
             }
         }
 
@@ -195,63 +198,14 @@ namespace Mass
             return error;
         }
 
-        void StartCompiling(string filePath, CompilerOptions options)
+        void StartCompiling(string dirPath, CompilerOptions options)
         {
-            filePath = Path.GetFullPath(filePath);
-
-            //Package package = Package.Compile(filePath);
-            //Package library = Package.CompileLibrary(Path.GetDirectoryName(filePath), "libc");
-
-            string dir = Path.GetDirectoryName(filePath);
-            //CompileUnit programUnit = CompileUnit.CompileFile(filePath);
-            //CompileUnit otherUnit = CompileUnit.CompileFile(Path.Join(dir, "other.ma"));
-
-            //programUnit.Resolve();
-            //otherUnit.Resolve();
-
-            /*foreach (Decl decl in programUnit.Decls)
-            {
-                resolver.AddSymbol(decl);
-            }
-
-            resolver.ResolveSymbols();
-            resolver.FinalizeSymbols();*/
-
-            LLVMGenerator.Setup();
-
-            /*using LLVMGenerator gen = new LLVMGenerator(programUnit.ResolvedSymbols);
-            gen.Generate();
-
-            using LLVMGenerator gen2 = new LLVMGenerator(otherUnit.ResolvedSymbols);
-            gen2.Generate();
-            gen2.DebugPrint();
-
-            if (options.DebugInfo)
-                gen.DebugPrint();
-
-            string outputPath = "";
-            if (options.OutputPath == "")
-            {
-                outputPath = Path.ChangeExtension(filePath, "ll");
-            }
-            else
-            {
-                outputPath = options.OutputPath;
-            }
-
-            gen.WriteToFile(outputPath);
-
-            gen.RunCode(new LLVMGenerator[] { gen2 });*/
-        }
-
-        static void Main(string[] args)
-        {
-            // new Program(args);
-
-            // NOTE(patrik): Temp Testing
+            dirPath = Path.GetFullPath(dirPath);
 
             Package libc = PackageManager.FindPackage("libc");
-            Package main = PackageManager.FindPackage(".");
+            Package main = PackageManager.FindPackageInDir(dirPath);
+            Debug.Assert(main != null);
+
             main.ImportPackage(libc);
 
             PackageManager.ResolvePackage(main);
@@ -261,8 +215,26 @@ namespace Mass
             using LLVMGenerator gen = new LLVMGenerator(main);
             gen.Generate();
 
-            gen.DebugPrint();
+            if (options.DebugInfo)
+                gen.DebugPrint();
+
+            string outputPath = "";
+            if (options.OutputPath == "")
+            {
+                outputPath = Path.ChangeExtension(main.Name, "ll");
+            }
+            else
+            {
+                outputPath = options.OutputPath;
+            }
+
+            gen.WriteToFile(outputPath);
             gen.RunCode();
+        }
+
+        static void Main(string[] args)
+        {
+            new Program(args);
         }
     }
 }

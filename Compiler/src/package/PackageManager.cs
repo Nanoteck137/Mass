@@ -23,24 +23,15 @@ namespace Mass.Compiler
 
         private PackageManager() { }
 
-        public static Package FindPackage(string name)
+        private static Package ProcessProjectData(string projectDataPath)
         {
-            Console.WriteLine($"DEBUG: Trying to load package '{name}'");
-
-            string tempPath = "tests";
-            tempPath = Path.GetFullPath(tempPath);
-
-            string packagePath = Path.Join(tempPath, name);
-
-            string projectDataPath = Path.Join(packagePath, "MassProject.json");
-            Debug.Assert(File.Exists(projectDataPath));
-
-            Console.WriteLine($"DEBUG: Found package '{name}'");
+            string path = Path.GetDirectoryName(projectDataPath);
 
             string projectDataContent = File.ReadAllText(projectDataPath);
             ProjectData data = JsonConvert.DeserializeObject<ProjectData>(projectDataContent);
 
-            Console.WriteLine($"DEBUG: Loading package '{name}'");
+            Console.WriteLine($"DEBUG: Found package '{data.Name}'");
+            Console.WriteLine($"DEBUG: Loading package '{data.Name}'");
             Console.WriteLine("-----------------------------------------");
             Console.WriteLine($"Name: {data.Name}");
             Console.WriteLine($"Desc: {data.Desc}");
@@ -53,7 +44,7 @@ namespace Mass.Compiler
             List<CompilationUnit> units = new List<CompilationUnit>();
             foreach (string file in data.Files)
             {
-                string filePath = Path.Join(packagePath, file);
+                string filePath = Path.Join(path, file);
                 // TODO(patrik): Real error?!?!?!?
                 Debug.Assert(File.Exists(filePath));
 
@@ -64,6 +55,34 @@ namespace Mass.Compiler
             }
 
             return new Package(data.Name, units);
+        }
+
+        public static Package FindPackage(string name)
+        {
+            Console.WriteLine($"DEBUG: Trying to load package '{name}'");
+
+            string tempPath = "tests";
+            tempPath = Path.GetFullPath(tempPath);
+
+            string packagePath = Path.Join(tempPath, name);
+
+            string projectDataPath = Path.Join(packagePath, "MassProject.json");
+            if (!File.Exists(projectDataPath))
+            {
+                return null;
+            }
+
+            return ProcessProjectData(projectDataPath);
+        }
+
+        public static Package FindPackageInDir(string dirPath)
+        {
+            string projectDataPath = Path.Join(dirPath, "MassProject.json");
+
+            if (!File.Exists(projectDataPath))
+                return null;
+
+            return ProcessProjectData(projectDataPath);
         }
 
         public static void ResolvePackage(Package package)
