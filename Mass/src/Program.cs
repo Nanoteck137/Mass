@@ -251,26 +251,6 @@ namespace Mass
             // NOTE(patrik): Temp Testing
 
             Package libc = PackageManager.FindPackage("libc");
-
-            /*string programText = @"
-                use libc;
-                use libc.stdio;
-
-                func main(argc: s32, argv: u8**) -> s32
-                {
-                    var num: s32 = rand();
-                    libc.stdio.printf(""Random Number '%d'\n"", num);
-                    // test();
-                    ret 0;
-                }
-            ";
-
-            // NOTE(patrik): Maybe change CompileText to ParseText or ParseCompililationUnit ?!??!?!
-            CompilationUnit unit = MassCompiler.CompileText(programText, "main.ma");
-
-            Package main = new Package("test", new List<CompilationUnit>() { unit }, true);
-            main.ImportPackage(libc);*/
-
             Package main = PackageManager.FindPackage(".");
             main.ImportPackage(libc);
 
