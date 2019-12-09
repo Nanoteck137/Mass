@@ -273,8 +273,6 @@ namespace Mass
 
             PackageManager.ResolvePackage(main);
 
-            Symbol[] syms = libc.GetSymbolsFromNamespace("libc");
-
             LLVMGenerator.Setup();
 
             using LLVMGenerator gen = new LLVMGenerator(main);
@@ -282,15 +280,6 @@ namespace Mass
 
             gen.DebugPrint();
             //gen.RunCode();
-
-            // Package main = MassCompiler.GetMainPackage();
-            // Package package = MassCompiler.CompileProgram();
-            // package.IsRunnable // Returns true if the package should or can be runnable
-
-            // Package program = Package.CreateRunnablePackage();
-
-            // NOTE(patrik): Maybe not needed!?
-            // PackageManager.SetRunnablePackage(program);
         }
     }
 }
