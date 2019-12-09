@@ -1513,8 +1513,11 @@ namespace Mass.Compiler
 
         public void RunCode()
         {
+            Symbol symbol = Package.FindSymbol("main");
+            Debug.Assert(symbol != null);
+
             LLVMExecutionEngineRef engine = module.CreateExecutionEngine();
-            LLVMValueRef t = engine.FindFunction("test.main.main");
+            LLVMValueRef t = engine.FindFunction(symbol.QualifiedName);
 
             string[] args = new string[] { };
             engine.RunFunctionAsMain(t, (uint)args.Length, args, new string[] { });

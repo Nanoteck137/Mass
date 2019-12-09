@@ -61,5 +61,10 @@ namespace Mass.Compiler
             Debug.Assert(Resolver != null);
             return Resolver.ExportedSymbols.FindAll(sym => sym.Namespace == name).ToArray();
         }
+
+        public Symbol FindSymbol(string name)
+        {
+            return Resolver.GetSymbol(name);
+        }
     }
 }

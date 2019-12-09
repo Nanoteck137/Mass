@@ -13,7 +13,8 @@ namespace Mass.Compiler
         public string Desc { get; set; }
         public string Version { get; set; }
         public string[] Files { get; set; }
-        public bool Library { get; set; }
+        public string[] Imports { get; set; }
+        public string Type { get; set; }
     }
 
     public class PackageManager
@@ -44,7 +45,7 @@ namespace Mass.Compiler
             Console.WriteLine($"Name: {data.Name}");
             Console.WriteLine($"Desc: {data.Desc}");
             Console.WriteLine($"Version: {data.Version}");
-            Console.WriteLine($"Is a Library: {data.Library}");
+            Console.WriteLine($"Type: {data.Type}");
             Console.WriteLine("-----------------------------------------");
 
             // TODO(patrik): Load packages used in this package
@@ -53,6 +54,9 @@ namespace Mass.Compiler
             foreach (string file in data.Files)
             {
                 string filePath = Path.Join(packagePath, file);
+                // TODO(patrik): Real error?!?!?!?
+                Debug.Assert(File.Exists(filePath));
+
                 Console.WriteLine($"DEBUG: Compiling file '{filePath}' for '{data.Name}'");
 
                 CompilationUnit unit = MassCompiler.CompileFile(filePath);

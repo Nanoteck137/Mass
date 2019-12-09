@@ -252,7 +252,7 @@ namespace Mass
 
             Package libc = PackageManager.FindPackage("libc");
 
-            string programText = @"
+            /*string programText = @"
                 use libc;
                 use libc.stdio;
 
@@ -269,6 +269,9 @@ namespace Mass
             CompilationUnit unit = MassCompiler.CompileText(programText, "main.ma");
 
             Package main = new Package("test", new List<CompilationUnit>() { unit }, true);
+            main.ImportPackage(libc);*/
+
+            Package main = PackageManager.FindPackage(".");
             main.ImportPackage(libc);
 
             PackageManager.ResolvePackage(main);
@@ -279,7 +282,7 @@ namespace Mass
             gen.Generate();
 
             gen.DebugPrint();
-            //gen.RunCode();
+            gen.RunCode();
         }
     }
 }

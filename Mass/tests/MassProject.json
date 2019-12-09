@@ -1,0 +1,8 @@
+{
+    "Name": "program",
+    "Desc": "This is a testing program to test mass",
+    "Version": "0.1",
+    "Files": ["program.ma"],
+    "Imports": ["libc"],
+    "Type": "program"
+}
