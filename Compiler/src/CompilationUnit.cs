@@ -11,7 +11,7 @@ namespace Mass.Compiler
         public string FilePath { get; private set; }
 
         public List<Decl> Decls { get; private set; }
-        public List<ImportDecl> Imports { get; private set; }
+        public List<UseDecl> Uses { get; private set; }
 
         public CompilationUnit(string filePath, List<Decl> decls)
         {
@@ -23,13 +23,17 @@ namespace Mass.Compiler
         private void ProcessDecls(List<Decl> decls)
         {
             this.Decls = new List<Decl>();
-            this.Imports = new List<ImportDecl>();
+            this.Uses = new List<UseDecl>();
 
             foreach (Decl decl in decls)
             {
                 if (decl is ImportDecl importDecl)
                 {
-                    this.Imports.Add(importDecl);
+                    Debug.Assert(false, "Remove");
+                }
+                else if (decl is UseDecl useDecl)
+                {
+                    this.Uses.Add(useDecl);
                 }
                 else
                 {

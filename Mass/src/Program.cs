@@ -253,22 +253,14 @@ namespace Mass
             Package libc = PackageManager.FindPackage("libc");
 
             string programText = @"
-                func test() {
-                    libc.stdio.printf(""Test\n"");
-                    test2();
-                }
-
-                func test2() {
-                    libc.stdio.printf(""Test2\n"");
-
-                    test2();
-                }
+                use libc;
+                use libc.stdio;
 
                 func main(argc: s32, argv: u8**) -> s32
                 {
-                    // var num: s32 = libc.stdio.Test();
-                    // libc.stdio.printf(""Random Number '%d'\n"", num);
-                    test();
+                    var num: s32 = rand();
+                    libc.stdio.printf(""Random Number '%d'\n"", num);
+                    // test();
                     ret 0;
                 }
             ";
@@ -280,6 +272,8 @@ namespace Mass
             main.ImportPackage(libc);
 
             PackageManager.ResolvePackage(main);
+
+            Symbol[] syms = libc.GetSymbolsFromNamespace("libc");
 
             LLVMGenerator.Setup();
 

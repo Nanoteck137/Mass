@@ -55,6 +55,7 @@ namespace Mass.Compiler
 
         private List<Symbol> localSymbols;
         private List<Symbol> globalSymbols;
+        private List<Symbol> tempSymbols;
 
         private readonly Dictionary<Type, int> typeRank;
 
@@ -68,6 +69,7 @@ namespace Mass.Compiler
 
             this.localSymbols = new List<Symbol>();
             this.globalSymbols = new List<Symbol>();
+            this.tempSymbols = new List<Symbol>();
 
             // TODO(patrik): Move this
             AddGlobalType("u8", Type.U8);
@@ -193,6 +195,14 @@ namespace Mass.Compiler
                 if (globalSymbols[i].Name == name || globalSymbols[i].QualifiedName == name)
                 {
                     return globalSymbols[i];
+                }
+            }
+
+            for (int i = 0; i < tempSymbols.Count; i++)
+            {
+                if (tempSymbols[i].Name == name || tempSymbols[i].QualifiedName == name)
+                {
+                    return tempSymbols[i];
                 }
             }
 
@@ -882,6 +892,9 @@ namespace Mass.Compiler
         private Operand ResolveIdentifierExpr(IdentifierExpr expr)
         {
             Symbol symbol = ResolveName(expr.Value);
+            if (symbol == null)
+                Log.Fatal($"'{expr.Value}' does not exist", expr.Span);
+
             if (symbol.Kind == SymbolKind.Var)
             {
                 return OperandLValue(symbol.Type);
@@ -1504,6 +1517,8 @@ namespace Mass.Compiler
                 }
 
                 Symbol symbol = ResolveName(name);
+                Debug.Assert(symbol != null);
+
                 return symbol.Type;
             }
             else if (typespec is PtrTypespec ptrTypespec)
@@ -1633,6 +1648,29 @@ namespace Mass.Compiler
 
             symbol.State = SymbolState.Resolving;
 
+            CompilationUnit unit = symbol.CompilationUnit;
+            Debug.Assert(unit != null);
+
+            foreach (UseDecl use in unit.Uses)
+            {
+                string packageName = "";
+                if (use.Name.IndexOf(".") == -1)
+                {
+                    packageName = use.Name;
+                }
+                else
+                {
+                    string[] parts = use.Name.Split(".");
+                    Debug.Assert(parts.Length > 0);
+
+                    packageName = parts[0];
+                }
+
+                Package import = Package.GetImportPackage(packageName);
+                Symbol[] symbols = import.GetSymbolsFromNamespace(use.Name);
+                tempSymbols.AddRange(symbols);
+            }
+
             if (symbol.Decl is VarDecl varDecl)
             {
                 symbol.Type = ResolveVarDecl(varDecl);
@@ -1656,6 +1694,10 @@ namespace Mass.Compiler
             else if (symbol.Decl is NamespaceDecl namespaceDecl)
             {
                 currentNamespace = $"{Package.Name}.{namespaceDecl.Name}";
+            }
+            else if (symbol.Decl is UseDecl)
+            {
+                // NOTE(patrik): Do nothing
             }
             else
             {
@@ -1681,6 +1723,8 @@ namespace Mass.Compiler
                     ExportedSymbols.Add(symbol);
                 }
             }
+
+            tempSymbols.Clear();
         }
 
         public Symbol ResolveName(string name)
@@ -1696,7 +1740,8 @@ namespace Mass.Compiler
                 Symbol sym = GetSymbol(name);
                 if (sym == null)
                 {
-                    Log.Fatal($"Unknown symbol name: '{name}'", null);
+                    // Log.Fatal($"Unknown symbol name: '{name}'", null);
+                    return null;
                 }
 
                 ResolveSymbol(sym);

@@ -55,5 +55,11 @@ namespace Mass.Compiler
 
             return Units[name];
         }
+
+        public Symbol[] GetSymbolsFromNamespace(string name)
+        {
+            Debug.Assert(Resolver != null);
+            return Resolver.ExportedSymbols.FindAll(sym => sym.Namespace == name).ToArray();
+        }
     }
 }

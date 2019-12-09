@@ -125,6 +125,14 @@ namespace Mass.Compiler
         }
     }
 
+    public class UseDecl : Decl
+    {
+        public UseDecl(string name)
+        {
+            this.Name = name;
+        }
+    }
+
     public class NamespaceDecl : Decl
     {
         public NamespaceDecl(string name)

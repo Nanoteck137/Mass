@@ -25,6 +25,8 @@ namespace Mass.Compiler
         private Dictionary<string, LLVMValueRef> locals;
         private Dictionary<string, LLVMTypeRef> structTypes;
 
+        private Dictionary<string, LLVMValueRef> tempValues;
+
         private LLVMValueRef currentValuePtr;
         private LLVMBasicBlockRef currentEntryBlock;
 
@@ -46,6 +48,7 @@ namespace Mass.Compiler
             globals = new Dictionary<string, LLVMValueRef>();
             locals = new Dictionary<string, LLVMValueRef>();
             structTypes = new Dictionary<string, LLVMTypeRef>();
+            tempValues = new Dictionary<string, LLVMValueRef>();
 
             currentWorkingNamespace = "";
         }
@@ -557,7 +560,14 @@ namespace Mass.Compiler
                             }
                             else
                             {
-                                Debug.Assert(false);
+                                if (tempValues.ContainsKey(identExpr.Value))
+                                {
+                                    ptr = tempValues[identExpr.Value];
+                                }
+                                else
+                                {
+                                    Debug.Assert(false);
+                                }
                             }
                         }
                     }
@@ -1411,7 +1421,7 @@ namespace Mass.Compiler
             else if (decl is StructDecl structDecl)
             {
                 LLVMValueRef value = GenStructDecl(structDecl, symbol.Type);
-                globals[structDecl.Name] = value;
+                globals[symbol.QualifiedName] = value;
             }
             else
             {
@@ -1439,11 +1449,43 @@ namespace Mass.Compiler
             foreach (Symbol symbol in package.Resolver.ResolvedSymbols)
             {
                 currentWorkingNamespace = symbol.Namespace;
+
+                CompilationUnit unit = symbol.CompilationUnit;
+                Debug.Assert(unit != null);
+
+                foreach (UseDecl use in unit.Uses)
+                {
+                    string packageName = "";
+                    if (use.Name.IndexOf(".") == -1)
+                    {
+                        packageName = use.Name;
+                    }
+                    else
+                    {
+                        string[] parts = use.Name.Split(".");
+                        Debug.Assert(parts.Length > 0);
+
+                        packageName = parts[0];
+                    }
+
+                    Package import = Package.GetImportPackage(packageName);
+                    Symbol[] symbols = import.GetSymbolsFromNamespace(use.Name);
+
+                    foreach (Symbol tempSymbol in symbols)
+                    {
+                        tempValues.Add(tempSymbol.Name, globals[tempSymbol.QualifiedName]);
+                    }
+                    //tempSymbols.AddRange(symbols);
+                }
+
+
                 if (symbol.Decl is FunctionDecl funcDecl)
                 {
                     GenFuncBody(funcDecl, symbol);
                 }
                 currentWorkingNamespace = "";
+
+                tempValues.Clear();
             }
 
             currentWorkingPackage = null;

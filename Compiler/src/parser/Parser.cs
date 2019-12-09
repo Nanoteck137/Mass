@@ -1171,7 +1171,13 @@ namespace Mass.Compiler
             SourceSpan firstSpan = lexer.CurrentTokenSpan;
 
             lexer.ExpectToken(TokenType.KEYWORD_USE);
-            lexer.ExpectToken(TokenType.KEYWORD_NAMESPACE);
+
+            bool useNamespace = false;
+            if (lexer.MatchToken(TokenType.KEYWORD_NAMESPACE))
+            {
+                lexer.NextToken();
+                useNamespace = true;
+            }
 
             string namespaceName = lexer.CurrentIdentifier;
             lexer.ExpectToken(TokenType.IDENTIFIER);
@@ -1188,10 +1194,22 @@ namespace Mass.Compiler
 
             SourceSpan lastSpan = lexer.CurrentTokenSpan;
 
-            NamespaceDecl result = new NamespaceDecl(namespaceName)
+            Decl result = null;
+
+            if (useNamespace)
             {
-                Span = SourceSpan.FromTo(firstSpan, lastSpan)
-            };
+                result = new NamespaceDecl(namespaceName)
+                {
+                    Span = SourceSpan.FromTo(firstSpan, lastSpan)
+                };
+            }
+            else
+            {
+                result = new UseDecl(namespaceName)
+                {
+                    Span = SourceSpan.FromTo(firstSpan, lastSpan)
+                };
+            }
 
             return result;
         }
