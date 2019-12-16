@@ -8,6 +8,12 @@ using LLVMSharp;
 
 namespace Mass.Compiler
 {
+    /*
+    TODO(patrik):
+        - Refactor the whole code generator
+          - Refactor Expr and Type Generation to multiple methods
+    */
+
     public class GenStmtBlockInfo
     {
         public bool HasBreakStmt { get; set; }
@@ -1513,6 +1519,10 @@ namespace Mass.Compiler
 
         public void RunCode()
         {
+            Console.WriteLine("------------------------------------");
+            Console.WriteLine("DEBUG: Running Code");
+            Console.WriteLine("------------------------------------");
+
             Symbol symbol = Package.FindSymbol("main");
             Debug.Assert(symbol != null);
 

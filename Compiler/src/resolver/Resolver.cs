@@ -6,6 +6,15 @@ using System.Runtime.InteropServices;
 
 namespace Mass.Compiler
 {
+    /*
+    TODO(patrik):
+        - Refactor the whole resolver
+          - Refactor code to other class
+            - Expr resolving
+            - Stmt resolving
+            - Decl resolving
+    */
+
     [StructLayout(LayoutKind.Explicit)]
     public class Val
     {
@@ -71,6 +80,21 @@ namespace Mass.Compiler
             this.globalSymbols = new List<Symbol>();
             this.tempSymbols = new List<Symbol>();
 
+            this.typeRank = new Dictionary<Type, int>()
+            {
+                { Type.U8, 1 },
+                { Type.S8, 1 },
+
+                { Type.U16, 2 },
+                { Type.S16, 2 },
+
+                { Type.U32, 3 },
+                { Type.S32, 3 },
+
+                { Type.U64, 4 },
+                { Type.S64, 4 },
+            };
+
             // TODO(patrik): Move this
             AddGlobalType("u8", Type.U8);
             AddGlobalType("u16", Type.U16);
@@ -88,21 +112,6 @@ namespace Mass.Compiler
             AddGlobalType("f64", Type.F64);
 
             AddGlobalType("void", Type.Void);
-
-            typeRank = new Dictionary<Type, int>()
-            {
-                { Type.U8, 1 },
-                { Type.S8, 1 },
-
-                { Type.U16, 2 },
-                { Type.S16, 2 },
-
-                { Type.U32, 3 },
-                { Type.S32, 3 },
-
-                { Type.U64, 4 },
-                { Type.S64, 4 },
-            };
 
             ProcessPackage(this.Package);
         }
