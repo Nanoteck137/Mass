@@ -1267,6 +1267,13 @@ namespace Mass.Compiler
                 else
                 {
                     Debug.Assert(assignStmt.Left.ResolvedType is IntType);
+                    Debug.Assert(assignStmt.Right.ResolvedType is IntType);
+
+                    if (((IntType)assignStmt.Right.ResolvedType).Size > ((IntType)assignStmt.Left.ResolvedType).Size)
+                    {
+
+                    }
+
                     GenIntegerOperators(builder, left, right, assignStmt.Op, (IntType)assignStmt.Left.ResolvedType);
                 }
 

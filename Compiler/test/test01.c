@@ -3,12 +3,14 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-void test() {
-	test();
-}
-
 int main(int argc, char **argv)
 {
-	test();
+	char a = 'A';
+
+	short b = 65;
+	if (a == b)
+	{
+		printf("Equal\n");
+	}
 	return 0;
 }
