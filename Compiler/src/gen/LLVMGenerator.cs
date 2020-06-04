@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Text;
+using System.Diagnostics;
+using System.Collections.Generic;
 
 using LLVMSharp.Interop;
 
@@ -11,7 +10,7 @@ namespace Mass.Compiler
     /*
     TODO(patrik):
         - Refactor the whole code generator
-          - Refactor Expr and Type Generation to multiple methods
+        - Refactor Expr and Type Generation to multiple methods
     */
 
     public class GenStmtBlockInfo
