@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-using LLVMSharp;
+using LLVMSharp.Interop;
 
 namespace Mass.Compiler
 {
