@@ -316,6 +316,11 @@ namespace Mass.Compiler
                 case TokenType.EQUAL2:
                     return builder.BuildICmp(LLVMIntPredicate.LLVMIntEQ, left, right);
                 case TokenType.NOT_EQUAL:
+                    if (type.Kind == IntKind.U8)
+                    {
+                        // TODO(patrik): This is a hack
+                        right = builder.BuildTrunc(right, LLVMTypeRef.Int8);
+                    }
                     return builder.BuildICmp(LLVMIntPredicate.LLVMIntNE, left, right);
                 case TokenType.GREATER_THEN:
                     if (isSigned)
@@ -342,55 +347,55 @@ namespace Mass.Compiler
                     builder.BuildStore(right, left);
                     break;
                 case TokenType.PLUS_EQUALS:
-                    {
-                        LLVMValueRef varValue = builder.BuildLoad(left);
-                        if (isSigned)
-                            right = builder.BuildNSWAdd(varValue, right);
-                        else
-                            right = builder.BuildAdd(varValue, right);
-                        builder.BuildStore(right, left);
-                        break;
-                    }
+                {
+                    LLVMValueRef varValue = builder.BuildLoad(left);
+                    if (isSigned)
+                        right = builder.BuildNSWAdd(varValue, right);
+                    else
+                        right = builder.BuildAdd(varValue, right);
+                    builder.BuildStore(right, left);
+                    break;
+                }
                 case TokenType.MINUS_EQUALS:
-                    {
-                        LLVMValueRef varValue = builder.BuildLoad(left);
-                        if (isSigned)
-                            right = builder.BuildNSWSub(varValue, right);
-                        else
-                            right = builder.BuildSub(varValue, right);
-                        builder.BuildStore(right, left);
-                        break;
-                    }
+                {
+                    LLVMValueRef varValue = builder.BuildLoad(left);
+                    if (isSigned)
+                        right = builder.BuildNSWSub(varValue, right);
+                    else
+                        right = builder.BuildSub(varValue, right);
+                    builder.BuildStore(right, left);
+                    break;
+                }
                 case TokenType.MULTIPLY_EQUALS:
-                    {
-                        LLVMValueRef varValue = builder.BuildLoad(left);
-                        if (isSigned)
-                            right = builder.BuildNSWMul(varValue, right);
-                        else
-                            right = builder.BuildMul(varValue, right);
-                        builder.BuildStore(right, left);
-                        break;
-                    }
+                {
+                    LLVMValueRef varValue = builder.BuildLoad(left);
+                    if (isSigned)
+                        right = builder.BuildNSWMul(varValue, right);
+                    else
+                        right = builder.BuildMul(varValue, right);
+                    builder.BuildStore(right, left);
+                    break;
+                }
                 case TokenType.DIVIDE_EQUALS:
-                    {
-                        LLVMValueRef varValue = builder.BuildLoad(left);
-                        if (isSigned)
-                            right = builder.BuildSDiv(varValue, right);
-                        else
-                            right = builder.BuildUDiv(varValue, right);
-                        builder.BuildStore(right, left);
-                        break;
-                    }
+                {
+                    LLVMValueRef varValue = builder.BuildLoad(left);
+                    if (isSigned)
+                        right = builder.BuildSDiv(varValue, right);
+                    else
+                        right = builder.BuildUDiv(varValue, right);
+                    builder.BuildStore(right, left);
+                    break;
+                }
                 case TokenType.MODULO_EQUALS:
-                    {
-                        LLVMValueRef varValue = builder.BuildLoad(left);
-                        if (isSigned)
-                            right = builder.BuildSRem(varValue, right);
-                        else
-                            right = builder.BuildURem(varValue, right);
-                        builder.BuildStore(right, left);
-                        break;
-                    }
+                {
+                    LLVMValueRef varValue = builder.BuildLoad(left);
+                    if (isSigned)
+                        right = builder.BuildSRem(varValue, right);
+                    else
+                        right = builder.BuildURem(varValue, right);
+                    builder.BuildStore(right, left);
+                    break;
+                }
 
                 default:
                     Debug.Assert(false);
@@ -452,40 +457,40 @@ namespace Mass.Compiler
                     builder.BuildStore(right, left);
                     break;
                 case TokenType.PLUS_EQUALS:
-                    {
-                        LLVMValueRef varValue = builder.BuildLoad(left);
-                        right = builder.BuildFAdd(varValue, right);
-                        builder.BuildStore(right, left);
-                        break;
-                    }
+                {
+                    LLVMValueRef varValue = builder.BuildLoad(left);
+                    right = builder.BuildFAdd(varValue, right);
+                    builder.BuildStore(right, left);
+                    break;
+                }
                 case TokenType.MINUS_EQUALS:
-                    {
-                        LLVMValueRef varValue = builder.BuildLoad(left);
-                        right = builder.BuildFSub(varValue, right);
-                        builder.BuildStore(right, left);
-                        break;
-                    }
+                {
+                    LLVMValueRef varValue = builder.BuildLoad(left);
+                    right = builder.BuildFSub(varValue, right);
+                    builder.BuildStore(right, left);
+                    break;
+                }
                 case TokenType.MULTIPLY_EQUALS:
-                    {
-                        LLVMValueRef varValue = builder.BuildLoad(left);
-                        right = builder.BuildFMul(varValue, right);
-                        builder.BuildStore(right, left);
-                        break;
-                    }
+                {
+                    LLVMValueRef varValue = builder.BuildLoad(left);
+                    right = builder.BuildFMul(varValue, right);
+                    builder.BuildStore(right, left);
+                    break;
+                }
                 case TokenType.DIVIDE_EQUALS:
-                    {
-                        LLVMValueRef varValue = builder.BuildLoad(left);
-                        right = builder.BuildFDiv(varValue, right);
-                        builder.BuildStore(right, left);
-                        break;
-                    }
+                {
+                    LLVMValueRef varValue = builder.BuildLoad(left);
+                    right = builder.BuildFDiv(varValue, right);
+                    builder.BuildStore(right, left);
+                    break;
+                }
                 case TokenType.MODULO_EQUALS:
-                    {
-                        LLVMValueRef varValue = builder.BuildLoad(left);
-                        right = builder.BuildFRem(varValue, right);
-                        builder.BuildStore(right, left);
-                        break;
-                    }
+                {
+                    LLVMValueRef varValue = builder.BuildLoad(left);
+                    right = builder.BuildFRem(varValue, right);
+                    builder.BuildStore(right, left);
+                    break;
+                }
                 default:
                     Debug.Assert(false);
                     break;
@@ -704,60 +709,60 @@ namespace Mass.Compiler
                         switch (binaryOpExpr.Op)
                         {
                             case TokenType.AND2:
-                                {
-                                    LLVMBasicBlockRef leftBlock = currentEntryBlock.InsertBasicBlock("land");
-                                    LLVMBasicBlockRef rightBlock = currentEntryBlock.InsertBasicBlock("rand");
-                                    LLVMBasicBlockRef endBlock = currentEntryBlock.InsertBasicBlock("endand");
-                                    leftBlock.MoveAfter(currentEntryBlock);
-                                    rightBlock.MoveAfter(leftBlock);
-                                    endBlock.MoveAfter(rightBlock);
+                            {
+                                LLVMBasicBlockRef leftBlock = currentEntryBlock.InsertBasicBlock("land");
+                                LLVMBasicBlockRef rightBlock = currentEntryBlock.InsertBasicBlock("rand");
+                                LLVMBasicBlockRef endBlock = currentEntryBlock.InsertBasicBlock("endand");
+                                leftBlock.MoveAfter(currentEntryBlock);
+                                rightBlock.MoveAfter(leftBlock);
+                                endBlock.MoveAfter(rightBlock);
 
-                                    builder.BuildBr(leftBlock);
+                                builder.BuildBr(leftBlock);
 
-                                    builder.PositionAtEnd(leftBlock);
-                                    builder.BuildCondBr(left, rightBlock, endBlock);
+                                builder.PositionAtEnd(leftBlock);
+                                builder.BuildCondBr(left, rightBlock, endBlock);
 
-                                    builder.PositionAtEnd(rightBlock);
-                                    builder.BuildBr(endBlock);
+                                builder.PositionAtEnd(rightBlock);
+                                builder.BuildBr(endBlock);
 
-                                    builder.PositionAtEnd(endBlock);
-                                    LLVMTypeRef type = GetType(leftType);
-                                    LLVMValueRef phi = builder.BuildPhi(type);
-                                    phi.AddIncoming(new LLVMValueRef[] { LLVMValueRef.CreateConstInt(type, 0), right }, new LLVMBasicBlockRef[] { leftBlock, rightBlock }, 2);
+                                builder.PositionAtEnd(endBlock);
+                                LLVMTypeRef type = GetType(leftType);
+                                LLVMValueRef phi = builder.BuildPhi(type);
+                                phi.AddIncoming(new LLVMValueRef[] { LLVMValueRef.CreateConstInt(type, 0), right }, new LLVMBasicBlockRef[] { leftBlock, rightBlock }, 2);
 
-                                    currentEntryBlock = endBlock;
+                                currentEntryBlock = endBlock;
 
-                                    result = phi;
-                                }
-                                break;
+                                result = phi;
+                            }
+                            break;
 
                             case TokenType.OR2:
-                                {
-                                    LLVMBasicBlockRef leftBlock = currentEntryBlock.InsertBasicBlock("lor");
-                                    LLVMBasicBlockRef rightBlock = currentEntryBlock.InsertBasicBlock("ror");
-                                    LLVMBasicBlockRef endBlock = currentEntryBlock.InsertBasicBlock("endor");
-                                    leftBlock.MoveAfter(currentEntryBlock);
-                                    rightBlock.MoveAfter(leftBlock);
-                                    endBlock.MoveAfter(rightBlock);
+                            {
+                                LLVMBasicBlockRef leftBlock = currentEntryBlock.InsertBasicBlock("lor");
+                                LLVMBasicBlockRef rightBlock = currentEntryBlock.InsertBasicBlock("ror");
+                                LLVMBasicBlockRef endBlock = currentEntryBlock.InsertBasicBlock("endor");
+                                leftBlock.MoveAfter(currentEntryBlock);
+                                rightBlock.MoveAfter(leftBlock);
+                                endBlock.MoveAfter(rightBlock);
 
-                                    builder.BuildBr(leftBlock);
+                                builder.BuildBr(leftBlock);
 
-                                    builder.PositionAtEnd(leftBlock);
-                                    builder.BuildCondBr(left, endBlock, rightBlock);
+                                builder.PositionAtEnd(leftBlock);
+                                builder.BuildCondBr(left, endBlock, rightBlock);
 
-                                    builder.PositionAtEnd(rightBlock);
-                                    builder.BuildBr(endBlock);
+                                builder.PositionAtEnd(rightBlock);
+                                builder.BuildBr(endBlock);
 
-                                    builder.PositionAtEnd(endBlock);
-                                    LLVMTypeRef type = GetType(leftType);
-                                    LLVMValueRef phi = builder.BuildPhi(type);
-                                    phi.AddIncoming(new LLVMValueRef[] { LLVMValueRef.CreateConstInt(type, 1), right }, new LLVMBasicBlockRef[] { leftBlock, rightBlock }, 2);
+                                builder.PositionAtEnd(endBlock);
+                                LLVMTypeRef type = GetType(leftType);
+                                LLVMValueRef phi = builder.BuildPhi(type);
+                                phi.AddIncoming(new LLVMValueRef[] { LLVMValueRef.CreateConstInt(type, 1), right }, new LLVMBasicBlockRef[] { leftBlock, rightBlock }, 2);
 
-                                    currentEntryBlock = endBlock;
+                                currentEntryBlock = endBlock;
 
-                                    result = phi;
-                                }
-                                break;
+                                result = phi;
+                            }
+                            break;
                             default:
                                 Debug.Assert(false);
                                 break;

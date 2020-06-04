@@ -17,6 +17,10 @@ func Add(a: s32, b: s32) -> s32
 #export
 func printf(format: u8*, ...);
 
+#external
+#export
+func scanf(format: u8*, ...) -> s32;
+
 #export
 #external
 struct FILE;

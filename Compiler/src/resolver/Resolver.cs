@@ -1019,6 +1019,7 @@ namespace Mass.Compiler
                 case TokenType.LESS_THEN:
                 case TokenType.GREATER_EQUALS:
                 case TokenType.LESS_EQUALS:
+                    UnifyArithmeticOperands(left, right);
                     return OperandRValue(Type.Bool);
 
                 case TokenType.AND2:
