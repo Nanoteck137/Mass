@@ -1,7 +1,5 @@
 # Mass
 
-Simple C Style Language implemented in C# with LLVM
+Simple C Style Language implemented in Rust
 
-* Using dotnet core version 3.0
-* LLVMSharp (https://github.com/microsoft/LLVMSharp)
 * Based on Per Vognsen's bitwise project (https://github.com/pervognsen/bitwise)

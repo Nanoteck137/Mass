@@ -1,7 +1,0 @@
-{
-    "Name": "libc",
-    "Desc": "This library provides some libc functions",
-    "Version": "0.1",
-    "Files": ["stdio.ma", "stdlib.ma"],
-    "Type": "lib"
-}

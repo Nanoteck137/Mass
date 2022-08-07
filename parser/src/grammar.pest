@@ -1,0 +1,96 @@
+ident = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
+integer = @{ ASCII_DIGIT+ }
+
+string                      = ${ string_single_line }
+string_single_line          = _{ string_delimiter ~ string_content ~ string_delimiter }
+string_content              = ${ (string_escape | !(string_delimiter | "\\") ~ ANY)* }
+string_delimiter            = _{ "\"" }
+string_unicode              = _{ "u" ~ ('0'..'9' | 'a'..'f' | 'A'..'F'){4} }
+string_escape               = _{ "\\" ~ ("\"" | "\\" | "a" | "b" | "f" | "n" | "r" | "t" | "v" | string_unicode) }
+
+base_typespec = { ident }
+typespec = { base_typespec ~ ( ("*")* )? }
+
+term = {
+    integer |
+    ident |
+    string |
+    ( "(" ~ expr ~ ")" )
+}
+
+func_arg = { expr }
+func_args = { (func_arg ~ ("," ~ func_arg)*)? }
+func_call = { "(" ~ func_args? ~ ")" }
+array_index = { "[" ~ expr ~ "]" }
+
+base = {
+    term ~ (func_call | array_index)*
+}
+
+op_multiply = { "*" }
+op_divide = { "/" }
+
+op_add = { "+" }
+op_minus = { "-" }
+
+op_lessthan = { "<" }
+op_lessthanequal = { "<=" }
+op_greaterthan = { ">" }
+op_greaterthanequal = { ">=" }
+
+op_equal = { "==" }
+op_notequal = { "!=" }
+
+op_and = { "&&" }
+op_or = { "||" }
+
+operator = _{
+    op_multiply | op_divide |
+    op_add | op_minus |
+
+    op_lessthanequal | op_lessthan |
+    op_greaterthanequal | op_greaterthan |
+
+    op_equal | op_notequal |
+
+    op_and | op_or
+}
+
+bin_op = { base ~ (operator ~ base)* }
+
+expr = { bin_op }
+
+stmt_var = {
+    "var" ~ ident ~ ":" ~ typespec ~ ("=" ~ expr)? ~ ";"
+}
+
+if_else = { "else" ~ block }
+else_if = { "else" ~ "if" ~ expr ~ block }
+
+else_if_list = { else_if* }
+
+stmt_if = { "if" ~ expr ~ block ~ else_if_list ~ if_else? }
+
+stmt_expr = { expr ~ ";" }
+
+stmt = { stmt_var | stmt_if | stmt_expr }
+stmt_list = { stmt* }
+
+block = { "{" ~ stmt_list? ~ "}" }
+
+func_param = { ident ~ ":" ~ typespec }
+func_param_list = { (func_param ~ ("," ~ func_param)*)? }
+func_return_type = { "->" ~ typespec }
+func_decl = { "func" ~ ident ~ "(" ~ func_param_list ~ ")" ~ func_return_type? ~ block }
+
+decl = { func_decl }
+decl_list = { decl* }
+
+WHITESPACE = _{ " " | NEWLINE }
+COMMENT    = { ("//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE) | ("/*" ~ (!"*/" ~ ANY)* ~ "*/") }
+
+file = {
+    SOI ~
+    decl_list? ~
+    EOI
+}
