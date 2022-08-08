@@ -89,6 +89,7 @@ checksum = "18a6dbe30758c9f83eb00cbea4ac95966305f5a7772f3f42ebfc7fc7eddbd8e1"
 name = "parser"
 version = "0.1.0"
 dependencies = [
+ "ast",
  "lazy_static",
  "pest",
  "pest_derive",

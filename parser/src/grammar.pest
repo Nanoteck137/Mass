@@ -9,7 +9,8 @@ string_unicode              = _{ "u" ~ ('0'..'9' | 'a'..'f' | 'A'..'F'){4} }
 string_escape               = _{ "\\" ~ ("\"" | "\\" | "a" | "b" | "f" | "n" | "r" | "t" | "v" | string_unicode) }
 
 base_typespec = { ident }
-typespec = { base_typespec ~ ( ("*")* )? }
+pointer = { "*"+ }
+typespec = { base_typespec ~ (pointer)? }
 
 term = {
     integer |
@@ -71,26 +72,27 @@ else_if_list = { else_if* }
 
 stmt_if = { "if" ~ expr ~ block ~ else_if_list ~ if_else? }
 
+stmt_ret = { ( "return" | "ret") ~ expr ~ ";" }
+
 stmt_expr = { expr ~ ";" }
 
-stmt = { stmt_var | stmt_if | stmt_expr }
+stmt = { stmt_var | stmt_if | stmt_ret | stmt_expr }
 stmt_list = { stmt* }
 
 block = { "{" ~ stmt_list? ~ "}" }
 
 func_param = { ident ~ ":" ~ typespec }
 func_param_list = { (func_param ~ ("," ~ func_param)*)? }
-func_return_type = { "->" ~ typespec }
-func_decl = { "func" ~ ident ~ "(" ~ func_param_list ~ ")" ~ func_return_type? ~ block }
+func_return_type = { ("->" ~ typespec)? }
+func_decl = { "func" ~ ident ~ "(" ~ func_param_list ~ ")" ~ func_return_type ~ block }
 
 decl = { func_decl }
-decl_list = { decl* }
 
 WHITESPACE = _{ " " | NEWLINE }
 COMMENT    = { ("//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE) | ("/*" ~ (!"*/" ~ ANY)* ~ "*/") }
 
 file = {
     SOI ~
-    decl_list? ~
+    decl* ~
     EOI
 }
