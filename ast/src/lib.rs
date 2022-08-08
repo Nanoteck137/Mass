@@ -22,6 +22,16 @@ pub struct Ident {
     index: usize,
 }
 
+impl Ident {
+    pub fn new(index: usize) -> Self {
+        Self { index }
+    }
+
+    pub fn index(&self) -> usize {
+        self.index
+    }
+}
+
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum BinaryOp {
     Multiply,
@@ -115,9 +125,11 @@ impl Expr {
 pub enum StmtKind {
     Var {
         name: Ident,
-        typ: Typespec,
+        typ: P<Typespec>,
         expr: Option<P<Expr>>,
     },
+
+    Ret(P<Expr>),
 
     Expr(P<Expr>),
 }
@@ -127,9 +139,19 @@ pub struct Stmt {
 }
 
 impl Stmt {
-    pub fn var(name: Ident, typ: Typespec, expr: Option<P<Expr>>) -> P<Stmt> {
+    pub fn var(
+        name: Ident,
+        typ: P<Typespec>,
+        expr: Option<P<Expr>>,
+    ) -> P<Stmt> {
         P::new(Box::new(Stmt {
             kind: StmtKind::Var { name, typ, expr },
+        }))
+    }
+
+    pub fn ret(expr: P<Expr>) -> P<Stmt> {
+        P::new(Box::new(Stmt {
+            kind: StmtKind::Ret(expr),
         }))
     }
 
@@ -151,8 +173,12 @@ pub struct StmtBlock {
 }
 
 impl StmtBlock {
-    pub fn new(stmts: Vec<P<Stmt>>) -> Self {
-        Self { stmts }
+    pub fn new() -> Self {
+        Self { stmts: Vec::new() }
+    }
+
+    pub fn add_stmt(&mut self, stmt: P<Stmt>) {
+        self.stmts.push(stmt);
     }
 
     pub fn stmts(&self) -> &[P<Stmt>] {
@@ -212,7 +238,7 @@ pub enum DeclKind {
     Function {
         name: Ident,
         params: Vec<FunctionParam>,
-        return_type: Typespec,
+        return_type: Option<P<Typespec>>,
         body: StmtBlock,
     },
 }
@@ -225,7 +251,7 @@ impl Decl {
     pub fn function(
         name: Ident,
         params: Vec<FunctionParam>,
-        return_type: Typespec,
+        return_type: Option<P<Typespec>>,
         body: StmtBlock,
     ) -> P<Decl> {
         P::new(Box::new(Decl {
@@ -244,4 +270,3 @@ impl Decl {
         &self.kind
     }
 }
-
