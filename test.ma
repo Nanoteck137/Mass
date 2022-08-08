@@ -1,6 +1,6 @@
 
 func add(a: u32, b: u32) -> u32 {
-    var lel: u32 = 123;
+    var lel: u32 = 2 + 123 * 2;
     ret a + b;
 }
 

@@ -49,7 +49,7 @@ impl ParserContext {
         }
     }
 
-    pub fn add_ident(&mut self, ident: String) -> Ident {
+    pub fn add_ident(&mut self, ident: &str) -> Ident {
         let mut has_ident = None;
         for index in 0..self.ident_table.len() {
             if self.ident_table[index] == ident {
@@ -61,7 +61,7 @@ impl ParserContext {
             Ident::new(index)
         } else {
             let index = self.ident_table.len();
-            self.ident_table.push(ident);
+            self.ident_table.push(ident.to_string());
             Ident::new(index)
         };
     }
@@ -79,7 +79,7 @@ fn process_base_typespec(
     match base.as_rule() {
         Rule::ident => {
             let ident = base.as_str();
-            let ident = parser_context.add_ident(ident.to_string());
+            let ident = parser_context.add_ident(ident);
             Typespec::name(ident)
         }
 
@@ -127,7 +127,7 @@ fn create_expr_ast(
 
             Rule::ident => {
                 let ident = pair.as_str();
-                let ident = parser_context.add_ident(ident.to_string());
+                let ident = parser_context.add_ident(ident);
                 Expr::ident(ident)
             }
 
@@ -223,7 +223,7 @@ fn process_stmt(
             let mut inner = stmt.into_inner();
 
             let name = inner.next().unwrap().as_str();
-            let name = parser_context.add_ident(name.to_string());
+            let name = parser_context.add_ident(name);
 
             let typespec = inner.next().unwrap();
             let typespec = process_typespec(parser_context, typespec);
@@ -287,6 +287,7 @@ fn process_decl_func(
 
     let func_param_list = inner.next().unwrap();
     let mut params = Vec::new();
+
     for func_param in func_param_list.into_inner() {
         let mut inner = func_param.into_inner();
 
@@ -294,7 +295,7 @@ fn process_decl_func(
         let typespec = inner.next().unwrap();
         let typespec = process_typespec(parser_context, typespec);
 
-        let name = parser_context.add_ident(name.to_string());
+        let name = parser_context.add_ident(name);
         params.push(FunctionParam::new(name, typespec));
     }
 
@@ -310,7 +311,7 @@ fn process_decl_func(
     let body = inner.next().unwrap();
     let body = process_block(parser_context, body);
 
-    let name = parser_context.add_ident(name.to_string());
+    let name = parser_context.add_ident(name);
     Decl::function(name, params, return_type, body)
 }
 
@@ -322,29 +323,30 @@ fn process_decl(
 
     match decl.as_rule() {
         Rule::func_decl => process_decl_func(parser_context, decl),
+
         _ => unimplemented!("{:?}", decl.as_rule()),
     }
 }
 
-pub fn parse(input: &str) {
+pub fn parse(parser_context: &mut ParserContext, input: &str) -> Vec<P<Decl>> {
     let file = LangParser::parse(Rule::file, input)
         .expect("Failed to parse")
         .next()
         .unwrap();
 
-    let mut parser_context = ParserContext::new();
-
     let mut decls = Vec::new();
     for pair in file.into_inner() {
         if pair.as_rule() == Rule::decl {
-            let decl = process_decl(&mut parser_context, pair);
+            let decl = process_decl(parser_context, pair);
             decls.push(decl);
         }
     }
 
     let mut debug = debug::Debug::new();
     for decl in &decls {
-        debug.decl(&parser_context, decl);
+        debug.decl(parser_context, decl);
         println!();
     }
+
+    decls
 }
