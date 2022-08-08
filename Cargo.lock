@@ -5,6 +5,9 @@ version = 3
 [[package]]
 name = "ast"
 version = "0.1.0"
+dependencies = [
+ "util",
+]
 
 [[package]]
 name = "block-buffer"
@@ -93,6 +96,7 @@ dependencies = [
  "lazy_static",
  "pest",
  "pest_derive",
+ "util",
 ]
 
 [[package]]
@@ -216,6 +220,10 @@ name = "unicode-ident"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4f5b37a154999a8f3f98cc23a628d850e154479cd94decf3414696e12e31aaf"
+
+[[package]]
+name = "util"
+version = "0.1.0"
 
 [[package]]
 name = "version_check"

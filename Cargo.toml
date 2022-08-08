@@ -3,5 +3,6 @@
 members = [
     "ast",
     "parser",
+    "util",
     "langtest",
 ]

@@ -1,21 +1,4 @@
-#[derive(Clone, Debug)]
-pub struct P<T: ?Sized> {
-    ptr: Box<T>,
-}
-
-impl<T: ?Sized> P<T> {
-    pub fn new(ptr: Box<T>) -> Self {
-        Self { ptr }
-    }
-}
-
-impl<T: ?Sized> std::ops::Deref for P<T> {
-    type Target = T;
-
-    fn deref(&self) -> &T {
-        &self.ptr
-    }
-}
+use util::P;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Ident {
@@ -210,7 +193,7 @@ impl Typespec {
 }
 
 impl Typespec {
-    fn kind(&self) -> &TypespecKind {
+    pub fn kind(&self) -> &TypespecKind {
         &self.kind
     }
 }
@@ -266,7 +249,7 @@ impl Decl {
 }
 
 impl Decl {
-    fn kind(&self) -> &DeclKind {
+    pub fn kind(&self) -> &DeclKind {
         &self.kind
     }
 }

@@ -1,16 +1,17 @@
+use pest::prec_climber::{Assoc, PrecClimber};
+use pest::iterators::{Pair, Pairs};
+use pest::Parser;
+
+use util::P;
+use ast::{Ident, Typespec, Decl, StmtBlock, FunctionParam, Stmt, Expr, BinaryOp};
+
+mod debug;
+
 #[macro_use]
 extern crate pest_derive;
 
 #[macro_use]
 extern crate lazy_static;
-
-use pest::prec_climber::{Assoc, PrecClimber};
-use pest::iterators::{Pair, Pairs};
-use pest::Parser;
-
-use ast::{
-    Ident, Typespec, Decl, StmtBlock, FunctionParam, Stmt, Expr, BinaryOp, P,
-};
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
@@ -289,7 +290,7 @@ fn process_decl_func(
     for func_param in func_param_list.into_inner() {
         let mut inner = func_param.into_inner();
 
-        let name = inner.next().unwrap();
+        let name = inner.next().unwrap().as_str();
         let typespec = inner.next().unwrap();
         let typespec = process_typespec(parser_context, typespec);
 
@@ -333,10 +334,17 @@ pub fn parse(input: &str) {
 
     let mut parser_context = ParserContext::new();
 
-    // let decl_list = file.into_inner().next().unwrap();
+    let mut decls = Vec::new();
     for pair in file.into_inner() {
         if pair.as_rule() == Rule::decl {
-            process_decl(&mut parser_context, pair);
+            let decl = process_decl(&mut parser_context, pair);
+            decls.push(decl);
         }
+    }
+
+    let mut debug = debug::Debug::new();
+    for decl in &decls {
+        debug.decl(&parser_context, decl);
+        println!();
     }
 }
