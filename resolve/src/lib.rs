@@ -5,114 +5,12 @@ use std::collections::HashMap;
 use util::P;
 use ast::{Ident, Typespec, TypespecKind};
 
-#[derive(Copy, Clone, PartialEq, Debug)]
-enum IntKind {
-    U8,
-    U16,
-    U32,
-    U64,
-    S8,
-    S16,
-    S32,
-    S64,
-}
+use typ::{Typ, TypIndex, IntKind};
 
-#[derive(Clone)]
-enum TypKind {
-    Int(IntKind),
-    Ptr(P<Typ>),
-
-    Function {
-        params: Vec<P<Typ>>,
-        return_type: P<Typ>,
-    },
-}
-
-#[derive(Clone)]
-struct Typ {
-    kind: TypKind,
-}
-
-impl Typ {
-    fn int(kind: IntKind) -> P<Typ> {
-        P::new(Box::new(Typ {
-            kind: TypKind::Int(kind),
-        }))
-    }
-
-    fn ptr(base: P<Typ>) -> P<Typ> {
-        P::new(Box::new(Typ {
-            kind: TypKind::Ptr(base),
-        }))
-    }
-
-    fn function(params: Vec<P<Typ>>, return_type: P<Typ>) -> P<Typ> {
-        P::new(Box::new(Typ {
-            kind: TypKind::Function {
-                params,
-                return_type,
-            },
-        }))
-    }
-}
-
-impl Typ {
-    pub fn kind(&self) -> &TypKind {
-        &self.kind
-    }
-}
-
-fn same_typ(left: &P<Typ>, right: &P<Typ>) -> bool {
-    // Check if both types are integers
-    if let TypKind::Int(left_int_kind) = left.kind() {
-        if let TypKind::Int(right_int_kind) = right.kind() {
-            // Check if the types are the same integer kinds
-            return left_int_kind == right_int_kind;
-        }
-    }
-
-    if let TypKind::Ptr(left_base) = left.kind() {
-        if let TypKind::Ptr(right_base) = right.kind() {
-            return same_typ(left_base, right_base);
-        }
-    }
-
-    if let TypKind::Function {
-        params,
-        return_type,
-    } = left.kind()
-    {
-        let left_params = params;
-        let left_return_type = return_type;
-
-        if let TypKind::Function {
-            params,
-            return_type,
-        } = right.kind()
-        {
-            if left_params.len() != params.len() {
-                return false;
-            }
-
-            if !same_typ(left_return_type, return_type) {
-                return false;
-            }
-
-            for i in 0..left_params.len() {
-                if !same_typ(&left_params[i], &params[i]) {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-    }
-
-    return false;
-}
+mod typ;
 
 enum SymbolKind {
-    Type(P<Typ>),
+    Type(TypIndex),
     Function,
 }
 
@@ -129,7 +27,7 @@ struct Symbol {
 }
 
 impl Symbol {
-    fn typ(name: Ident, typ: P<Typ>) -> P<Symbol> {
+    fn typ(name: Ident, typ: TypIndex) -> P<Symbol> {
         P::new(Box::new(Symbol {
             name,
             kind: SymbolKind::Type(typ),
@@ -146,40 +44,95 @@ impl Symbol {
 
 struct Context {
     parser_context: parser::Context,
+    type_context: typ::Context,
     symbol_table: HashMap<ast::Ident, P<Symbol>>,
+
+    type_u8: TypIndex,
+    type_u16: TypIndex,
+    type_u32: TypIndex,
+    type_u64: TypIndex,
+
+    type_s8: TypIndex,
+    type_s16: TypIndex,
+    type_s32: TypIndex,
+    type_s64: TypIndex,
 }
 
 impl Context {
     fn new(parser_context: parser::Context) -> Self {
+        let mut type_context = typ::Context::new();
+        let type_u8 = type_context.add_type(Typ::int(IntKind::U8));
+        let type_u16 = type_context.add_type(Typ::int(IntKind::U16));
+        let type_u32 = type_context.add_type(Typ::int(IntKind::U32));
+        let type_u64 = type_context.add_type(Typ::int(IntKind::U64));
+
+        let type_s8 = type_context.add_type(Typ::int(IntKind::S8));
+        let type_s16 = type_context.add_type(Typ::int(IntKind::S16));
+        let type_s32 = type_context.add_type(Typ::int(IntKind::S32));
+        let type_s64 = type_context.add_type(Typ::int(IntKind::S64));
+
         Self {
             parser_context,
+            type_context,
             symbol_table: HashMap::new(),
+
+            type_u8,
+            type_u16,
+            type_u32,
+            type_u64,
+
+            type_s8,
+            type_s16,
+            type_s32,
+            type_s64,
         }
     }
 
-    fn add_type(&mut self, name: &str, typ: P<Typ>) {
-        let name = self.parser_context.add_ident(name);
-
-        let mut symbol = Symbol::typ(name, typ);
-        symbol.state = SymbolState::Resolved;
-        self.symbol_table.insert(name, symbol);
+    fn get_ident(&self, ident: Ident) -> &String {
+        self.parser_context.get_ident(ident)
     }
 
-    fn get_ident(&self, ident: ast::Ident) -> &String {
-        self.parser_context.get_ident(ident)
+    fn add_type_symbol(&mut self, name: Ident, typ: TypIndex) {
+        let mut symbol = Symbol::typ(name, typ);
+        symbol.state = SymbolState::Resolved;
+
+        self.symbol_table.insert(name, symbol);
     }
 
     fn resolve_ident(&self, ident: Ident) -> &P<Symbol> {
         self.symbol_table.get(&ident).unwrap()
     }
+
+    fn add_type(&mut self, typ: P<Typ>) -> TypIndex {
+        self.type_context.add_type(typ)
+    }
+
+    fn u8(&self) -> TypIndex {
+        self.type_u8
+    }
+
+    fn u16(&self) -> TypIndex {
+        self.type_u16
+    }
+
+    fn u32(&self) -> TypIndex {
+        self.type_u32
+    }
+
+    fn u64(&self) -> TypIndex {
+        self.type_u64
+    }
 }
 
-fn resolve_typespec(context: &Context, typespec: &P<Typespec>) -> P<Typ> {
+fn resolve_typespec(
+    context: &mut Context,
+    typespec: &P<Typespec>,
+) -> TypIndex {
     match typespec.kind() {
         TypespecKind::Name(ident) => {
             let symbol = context.resolve_ident(*ident);
             if let SymbolKind::Type(typ) = symbol.kind() {
-                typ.clone()
+                *typ
             } else {
                 panic!("{} is not a type", context.get_ident(*ident));
             }
@@ -187,7 +140,7 @@ fn resolve_typespec(context: &Context, typespec: &P<Typespec>) -> P<Typ> {
 
         TypespecKind::Ptr(base) => {
             let base = resolve_typespec(context, base);
-            Typ::ptr(base)
+            context.type_context.add_type(Typ::ptr(base))
         }
     }
 }
@@ -202,52 +155,52 @@ mod tests {
         let ident_u32 = parser_context.add_ident("u32");
 
         let mut context = Context::new(parser_context);
-        context.add_type("u32", Typ::int(IntKind::U32));
+        context.add_type_symbol(ident_u32, context.u32());
 
         let typespec = Typespec::name(ident_u32);
-        let typ = resolve_typespec(&context, &typespec);
-        assert!(same_typ(&typ, &Typ::int(IntKind::U32)));
+        let typ = resolve_typespec(&mut context, &typespec);
+        assert_eq!(typ, context.u32());
 
         let typespec = Typespec::ptr(Typespec::name(ident_u32));
-        let ptr_typ = resolve_typespec(&context, &typespec);
-        assert!(same_typ(&ptr_typ, &Typ::ptr(Typ::int(IntKind::U32))));
-        assert!(!same_typ(&ptr_typ, &typ));
+        let typ = resolve_typespec(&mut context, &typespec);
+        assert_eq!(typ, context.add_type(Typ::ptr(context.u32())));
+        assert_ne!(typ, context.u32());
     }
 
     #[test]
     fn type_test() {
-        let int_type = Typ::int(IntKind::U32);
-        assert!(!same_typ(&int_type, &Typ::int(IntKind::U64)));
-        assert!(same_typ(&int_type, &Typ::int(IntKind::U32)));
+        let parser_context = parser::Context::new();
+        let mut context = Context::new(parser_context);
 
-        let int_ptr_type = Typ::ptr(Typ::int(IntKind::U32));
-        assert!(same_typ(&int_ptr_type, &Typ::ptr(Typ::int(IntKind::U32))));
-        assert!(!same_typ(&int_ptr_type, &Typ::ptr(Typ::int(IntKind::U16))));
-        assert!(!same_typ(
-            &int_ptr_type,
-            &Typ::ptr(Typ::ptr(Typ::int(IntKind::U16)))
-        ));
+        let ptr = context.add_type(Typ::ptr(context.u32()));
 
-        let func_type = Typ::function(
-            vec![Typ::int(IntKind::U32)],
-            Typ::int(IntKind::U64),
+        assert!(ptr == context.add_type(Typ::ptr(context.u32())));
+        assert!(ptr != context.add_type(Typ::ptr(context.u16())));
+        assert!(ptr != context.add_type(Typ::ptr(ptr)));
+
+        let func_type = context
+            .add_type(Typ::function(vec![context.u32()], context.u64()));
+        assert_eq!(
+            func_type,
+            context
+                .add_type(Typ::function(vec![context.u32()], context.u64()))
         );
-
-        assert!(!same_typ(&func_type, &Typ::int(IntKind::U64)));
-        assert!(same_typ(
-            &func_type,
-            &Typ::function(
-                vec![Typ::int(IntKind::U32)],
-                Typ::int(IntKind::U64)
-            )
-        ));
-
-        assert!(!same_typ(
-            &func_type,
-            &Typ::function(
-                vec![Typ::int(IntKind::U32), Typ::int(IntKind::U32)],
-                Typ::int(IntKind::U64)
-            )
-        ));
+        assert_ne!(
+            func_type,
+            context
+                .add_type(Typ::function(vec![context.u32()], context.u32()))
+        );
+        assert_ne!(
+            func_type,
+            context
+                .add_type(Typ::function(vec![context.u64()], context.u64()))
+        );
+        assert_ne!(
+            func_type,
+            context.add_type(Typ::function(
+                vec![context.u64(), context.u64()],
+                context.u64()
+            ))
+        );
     }
 }
