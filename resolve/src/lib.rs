@@ -1,23 +1,25 @@
 #![allow(dead_code)]
 
-use std::collections::HashMap;
-
 use util::P;
-use ast::{Ident, Typespec, TypespecKind};
+use ast::Ident;
+use ast::{Typespec, TypespecKind};
+use ast::{Decl, DeclKind};
+use ast::{StmtBlock};
 
 use typ::{Typ, TypIndex, IntKind};
 
 mod typ;
 
 enum SymbolKind {
-    Type(TypIndex),
-    Function,
+    Type,
+    Function { decl: usize },
 }
 
+#[derive(Copy, Clone, PartialEq, Debug)]
 enum SymbolState {
     Unresolved,
     Resolving,
-    Resolved,
+    Resolved { typ: TypIndex },
 }
 
 struct Symbol {
@@ -27,10 +29,18 @@ struct Symbol {
 }
 
 impl Symbol {
-    fn typ(name: Ident, typ: TypIndex) -> P<Symbol> {
+    fn typ(name: Ident) -> P<Symbol> {
         P::new(Box::new(Symbol {
             name,
-            kind: SymbolKind::Type(typ),
+            kind: SymbolKind::Type,
+            state: SymbolState::Unresolved,
+        }))
+    }
+
+    fn function(name: Ident, decl: usize) -> P<Symbol> {
+        P::new(Box::new(Symbol {
+            name,
+            kind: SymbolKind::Function { decl },
             state: SymbolState::Unresolved,
         }))
     }
@@ -42,10 +52,84 @@ impl Symbol {
     }
 }
 
+#[derive(Copy, Clone, PartialEq, Debug)]
+enum SymbolTablePtrKind {
+    Global,
+    Local,
+}
+
+#[derive(Copy, Clone, PartialEq, Debug)]
+struct SymbolTablePtr {
+    kind: SymbolTablePtrKind,
+    index: usize,
+}
+
+struct SymbolTable {
+    global: Vec<P<Symbol>>,
+    local: Vec<P<Symbol>>,
+}
+
+impl SymbolTable {
+    fn new() -> Self {
+        Self {
+            global: Vec::new(),
+            local: Vec::new(),
+        }
+    }
+
+    fn add_global_symbol(&mut self, symbol: P<Symbol>) -> SymbolTablePtr {
+        let index = self.global.len();
+        self.global.push(symbol);
+
+        SymbolTablePtr {
+            kind: SymbolTablePtrKind::Global,
+            index,
+        }
+    }
+
+    fn symbol_from_name(&self, name: Ident) -> Option<SymbolTablePtr> {
+        for (index, symbol) in self.local.iter().rev().enumerate() {
+            if symbol.name == name {
+                return Some(SymbolTablePtr {
+                    kind: SymbolTablePtrKind::Local,
+                    index,
+                });
+            }
+        }
+
+        for (index, symbol) in self.global.iter().enumerate() {
+            if symbol.name == name {
+                return Some(SymbolTablePtr {
+                    kind: SymbolTablePtrKind::Global,
+                    index,
+                });
+            }
+        }
+
+        None
+    }
+
+    fn symbol_from_ptr(&self, ptr: SymbolTablePtr) -> &P<Symbol> {
+        match ptr.kind {
+            SymbolTablePtrKind::Global => &self.global[ptr.index],
+            SymbolTablePtrKind::Local => &self.local[ptr.index],
+        }
+    }
+
+    fn symbol_from_ptr_mut(&mut self, ptr: SymbolTablePtr) -> &mut P<Symbol> {
+        match ptr.kind {
+            SymbolTablePtrKind::Global => &mut self.global[ptr.index],
+            SymbolTablePtrKind::Local => &mut self.local[ptr.index],
+        }
+    }
+}
+
 struct Context {
     parser_context: parser::Context,
     type_context: typ::Context,
-    symbol_table: HashMap<ast::Ident, P<Symbol>>,
+
+    decls: Vec<P<Decl>>,
+    symbol_table: SymbolTable,
 
     type_u8: TypIndex,
     type_u16: TypIndex,
@@ -74,7 +158,9 @@ impl Context {
         Self {
             parser_context,
             type_context,
-            symbol_table: HashMap::new(),
+
+            decls: Vec::new(),
+            symbol_table: SymbolTable::new(),
 
             type_u8,
             type_u16,
@@ -88,19 +174,75 @@ impl Context {
         }
     }
 
+    fn create_normal_types(&mut self) {
+        let ident = self.parser_context.add_ident("u8");
+        self.add_global_symbol_type(ident, self.u8());
+
+        let ident = self.parser_context.add_ident("u16");
+        self.add_global_symbol_type(ident, self.u16());
+
+        let ident = self.parser_context.add_ident("u32");
+        self.add_global_symbol_type(ident, self.u32());
+
+        let ident = self.parser_context.add_ident("u64");
+        self.add_global_symbol_type(ident, self.u64());
+    }
+
+    fn add_ident(&mut self, s: &str) -> Ident {
+        self.parser_context.add_ident(s)
+    }
+
     fn get_ident(&self, ident: Ident) -> &String {
         self.parser_context.get_ident(ident)
     }
 
-    fn add_type_symbol(&mut self, name: Ident, typ: TypIndex) {
-        let mut symbol = Symbol::typ(name, typ);
-        symbol.state = SymbolState::Resolved;
+    fn add_global_symbol_type(&mut self, name: Ident, typ: TypIndex) {
+        let mut symbol = Symbol::typ(name);
+        symbol.state = SymbolState::Resolved { typ };
 
-        self.symbol_table.insert(name, symbol);
+        self.symbol_table.add_global_symbol(symbol);
     }
 
-    fn resolve_ident(&self, ident: Ident) -> &P<Symbol> {
-        self.symbol_table.get(&ident).unwrap()
+    fn add_decl(&mut self, decl: P<Decl>) {
+        let name = decl.name();
+
+        let decl_index = self.decls.len();
+        self.decls.push(decl);
+
+        let symbol = match self.decls[decl_index].kind() {
+            DeclKind::Function { .. } => Symbol::function(name, decl_index),
+        };
+
+        self.symbol_table.add_global_symbol(symbol);
+    }
+
+    fn get_symbol(&self, name: Ident) -> Option<SymbolTablePtr> {
+        self.symbol_table.symbol_from_name(name)
+    }
+
+    fn resolve_symbol(&mut self, symbol: SymbolTablePtr) {
+        let symbol = self.symbol_table.symbol_from_ptr_mut(symbol);
+
+        match symbol.kind {}
+
+        todo!();
+    }
+
+    fn resolve_ident(&mut self, ident: Ident) -> &P<Symbol> {
+        let symbol = self.get_symbol(ident);
+        if let Some(ptr) = symbol {
+            let symbol_state = self.symbol_table.symbol_from_ptr(ptr).state;
+
+            if symbol_state == SymbolState::Unresolved {
+                self.resolve_symbol(ptr);
+            } else if symbol_state == SymbolState::Resolving {
+                panic!("Cyclic");
+            }
+
+            return self.symbol_table.symbol_from_ptr(ptr);
+        } else {
+            panic!("No symbol with name: {}", self.get_ident(ident));
+        }
     }
 
     fn add_type(&mut self, typ: P<Typ>) -> TypIndex {
@@ -131,8 +273,12 @@ fn resolve_typespec(
     match typespec.kind() {
         TypespecKind::Name(ident) => {
             let symbol = context.resolve_ident(*ident);
-            if let SymbolKind::Type(typ) = symbol.kind() {
-                *typ
+            if let SymbolKind::Type = symbol.kind() {
+                if let SymbolState::Resolved { typ } = symbol.state {
+                    typ
+                } else {
+                    unreachable!();
+                }
             } else {
                 panic!("{} is not a type", context.get_ident(*ident));
             }
@@ -150,12 +296,29 @@ mod tests {
     use super::*;
 
     #[test]
+    fn resolve_func_decl() {
+        let mut parser_context = parser::Context::new();
+
+        let mut context = Context::new(parser_context);
+        context.create_normal_types();
+
+        let body = StmtBlock::new();
+
+        let func_decl =
+            Decl::function(context.add_ident("main"), vec![], None, body);
+        context.add_decl(func_decl);
+
+        let name = context.add_ident("main");
+        let symbol = context.resolve_ident(name);
+    }
+
+    #[test]
     fn resolve_typespec_test() {
         let mut parser_context = parser::Context::new();
         let ident_u32 = parser_context.add_ident("u32");
 
         let mut context = Context::new(parser_context);
-        context.add_type_symbol(ident_u32, context.u32());
+        context.create_normal_types();
 
         let typespec = Typespec::name(ident_u32);
         let typ = resolve_typespec(&mut context, &typespec);

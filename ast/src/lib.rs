@@ -219,7 +219,6 @@ impl FunctionParam {
 
 pub enum DeclKind {
     Function {
-        name: Ident,
         params: Vec<FunctionParam>,
         return_type: Option<P<Typespec>>,
         body: StmtBlock,
@@ -227,6 +226,7 @@ pub enum DeclKind {
 }
 
 pub struct Decl {
+    name: Ident,
     kind: DeclKind,
 }
 
@@ -238,8 +238,8 @@ impl Decl {
         body: StmtBlock,
     ) -> P<Decl> {
         P::new(Box::new(Decl {
+            name,
             kind: DeclKind::Function {
-                name,
                 params,
                 return_type,
                 body,
@@ -249,6 +249,10 @@ impl Decl {
 }
 
 impl Decl {
+    pub fn name(&self) -> Ident {
+        self.name
+    }
+
     pub fn kind(&self) -> &DeclKind {
         &self.kind
     }
