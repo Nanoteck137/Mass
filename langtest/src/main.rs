@@ -1,5 +1,5 @@
 fn main() {
-    let mut parser_context = parser::ParserContext::new();
+    let mut parser_context = parser::Context::new();
 
     let input =
         std::fs::read_to_string("test.ma").expect("Failed to read 'test.ma'");

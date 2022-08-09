@@ -18,3 +18,9 @@ impl<T: ?Sized> std::ops::Deref for P<T> {
         &self.ptr
     }
 }
+
+impl<T: ?Sized> std::ops::DerefMut for P<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        &mut self.ptr
+    }
+}

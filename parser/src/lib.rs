@@ -38,11 +38,11 @@ lazy_static! {
 }
 
 #[derive(Debug)]
-pub struct ParserContext {
+pub struct Context {
     ident_table: Vec<String>,
 }
 
-impl ParserContext {
+impl Context {
     pub fn new() -> Self {
         Self {
             ident_table: Vec::new(),
@@ -72,7 +72,7 @@ impl ParserContext {
 }
 
 fn process_base_typespec(
-    parser_context: &mut ParserContext,
+    parser_context: &mut Context,
     base_typespec: Pair<Rule>,
 ) -> P<Typespec> {
     let base = base_typespec.into_inner().next().unwrap();
@@ -88,7 +88,7 @@ fn process_base_typespec(
 }
 
 fn process_typespec(
-    parser_context: &mut ParserContext,
+    parser_context: &mut Context,
     typespec: Pair<Rule>,
 ) -> P<Typespec> {
     let mut inner = typespec.into_inner();
@@ -112,7 +112,7 @@ fn process_typespec(
 }
 
 fn create_expr_ast(
-    parser_context: &mut ParserContext,
+    parser_context: &mut Context,
     expr: Pairs<Rule>,
 ) -> P<Expr> {
     PREC_CLIMBER.climb(
@@ -205,17 +205,11 @@ fn create_expr_ast(
     )
 }
 
-fn process_expr(
-    parser_context: &mut ParserContext,
-    expr: Pair<Rule>,
-) -> P<Expr> {
+fn process_expr(parser_context: &mut Context, expr: Pair<Rule>) -> P<Expr> {
     create_expr_ast(parser_context, expr.into_inner())
 }
 
-fn process_stmt(
-    parser_context: &mut ParserContext,
-    stmt: Pair<Rule>,
-) -> P<Stmt> {
+fn process_stmt(parser_context: &mut Context, stmt: Pair<Rule>) -> P<Stmt> {
     let stmt = stmt.into_inner().next().unwrap();
 
     match stmt.as_rule() {
@@ -257,7 +251,7 @@ fn process_stmt(
 }
 
 fn process_stmt_list(
-    parser_context: &mut ParserContext,
+    parser_context: &mut Context,
     stmt_list: Pair<Rule>,
 ) -> StmtBlock {
     let mut result = StmtBlock::new();
@@ -271,14 +265,14 @@ fn process_stmt_list(
 }
 
 fn process_block(
-    parser_context: &mut ParserContext,
+    parser_context: &mut Context,
     block: Pair<Rule>,
 ) -> StmtBlock {
     process_stmt_list(parser_context, block.into_inner().next().unwrap())
 }
 
 fn process_decl_func(
-    parser_context: &mut ParserContext,
+    parser_context: &mut Context,
     func: Pair<Rule>,
 ) -> P<Decl> {
     let mut inner = func.into_inner();
@@ -315,10 +309,7 @@ fn process_decl_func(
     Decl::function(name, params, return_type, body)
 }
 
-fn process_decl(
-    parser_context: &mut ParserContext,
-    decl: Pair<Rule>,
-) -> P<Decl> {
+fn process_decl(parser_context: &mut Context, decl: Pair<Rule>) -> P<Decl> {
     let decl = decl.into_inner().next().unwrap();
 
     match decl.as_rule() {
@@ -328,7 +319,7 @@ fn process_decl(
     }
 }
 
-pub fn parse(parser_context: &mut ParserContext, input: &str) -> Vec<P<Decl>> {
+pub fn parse(parser_context: &mut Context, input: &str) -> Vec<P<Decl>> {
     let file = LangParser::parse(Rule::file, input)
         .expect("Failed to parse")
         .next()

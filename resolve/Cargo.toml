@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 util = { path = "../util" }
+ast = { path = "../ast" }
+parser = { path = "../parser" }

@@ -1,4 +1,4 @@
-use super::ParserContext;
+use super::Context;
 use util::P;
 use ast::{Decl, DeclKind};
 use ast::{Typespec, TypespecKind};
@@ -33,7 +33,7 @@ impl Debug {
 
     pub fn typespec(
         &mut self,
-        parser_context: &ParserContext,
+        parser_context: &Context,
         typespec: &P<Typespec>,
     ) {
         match typespec.kind() {
@@ -49,7 +49,7 @@ impl Debug {
         }
     }
 
-    pub fn expr(&mut self, parser_context: &ParserContext, expr: &P<Expr>) {
+    pub fn expr(&mut self, parser_context: &Context, expr: &P<Expr>) {
         match expr.kind() {
             ExprKind::Integer(val) => {
                 print!("{}", val);
@@ -110,7 +110,7 @@ impl Debug {
         }
     }
 
-    pub fn stmt(&mut self, parser_context: &ParserContext, stmt: &P<Stmt>) {
+    pub fn stmt(&mut self, parser_context: &Context, stmt: &P<Stmt>) {
         match stmt.kind() {
             StmtKind::Var { name, typ, expr } => {
                 print!("(var {} ", parser_context.get_ident(*name));
@@ -140,7 +140,7 @@ impl Debug {
 
     pub fn stmt_block(
         &mut self,
-        parser_context: &ParserContext,
+        parser_context: &Context,
         stmt_block: &StmtBlock,
     ) {
         print!("(block ");
@@ -153,7 +153,7 @@ impl Debug {
         print!(")");
     }
 
-    pub fn decl(&mut self, parser_context: &ParserContext, decl: &P<Decl>) {
+    pub fn decl(&mut self, parser_context: &Context, decl: &P<Decl>) {
         match decl.kind() {
             DeclKind::Function {
                 name,

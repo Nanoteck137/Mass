@@ -1,6 +1,6 @@
 use util::P;
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, Hash, Eq, PartialEq, Debug)]
 pub struct Ident {
     index: usize,
 }
