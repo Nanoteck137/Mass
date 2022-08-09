@@ -1,6 +1,3 @@
-use std::collections::HashMap;
-
-use by_address::ByAddress;
 use util::P;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -148,4 +145,3 @@ mod tests {
         ));
     }
 }
-
