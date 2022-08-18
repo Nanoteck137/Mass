@@ -1,3 +1,4 @@
+use ast::Ident;
 use util::P;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -15,10 +16,31 @@ pub enum IntKind {
     S64,
 }
 
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub struct StructField {
+    name: Ident,
+    ty: TyId,
+}
+
+impl StructField {
+    pub fn new(name: Ident, ty: TyId) -> Self {
+        Self { name, ty }
+    }
+}
+
 #[derive(Clone)]
 pub enum TyKind {
     Int(IntKind),
     Ptr(TyId),
+
+    Array {
+        base: TyId,
+        count: usize,
+    },
+
+    Struct {
+        fields: Vec<StructField>,
+    },
 
     Function {
         params: Vec<TyId>,
@@ -41,6 +63,18 @@ impl Ty {
     pub fn ptr(base: TyId) -> P<Ty> {
         P::new(Box::new(Ty {
             kind: TyKind::Ptr(base),
+        }))
+    }
+
+    pub fn array(base: TyId, count: usize) -> P<Ty> {
+        P::new(Box::new(Ty {
+            kind: TyKind::Array { base, count },
+        }))
+    }
+
+    pub fn r#struct(fields: Vec<StructField>) -> P<Ty> {
+        P::new(Box::new(Ty {
+            kind: TyKind::Struct { fields },
         }))
     }
 
@@ -103,29 +137,48 @@ impl Context {
             }
         }
 
-        if let TyKind::Function {
-            params,
-            return_type,
+        if let TyKind::Array {
+            base: left_base,
+            count: left_count,
         } = left.kind()
         {
-            let left_params = params;
-            let left_return_type = return_type;
-
-            if let TyKind::Function {
-                params,
-                return_type,
+            if let TyKind::Array {
+                base: right_base,
+                count: right_count,
             } = right.kind()
             {
-                if left_params.len() != params.len() {
+                if left_base != right_base {
                     return false;
                 }
 
-                if left_return_type != return_type {
+                if left_count != right_count {
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
+        if let TyKind::Function {
+            params: left_params,
+            return_type: left_return_type,
+        } = left.kind()
+        {
+            if let TyKind::Function {
+                params: right_params,
+                return_type: right_return_type,
+            } = right.kind()
+            {
+                if left_params.len() != right_params.len() {
+                    return false;
+                }
+
+                if left_return_type != right_return_type {
                     return false;
                 }
 
                 for i in 0..left_params.len() {
-                    if left_params[i] != params[i] {
+                    if left_params[i] != right_params[i] {
                         return false;
                     }
                 }
@@ -174,5 +227,14 @@ mod tests {
             func_typ,
             context.add_type(Ty::function(vec![u64_typ], u32_typ))
         );
+
+        let array_typ = context.add_type(Ty::array(u32_typ, 10));
+        assert_eq!(array_typ, context.add_type(Ty::array(u32_typ, 10)));
+        assert_ne!(array_typ, context.add_type(Ty::array(u64_typ, 10)));
+        assert_ne!(array_typ, context.add_type(Ty::array(u32_typ, 11)));
+        assert_ne!(array_typ, context.add_type(Ty::array(u64_typ, 11)));
+
+        let struct_typ = context.add_type(Ty::r#struct(vec![]));
+        assert_ne!(struct_typ, context.add_type(Ty::r#struct(vec![])));
     }
 }
