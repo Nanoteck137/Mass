@@ -156,12 +156,11 @@ impl Debug {
     pub fn decl(&mut self, parser_context: &Context, decl: &P<Decl>) {
         match decl.kind() {
             DeclKind::Function {
-                name,
                 params,
                 return_type,
                 body,
             } => {
-                print!("(function {} ", parser_context.get_ident(*name));
+                print!("(function {} ", parser_context.get_ident(decl.name()));
                 print!("(");
                 for param in params {
                     print!(" {} ", parser_context.get_ident(param.name()));
