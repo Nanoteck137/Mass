@@ -3,7 +3,10 @@ use pest::iterators::{Pair, Pairs};
 use pest::Parser;
 
 use util::P;
-use ast::{Ident, Typespec, Decl, StmtBlock, FunctionParam, Stmt, Expr, BinaryOp};
+use ast::{
+    Span, Ident, Typespec, Decl, StmtBlock, FunctionParam, Stmt, Expr,
+    BinaryOp,
+};
 
 mod debug;
 
@@ -80,7 +83,11 @@ fn process_base_typespec(
         Rule::ident => {
             let ident = base.as_str();
             let ident = parser_context.add_ident(ident);
-            Typespec::name(ident)
+
+            let span = base.as_span();
+            let span = Span::new(span.start(), span.end());
+
+            Typespec::name(span, ident)
         }
 
         _ => unimplemented!("{:?}", base.as_rule()),
@@ -100,7 +107,11 @@ fn process_typespec(
         match after.as_rule() {
             Rule::pointer => {
                 for _ in 0..after.as_str().len() {
-                    result = Typespec::ptr(result);
+                    let span = Span::new(
+                        result.span().start(),
+                        result.span().end() + 1,
+                    );
+                    result = Typespec::ptr(span, result);
                 }
             }
 
@@ -122,19 +133,31 @@ fn create_expr_ast(
 
             Rule::integer => {
                 let s = pair.as_str();
-                Expr::integer(s.parse::<u64>().unwrap())
+
+                let span = pair.as_span();
+                let span = Span::new(span.start(), span.end());
+
+                Expr::integer(span, s.parse::<u64>().unwrap())
             }
 
             Rule::ident => {
                 let ident = pair.as_str();
                 let ident = parser_context.add_ident(ident);
-                Expr::ident(ident)
+
+                let span = pair.as_span();
+                let span = Span::new(span.start(), span.end());
+
+                Expr::ident(span, ident)
             }
 
             Rule::string => {
                 let s = pair.as_str();
                 let s = &s[1..s.len() - 1];
-                Expr::string(String::from(s))
+
+                let span = pair.as_span();
+                let span = Span::new(span.start(), span.end());
+
+                Expr::string(span, String::from(s))
             }
 
             Rule::expr => process_expr(parser_context, pair),
@@ -148,6 +171,7 @@ fn create_expr_ast(
                 if let Some(next) = inner.next() {
                     match next.as_rule() {
                         Rule::func_call => {
+                            let span = next.as_span();
                             let mut args = next.into_inner();
                             let args = args.next().unwrap().into_inner();
 
@@ -157,16 +181,23 @@ fn create_expr_ast(
                                 res.push(expr);
                             }
 
-                            Expr::call(expr, res)
+                            let span =
+                                Span::new(expr.span().start(), span.end());
+
+                            Expr::call(span, expr, res)
                         }
 
                         Rule::array_index => {
+                            let span = next.as_span();
                             let index = process_expr(
                                 parser_context,
                                 next.into_inner().next().unwrap(),
                             );
 
-                            Expr::index(expr, index)
+                            let span =
+                                Span::new(expr.span().start(), span.end());
+
+                            Expr::index(span, expr, index)
                         }
 
                         _ => unimplemented!("{:?}", next.as_rule()),
@@ -200,7 +231,9 @@ fn create_expr_ast(
                 _ => unimplemented!("{:?}", op.as_rule()),
             };
 
-            Expr::binary(op, left, right)
+            let span = Span::new(left.span().start(), right.span().end());
+
+            Expr::binary(span, op, left, right)
         },
     )
 }
@@ -214,6 +247,7 @@ fn process_stmt(parser_context: &mut Context, stmt: Pair<Rule>) -> P<Stmt> {
 
     match stmt.as_rule() {
         Rule::stmt_var => {
+            let span = stmt.as_span();
             let mut inner = stmt.into_inner();
 
             let name = inner.next().unwrap().as_str();
@@ -229,21 +263,31 @@ fn process_stmt(parser_context: &mut Context, stmt: Pair<Rule>) -> P<Stmt> {
                 None
             };
 
-            Stmt::var(name, typespec, expr)
+            let span = Span::new(span.start(), span.end());
+
+            Stmt::var(span, name, typespec, expr)
         }
 
         Rule::stmt_ret => {
+            let span = stmt.as_span();
+
             let expr = stmt.into_inner().next().unwrap();
             let expr = process_expr(parser_context, expr);
 
-            Stmt::ret(expr)
+            let span = Span::new(span.start(), span.end());
+
+            Stmt::ret(span, expr)
         }
 
         Rule::stmt_expr => {
+            let span = stmt.as_span();
+
             let expr = stmt.into_inner().next().unwrap();
             let expr = process_expr(parser_context, expr);
 
-            Stmt::expr(expr)
+            let span = Span::new(span.start(), span.end());
+
+            Stmt::expr(span, expr)
         }
 
         _ => unimplemented!("{:?}", stmt.as_rule()),
@@ -252,9 +296,10 @@ fn process_stmt(parser_context: &mut Context, stmt: Pair<Rule>) -> P<Stmt> {
 
 fn process_stmt_list(
     parser_context: &mut Context,
+    span: Span,
     stmt_list: Pair<Rule>,
 ) -> StmtBlock {
-    let mut result = StmtBlock::new();
+    let mut result = StmtBlock::new(span);
 
     for stmt in stmt_list.into_inner() {
         let stmt = process_stmt(parser_context, stmt);
@@ -268,13 +313,17 @@ fn process_block(
     parser_context: &mut Context,
     block: Pair<Rule>,
 ) -> StmtBlock {
-    process_stmt_list(parser_context, block.into_inner().next().unwrap())
+    let span = block.as_span();
+    let span = Span::new(span.start(), span.end());
+    process_stmt_list(parser_context, span, block.into_inner().next().unwrap())
 }
 
 fn process_decl_func(
     parser_context: &mut Context,
     func: Pair<Rule>,
 ) -> P<Decl> {
+    let span = func.as_span();
+
     let mut inner = func.into_inner();
 
     let name = inner.next().unwrap().as_str();
@@ -283,14 +332,17 @@ fn process_decl_func(
     let mut params = Vec::new();
 
     for func_param in func_param_list.into_inner() {
+        let span = func_param.as_span();
         let mut inner = func_param.into_inner();
 
         let name = inner.next().unwrap().as_str();
         let typespec = inner.next().unwrap();
         let typespec = process_typespec(parser_context, typespec);
 
+        let span = Span::new(span.start(), span.end());
+
         let name = parser_context.add_ident(name);
-        params.push(FunctionParam::new(name, typespec));
+        params.push(FunctionParam::new(span, name, typespec));
     }
 
     let return_type = inner.next().unwrap();
@@ -305,8 +357,10 @@ fn process_decl_func(
     let body = inner.next().unwrap();
     let body = process_block(parser_context, body);
 
+    let span = Span::new(span.start(), span.end());
+
     let name = parser_context.add_ident(name);
-    Decl::function(name, params, return_type, body)
+    Decl::function(span, name, params, return_type, body)
 }
 
 fn process_decl(parser_context: &mut Context, decl: Pair<Rule>) -> P<Decl> {
@@ -340,4 +394,39 @@ pub fn parse(parser_context: &mut Context, input: &str) -> Vec<P<Decl>> {
     }
 
     decls
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ast::{DeclKind, StmtKind};
+
+    #[test]
+    fn test_span() {
+        let input = r#"
+            func main(argc: s32, argv: u8**) -> s32 {
+                ret lel() + 1 + 123 * 2 + lel[123];
+            }
+        "#;
+
+        let mut parser_context = Context::new();
+        let decls = parse(&mut parser_context, input);
+
+        for decl in decls {
+            let span = decl.span();
+
+            if let DeclKind::Function {
+                params,
+                return_type,
+                body,
+            } = decl.kind()
+            {
+                let span = body.span();
+                println!("{:#?}", span);
+                println!("{:?}", input.get(span.start()..span.end()));
+            }
+        }
+
+        panic!();
+    }
 }

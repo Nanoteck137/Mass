@@ -1,17 +1,35 @@
 use util::P;
 
-#[derive(Copy, Clone, Hash, Eq, PartialEq, Debug)]
-pub struct Ident {
-    index: usize,
+#[derive(Clone, Debug)]
+pub struct Span {
+    start: usize,
+    end: usize,
 }
+
+impl Span {
+    pub fn new(start: usize, end: usize) -> Self {
+        Self { start, end }
+    }
+
+    pub fn start(&self) -> usize {
+        self.start
+    }
+
+    pub fn end(&self) -> usize {
+        self.end
+    }
+}
+
+#[derive(Copy, Clone, Hash, Eq, PartialEq, Debug)]
+pub struct Ident(usize);
 
 impl Ident {
     pub fn new(index: usize) -> Self {
-        Self { index }
+        Self(index)
     }
 
     pub fn index(&self) -> usize {
-        self.index
+        self.0
     }
 }
 
@@ -59,42 +77,54 @@ pub enum ExprKind {
 
 pub struct Expr {
     kind: ExprKind,
+    span: Span,
 }
 
 impl Expr {
-    pub fn integer(value: u64) -> P<Expr> {
+    pub fn integer(span: Span, value: u64) -> P<Expr> {
         P::new(Box::new(Expr {
             kind: ExprKind::Integer(value),
+            span,
         }))
     }
 
-    pub fn ident(ident: Ident) -> P<Expr> {
+    pub fn ident(span: Span, ident: Ident) -> P<Expr> {
         P::new(Box::new(Expr {
             kind: ExprKind::Ident(ident),
+            span,
         }))
     }
 
-    pub fn string(string: String) -> P<Expr> {
+    pub fn string(span: Span, string: String) -> P<Expr> {
         P::new(Box::new(Expr {
             kind: ExprKind::String(string),
+            span,
         }))
     }
 
-    pub fn binary(op: BinaryOp, left: P<Expr>, right: P<Expr>) -> P<Expr> {
+    pub fn binary(
+        span: Span,
+        op: BinaryOp,
+        left: P<Expr>,
+        right: P<Expr>,
+    ) -> P<Expr> {
         P::new(Box::new(Expr {
             kind: ExprKind::Binary { op, left, right },
+            span,
         }))
     }
 
-    pub fn call(expr: P<Expr>, args: Vec<P<Expr>>) -> P<Expr> {
+    pub fn call(span: Span, expr: P<Expr>, args: Vec<P<Expr>>) -> P<Expr> {
         P::new(Box::new(Expr {
             kind: ExprKind::Call { expr, args },
+            span,
         }))
     }
 
-    pub fn index(expr: P<Expr>, index: P<Expr>) -> P<Expr> {
+    pub fn index(span: Span, expr: P<Expr>, index: P<Expr>) -> P<Expr> {
         P::new(Box::new(Expr {
             kind: ExprKind::Index { expr, index },
+            span,
         }))
     }
 }
@@ -102,6 +132,10 @@ impl Expr {
 impl Expr {
     pub fn kind(&self) -> &ExprKind {
         &self.kind
+    }
+
+    pub fn span(&self) -> &Span {
+        &self.span
     }
 }
 
@@ -119,28 +153,33 @@ pub enum StmtKind {
 
 pub struct Stmt {
     kind: StmtKind,
+    span: Span,
 }
 
 impl Stmt {
     pub fn var(
+        span: Span,
         name: Ident,
         typ: P<Typespec>,
         expr: Option<P<Expr>>,
     ) -> P<Stmt> {
         P::new(Box::new(Stmt {
             kind: StmtKind::Var { name, typ, expr },
+            span,
         }))
     }
 
-    pub fn ret(expr: P<Expr>) -> P<Stmt> {
+    pub fn ret(span: Span, expr: P<Expr>) -> P<Stmt> {
         P::new(Box::new(Stmt {
             kind: StmtKind::Ret(expr),
+            span,
         }))
     }
 
-    pub fn expr(expr: P<Expr>) -> P<Stmt> {
+    pub fn expr(span: Span, expr: P<Expr>) -> P<Stmt> {
         P::new(Box::new(Stmt {
             kind: StmtKind::Expr(expr),
+            span,
         }))
     }
 }
@@ -149,15 +188,23 @@ impl Stmt {
     pub fn kind(&self) -> &StmtKind {
         &self.kind
     }
+
+    pub fn span(&self) -> &Span {
+        &self.span
+    }
 }
 
 pub struct StmtBlock {
     stmts: Vec<P<Stmt>>,
+    span: Span,
 }
 
 impl StmtBlock {
-    pub fn new() -> Self {
-        Self { stmts: Vec::new() }
+    pub fn new(span: Span) -> Self {
+        Self {
+            stmts: Vec::new(),
+            span,
+        }
     }
 
     pub fn add_stmt(&mut self, stmt: P<Stmt>) {
@@ -166,6 +213,10 @@ impl StmtBlock {
 
     pub fn stmts(&self) -> &[P<Stmt>] {
         &self.stmts
+    }
+
+    pub fn span(&self) -> &Span {
+        &self.span
     }
 }
 
@@ -176,18 +227,21 @@ pub enum TypespecKind {
 
 pub struct Typespec {
     kind: TypespecKind,
+    span: Span,
 }
 
 impl Typespec {
-    pub fn name(name: Ident) -> P<Typespec> {
+    pub fn name(span: Span, name: Ident) -> P<Typespec> {
         P::new(Box::new(Typespec {
             kind: TypespecKind::Name(name),
+            span,
         }))
     }
 
-    pub fn ptr(base: P<Typespec>) -> P<Typespec> {
+    pub fn ptr(span: Span, base: P<Typespec>) -> P<Typespec> {
         P::new(Box::new(Typespec {
             kind: TypespecKind::Ptr(base),
+            span,
         }))
     }
 }
@@ -196,16 +250,21 @@ impl Typespec {
     pub fn kind(&self) -> &TypespecKind {
         &self.kind
     }
+
+    pub fn span(&self) -> &Span {
+        &self.span
+    }
 }
 
 pub struct FunctionParam {
     name: Ident,
     ty: P<Typespec>,
+    span: Span,
 }
 
 impl FunctionParam {
-    pub fn new(name: Ident, ty: P<Typespec>) -> Self {
-        Self { name, ty }
+    pub fn new(span: Span, name: Ident, ty: P<Typespec>) -> Self {
+        Self { name, ty, span }
     }
 
     pub fn name(&self) -> Ident {
@@ -214,6 +273,10 @@ impl FunctionParam {
 
     pub fn ty(&self) -> &P<Typespec> {
         &self.ty
+    }
+
+    pub fn span(&self) -> &Span {
+        &self.span
     }
 }
 
@@ -228,10 +291,12 @@ pub enum DeclKind {
 pub struct Decl {
     name: Ident,
     kind: DeclKind,
+    span: Span,
 }
 
 impl Decl {
     pub fn function(
+        span: Span,
         name: Ident,
         params: Vec<FunctionParam>,
         return_type: Option<P<Typespec>>,
@@ -244,6 +309,7 @@ impl Decl {
                 return_type,
                 body,
             },
+            span,
         }))
     }
 }
@@ -255,5 +321,9 @@ impl Decl {
 
     pub fn kind(&self) -> &DeclKind {
         &self.kind
+    }
+
+    pub fn span(&self) -> &Span {
+        &self.span
     }
 }

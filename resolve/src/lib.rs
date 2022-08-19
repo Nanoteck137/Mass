@@ -457,13 +457,13 @@ impl<'a> TyResolver<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ast::Span;
 
     #[test]
     fn test_lang() {
         let mut parser_context = parser::Context::new();
         let source = r#"
-            func add(a: u32, b: u32) -> s32 {
-                var a: s32 = 0;
+            func add(a: u32, b: u32) -> s32 { var a: s32 = 0;
                 ret a;
             }
 
@@ -496,12 +496,14 @@ mod tests {
         let main_ident = parser_context.add_ident("main");
 
         let mut res = TyResolver::new(&mut parser_context);
+        let span = Span::new(0, 0);
 
         let decl = Decl::function(
+            span.clone(),
             main_ident,
             vec![],
-            Some(Typespec::name(u32_ident)),
-            StmtBlock::new(),
+            Some(Typespec::name(span.clone(), u32_ident)),
+            StmtBlock::new(span.clone()),
         );
 
         let ty = res.resolve_decl(&decl).expect("Failed to resolve func");
@@ -514,14 +516,18 @@ mod tests {
         let u32_ident = parser_context.add_ident("u32");
 
         let mut res = TyResolver::new(&mut parser_context);
+        let span = Span::new(0, 0);
 
-        let typespec = Typespec::name(u32_ident);
+        let typespec = Typespec::name(span.clone(), u32_ident);
         let ty = res
             .resolve_typespec(&typespec)
             .expect("Failed to resolve typespec");
         assert_eq!(ty, res.u32());
 
-        let typespec = Typespec::ptr(Typespec::name(u32_ident));
+        let typespec = Typespec::ptr(
+            span.clone(),
+            Typespec::name(span.clone(), u32_ident),
+        );
         let ty = res
             .resolve_typespec(&typespec)
             .expect("Failed to resolve typespec");
