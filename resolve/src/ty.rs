@@ -32,6 +32,7 @@ impl StructField {
 pub enum TyKind {
     Int(IntKind),
     Ptr(TyId),
+    Void,
 
     Array {
         base: TyId,
@@ -66,6 +67,9 @@ impl Ty {
         }))
     }
 
+    pub fn void() -> P<Ty> {
+        P::new(Box::new(Ty { kind: TyKind::Void }))
+    }
     pub fn array(base: TyId, count: usize) -> P<Ty> {
         P::new(Box::new(Ty {
             kind: TyKind::Array { base, count },

@@ -200,20 +200,20 @@ impl Typespec {
 
 pub struct FunctionParam {
     name: Ident,
-    typ: P<Typespec>,
+    ty: P<Typespec>,
 }
 
 impl FunctionParam {
-    pub fn new(name: Ident, typ: P<Typespec>) -> Self {
-        Self { name, typ }
+    pub fn new(name: Ident, ty: P<Typespec>) -> Self {
+        Self { name, ty }
     }
 
     pub fn name(&self) -> Ident {
         self.name
     }
 
-    pub fn typ(&self) -> &P<Typespec> {
-        &self.typ
+    pub fn ty(&self) -> &P<Typespec> {
+        &self.ty
     }
 }
 

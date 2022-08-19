@@ -66,7 +66,7 @@ impl Context {
         };
     }
 
-    pub fn get_ident(&self, ident: Ident) -> &String {
+    pub fn ident(&self, ident: Ident) -> &String {
         &self.ident_table[ident.index()]
     }
 }

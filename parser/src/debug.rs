@@ -38,7 +38,7 @@ impl Debug {
     ) {
         match typespec.kind() {
             TypespecKind::Name(ident) => {
-                print!("{}", parser_context.get_ident(*ident))
+                print!("{}", parser_context.ident(*ident))
             }
 
             TypespecKind::Ptr(base) => {
@@ -56,7 +56,7 @@ impl Debug {
             }
 
             ExprKind::Ident(ident) => {
-                print!("{}", parser_context.get_ident(*ident));
+                print!("{}", parser_context.ident(*ident));
             }
 
             ExprKind::String(str) => {
@@ -113,7 +113,7 @@ impl Debug {
     pub fn stmt(&mut self, parser_context: &Context, stmt: &P<Stmt>) {
         match stmt.kind() {
             StmtKind::Var { name, typ, expr } => {
-                print!("(var {} ", parser_context.get_ident(*name));
+                print!("(var {} ", parser_context.ident(*name));
                 self.typespec(parser_context, typ);
 
                 if let Some(expr) = expr {
@@ -160,11 +160,11 @@ impl Debug {
                 return_type,
                 body,
             } => {
-                print!("(function {} ", parser_context.get_ident(decl.name()));
+                print!("(function {} ", parser_context.ident(decl.name()));
                 print!("(");
                 for param in params {
-                    print!(" {} ", parser_context.get_ident(param.name()));
-                    self.typespec(parser_context, param.typ());
+                    print!(" {} ", parser_context.ident(param.name()));
+                    self.typespec(parser_context, param.ty());
                 }
                 print!(" ) ");
 
