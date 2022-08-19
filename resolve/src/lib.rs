@@ -3,8 +3,11 @@
 use std::collections::HashMap;
 
 use util::P;
-use ast::{Ident, Typespec, TypespecKind, Decl, DeclKind, StmtBlock};
-use ty::{TyId, Ty, IntKind};
+use ast::{
+    Ident, Typespec, TypespecKind, Decl, DeclKind, Stmt, StmtKind, StmtBlock,
+    Expr, ExprKind,
+};
+use ty::{TyId, Ty, TyKind, IntKind};
 
 mod ty;
 
@@ -29,9 +32,11 @@ struct BuiltinTypes {
 #[derive(Clone, Debug)]
 enum SymbolKind {
     Ty,
+    Var,
     Function,
 }
 
+#[derive(Clone)]
 struct Symbol {
     kind: SymbolKind,
 
@@ -48,6 +53,14 @@ impl Symbol {
         }
     }
 
+    fn var(name: Ident, ty: TyId) -> Self {
+        Self {
+            kind: SymbolKind::Var,
+            name,
+            ty,
+        }
+    }
+
     fn function(name: Ident, ty: TyId) -> Self {
         Self {
             kind: SymbolKind::Function,
@@ -55,6 +68,55 @@ impl Symbol {
             ty,
         }
     }
+}
+
+struct Scope {
+    local_symbols: Vec<Symbol>,
+}
+
+impl Scope {
+    fn new() -> Self {
+        Self {
+            local_symbols: Vec::new(),
+        }
+    }
+
+    fn add_var(&mut self, name: Ident, ty: TyId) {
+        self.local_symbols.push(Symbol::var(name, ty));
+    }
+
+    fn find_symbol(&self, name: Ident) -> Option<&Symbol> {
+        for sym in self.local_symbols.iter().rev() {
+            if sym.name == name {
+                return Some(sym);
+            }
+        }
+
+        None
+    }
+
+    fn push(&mut self) -> usize {
+        0
+    }
+
+    fn pop(&mut self, _index: usize) {}
+
+    fn debug_print(&mut self, parser_context: &parser::Context) {
+        for sym in &self.local_symbols {
+            let name = parser_context.ident(sym.name);
+            let kind = match sym.kind {
+                SymbolKind::Ty => "type",
+                SymbolKind::Function => "function",
+                SymbolKind::Var => "var",
+            };
+
+            println!("{} ({}) -> {:?}", name, kind, sym.ty);
+        }
+    }
+}
+
+struct ResolvedExpr {
+    ty: TyId,
 }
 
 struct TyResolver<'a> {
@@ -187,23 +249,146 @@ impl<'a> TyResolver<'a> {
         }
     }
 
+    fn find_symbol(&self, scope: &Scope, name: Ident) -> Option<Symbol> {
+        if let Some(sym) = scope.find_symbol(name) {
+            return Some(sym.clone());
+        }
+
+        if let Some(sym) = self.symbols.get(&name) {
+            return Some(sym.clone());
+        }
+
+        None
+    }
+
+    fn resolve_expr(
+        &mut self,
+        scope: &mut Scope,
+        expr: &P<Expr>,
+        expected_ty: Option<TyId>,
+    ) -> ResolvedExpr {
+        match expr.kind() {
+            ExprKind::Integer(_value) => {
+                if let Some(expected_ty) = expected_ty {
+                    let ty = self.ty_context.get_type(expected_ty);
+                    if matches!(ty.kind(), TyKind::Int(..)) {
+                        return ResolvedExpr { ty: expected_ty };
+                    }
+                }
+
+                ResolvedExpr { ty: self.u64() }
+            }
+
+            ExprKind::Ident(ident) => {
+                println!("Ident: {}", self.parser_context.ident(*ident));
+                if let Some(sym) = self.find_symbol(scope, *ident) {
+                    ResolvedExpr { ty: sym.ty }
+                } else {
+                    panic!(
+                        "No symbol with name: '{}'",
+                        self.parser_context.ident(*ident)
+                    );
+                }
+            }
+
+            ExprKind::String(s) => todo!(),
+
+            ExprKind::Binary { op, left, right } => todo!(),
+
+            ExprKind::Call { expr, args: _ } => {
+                let resolved_expr = self.resolve_expr(scope, expr, None);
+                if let TyKind::Function {
+                    params: _,
+                    return_type,
+                } = self.ty_context.get_type(resolved_expr.ty).kind()
+                {
+                    // TODO(patrik): Check params and args
+                    return ResolvedExpr { ty: *return_type };
+                } else {
+                    panic!("Trying to call a non function");
+                }
+            }
+
+            ExprKind::Index { expr, index } => todo!(),
+        }
+    }
+
+    fn resolve_stmt(
+        &mut self,
+        scope: &mut Scope,
+        stmt: &P<Stmt>,
+        return_ty: TyId,
+    ) {
+        match stmt.kind() {
+            StmtKind::Var { name, typ, expr } => {
+                let ty = self.resolve_typespec(typ).unwrap();
+
+                if let Some(expr) = expr {
+                    let resolved_expr =
+                        self.resolve_expr(scope, expr, Some(ty));
+                    println!("{:?} -> {:?}", resolved_expr.ty, ty);
+                    if resolved_expr.ty != ty {
+                        panic!("Type mismatch");
+                    }
+                }
+
+                scope.add_var(*name, ty);
+            }
+
+            StmtKind::Ret(expr) => {
+                let resolved_expr =
+                    self.resolve_expr(scope, expr, Some(return_ty));
+                if resolved_expr.ty != return_ty {
+                    panic!("Return type mismatch");
+                }
+            }
+
+            StmtKind::Expr(expr) => todo!(),
+        }
+    }
+
+    fn resolve_stmt_block(
+        &mut self,
+        scope: &mut Scope,
+        stmt_block: &StmtBlock,
+        return_ty: TyId,
+    ) {
+        for stmt in stmt_block.stmts() {
+            self.resolve_stmt(scope, stmt, return_ty);
+        }
+    }
+
     fn resolve_decl_body(&mut self, decl: &P<Decl>) {
         match decl.kind() {
             DeclKind::Function {
-                params: _,
+                params,
                 return_type: _,
                 body,
             } => {
                 if let Some(sym) = self.symbols.get(&decl.name()) {
                     assert!(matches!(sym.kind, SymbolKind::Function));
 
-                    // let scope = Scope::new();
+                    let function_ty = self.ty_context.get_type(sym.ty);
 
-                    for _stmt in body.stmts() {
-                        // resolve_stmt();
+                    if let TyKind::Function {
+                        params: params_ty,
+                        return_type,
+                    } = function_ty.kind()
+                    {
+                        let mut scope = Scope::new();
+
+                        for param in params.iter().zip(params_ty.iter()) {
+                            scope.add_var(param.0.name(), *param.1);
+                        }
+
+                        self.resolve_stmt_block(
+                            &mut scope,
+                            body,
+                            *return_type,
+                        );
+                    } else {
+                        panic!("Type not function");
                     }
-
-                    todo!();
                 }
             }
         }
@@ -223,6 +408,7 @@ impl<'a> TyResolver<'a> {
             let kind = match sym.kind {
                 SymbolKind::Ty => "type",
                 SymbolKind::Function => "function",
+                SymbolKind::Var => "var",
             };
 
             println!("{} ({}) -> {:?}", name, kind, sym.ty);
@@ -277,11 +463,12 @@ mod tests {
         let mut parser_context = parser::Context::new();
         let source = r#"
             func add(a: u32, b: u32) -> s32 {
-                ret a + b;
+                var a: s32 = 0;
+                ret a;
             }
 
             func main(argc: s32, argv: s8**) -> s32 {
-                var res: u32 = add(123, 321);
+                var res: s32 = add(123, 321);
 
                 return 0;
             }
